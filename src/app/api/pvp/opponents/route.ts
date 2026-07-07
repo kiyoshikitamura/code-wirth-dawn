@@ -361,165 +361,10 @@ const GHOST_PRESETS: Record<string, any[]> = {
     ],
     "B": [
         {
-            "user_id": "ghost_b_1",
-            "user_name": "堅牢のクロード",
-            "avatar_url": "/images/npcs/npc_roland_knight_veteran.png",
-            "battle_score": 2200,
-            "defense_rank": "B",
-            "is_ghost": true,
-            "player_snapshot": {
-                "level": 15,
-                "job_class": "Knight",
-                "hp": 320,
-                "max_hp": 320,
-                "atk": 18,
-                "def": 22
-            },
-            "party_members_snapshot": [
-                {
-                    "id": "ghost_b_1_m1",
-                    "name": "ガッツ",
-                    "job_class": "Mercenary",
-                    "level": 14,
-                    "hp": 280,
-                    "max_hp": 280,
-                    "atk": 22,
-                    "def": 12,
-                    "inject_cards": [
-                        1,
-                        9
-                    ],
-                    "image_url": "/images/npcs/npc_free_guts.png"
-                },
-                {
-                    "id": "ghost_b_1_m2",
-                    "name": "アンナ",
-                    "job_class": "Priest",
-                    "level": 12,
-                    "hp": 140,
-                    "max_hp": 140,
-                    "atk": 8,
-                    "def": 10,
-                    "inject_cards": [
-                        14
-                    ],
-                    "image_url": "/images/npcs/npc_roland_priest_anna.png"
-                }
-            ],
-            "equipped_items_snapshot": [
-                {
-                    "id": "191",
-                    "name": "騎士の盾",
-                    "type": "equipment",
-                    "effect_data": {
-                        "def_bonus": 10,
-                        "hp_bonus": 50
-                    }
-                },
-                {
-                    "id": "192",
-                    "name": "白銀の槍",
-                    "type": "equipment",
-                    "effect_data": {
-                        "atk_bonus": 8
-                    }
-                }
-            ],
-            "skill_deck_snapshot": [
-                {
-                    "id": "1",
-                    "name": "強打",
-                    "type": "Skill",
-                    "ap_cost": 2,
-                    "power": 25
-                },
-                {
-                    "id": "9",
-                    "name": "挑発",
-                    "type": "Skill",
-                    "ap_cost": 1,
-                    "power": 0
-                }
-            ]
-        },
-        {
-            "user_id": "ghost_b_2",
-            "user_name": "風のレン",
-            "avatar_url": "/images/npcs/npc_roland_scholar.png",
-            "battle_score": 2450,
-            "defense_rank": "B",
-            "is_ghost": true,
-            "player_snapshot": {
-                "level": 18,
-                "job_class": "Ranger",
-                "hp": 240,
-                "max_hp": 240,
-                "atk": 25,
-                "def": 14
-            },
-            "party_members_snapshot": [
-                {
-                    "id": "ghost_b_2_m1",
-                    "name": "サム",
-                    "job_class": "Hunter",
-                    "level": 16,
-                    "hp": 200,
-                    "max_hp": 200,
-                    "atk": 24,
-                    "def": 9,
-                    "inject_cards": [
-                        3
-                    ],
-                    "image_url": "/images/npcs/npc_roland_hunter_sam.png"
-                },
-                {
-                    "id": "ghost_b_2_m2",
-                    "name": "ライラ",
-                    "job_class": "Dancer",
-                    "level": 15,
-                    "hp": 160,
-                    "max_hp": 160,
-                    "atk": 12,
-                    "def": 8,
-                    "inject_cards": [
-                        5
-                    ],
-                    "image_url": "/images/npcs/npc_markand_dancer_lila.png"
-                }
-            ],
-            "equipped_items_snapshot": [
-                {
-                    "id": "196",
-                    "name": "冒険者の靴",
-                    "type": "equipment",
-                    "effect_data": {
-                        "atk_bonus": 5,
-                        "def_bonus": 4
-                    }
-                }
-            ],
-            "skill_deck_snapshot": [
-                {
-                    "id": "3",
-                    "name": "突き",
-                    "type": "Skill",
-                    "ap_cost": 1,
-                    "power": 18
-                },
-                {
-                    "id": "8",
-                    "name": "クイックステップ",
-                    "type": "Skill",
-                    "ap_cost": 1,
-                    "power": 0
-                }
-            ]
-        },
-        {
             "user_id": "c7906aec-ba14-4e35-8102-b21c6bea529a",
             "user_name": "ベル",
             "avatar_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/c7906aec-ba14-4e35-8102-b21c6bea529a/avatar.jpeg?t=1781659829258",
-            "battle_score": 2044,
+            "battle_score": 2509,
             "defense_rank": "B",
             "is_ghost": true,
             "player_snapshot": {
@@ -536,8 +381,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "ラヴィーネ",
                     "job_class": "Civilian",
                     "level": 13,
-                    "hp": 79,
-                    "max_hp": 221,
+                    "hp": 401,
+                    "max_hp": 401,
                     "atk": 18,
                     "def": 14,
                     "inject_cards": [
@@ -555,8 +400,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "魔剣士 テリア",
                     "job_class": "Civilian",
                     "level": 20,
-                    "hp": 71,
-                    "max_hp": 299,
+                    "hp": 584,
+                    "max_hp": 584,
                     "atk": 19,
                     "def": 22,
                     "inject_cards": [
@@ -666,7 +511,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "ヴォルグ",
                     "job_class": "Civilian",
                     "level": 1,
-                    "hp": 33,
+                    "hp": 680,
                     "max_hp": 680,
                     "atk": 5,
                     "def": 10,
@@ -683,7 +528,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "ゴリアテ",
                     "job_class": "Civilian",
                     "level": 1,
-                    "hp": 84,
+                    "hp": 390,
                     "max_hp": 390,
                     "atk": 5,
                     "def": 10,
@@ -769,7 +614,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
             "user_id": "0c4d9ee3-2b38-498a-ab23-823ae91dced5",
             "user_name": "ルキヤ",
             "avatar_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/0c4d9ee3-2b38-498a-ab23-823ae91dced5/avatar.png?t=1781605286950",
-            "battle_score": 2302,
+            "battle_score": 2662,
             "defense_rank": "B",
             "is_ghost": true,
             "player_snapshot": {
@@ -786,8 +631,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "魔剣士 テリア",
                     "job_class": "Civilian",
                     "level": 25,
-                    "hp": 89,
-                    "max_hp": 370,
+                    "hp": 730,
+                    "max_hp": 730,
                     "atk": 88,
                     "def": 39,
                     "inject_cards": [
@@ -900,7 +745,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "ゴウ",
                     "job_class": "Civilian",
                     "level": 1,
-                    "hp": 92,
+                    "hp": 299,
                     "max_hp": 299,
                     "atk": 5,
                     "def": 10,
@@ -915,7 +760,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "ヴォルグ",
                     "job_class": "Civilian",
                     "level": 1,
-                    "hp": 8,
+                    "hp": 680,
                     "max_hp": 680,
                     "atk": 5,
                     "def": 10,
@@ -932,7 +777,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "ケンジ",
                     "job_class": "Civilian",
                     "level": 1,
-                    "hp": 97,
+                    "hp": 234,
                     "max_hp": 234,
                     "atk": 5,
                     "def": 10,
@@ -946,7 +791,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "ヤスマサ",
                     "job_class": "Civilian",
                     "level": 1,
-                    "hp": 95,
+                    "hp": 143,
                     "max_hp": 143,
                     "atk": 5,
                     "def": 10,
@@ -1033,7 +878,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
             "user_id": "e155794b-a049-4d34-a9ec-1b7086cba695",
             "user_name": "タクミ",
             "avatar_url": "/avatars/adventurer.jpg",
-            "battle_score": 1801,
+            "battle_score": 2086,
             "defense_rank": "B",
             "is_ghost": true,
             "player_snapshot": {
@@ -1050,7 +895,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "ケンジ",
                     "job_class": "Civilian",
                     "level": 1,
-                    "hp": 84,
+                    "hp": 180,
                     "max_hp": 180,
                     "atk": 5,
                     "def": 10,
@@ -1064,8 +909,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "とらまる",
                     "job_class": "Civilian",
                     "level": 11,
-                    "hp": 82,
-                    "max_hp": 192,
+                    "hp": 342,
+                    "max_hp": 342,
                     "atk": 13,
                     "def": 12,
                     "inject_cards": [
@@ -1082,8 +927,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "Melody",
                     "job_class": "Civilian",
                     "level": 10,
-                    "hp": 83,
-                    "max_hp": 201,
+                    "hp": 336,
+                    "max_hp": 336,
                     "atk": 12,
                     "def": 16,
                     "inject_cards": [
@@ -1190,7 +1035,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "レオ",
                     "job_class": "Civilian",
                     "level": 1,
-                    "hp": 40,
+                    "hp": 300,
                     "max_hp": 300,
                     "atk": 5,
                     "def": 10,
@@ -1206,7 +1051,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "ガッド",
                     "job_class": "Civilian",
                     "level": 1,
-                    "hp": 29,
+                    "hp": 250,
                     "max_hp": 250,
                     "atk": 5,
                     "def": 10,
@@ -1221,7 +1066,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "撫子",
                     "job_class": "Civilian",
                     "level": 10,
-                    "hp": 34,
+                    "hp": 100,
                     "max_hp": 100,
                     "atk": 5,
                     "def": 10,
@@ -1236,7 +1081,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "ヴォルグ",
                     "job_class": "Civilian",
                     "level": 1,
-                    "hp": 42,
+                    "hp": 680,
                     "max_hp": 680,
                     "atk": 5,
                     "def": 10,
@@ -1325,7 +1170,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
             "user_id": "abb4d4f8-b86e-4d5f-af46-1c69933b2d3e",
             "user_name": "ションボリーヌ",
             "avatar_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/abb4d4f8-b86e-4d5f-af46-1c69933b2d3e/avatar.jpg?t=1782452623044",
-            "battle_score": 2331,
+            "battle_score": 2436,
             "defense_rank": "B",
             "is_ghost": true,
             "player_snapshot": {
@@ -1342,7 +1187,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "アンナ",
                     "job_class": "Civilian",
                     "level": 1,
-                    "hp": 1,
+                    "hp": 100,
                     "max_hp": 100,
                     "atk": 5,
                     "def": 10,
@@ -1357,8 +1202,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "Persepho",
                     "job_class": "Civilian",
                     "level": 8,
-                    "hp": 13,
-                    "max_hp": 176,
+                    "hp": 281,
+                    "max_hp": 281,
                     "atk": 11,
                     "def": 12,
                     "inject_cards": [
@@ -1376,7 +1221,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "ヴォルグ",
                     "job_class": "Civilian",
                     "level": 1,
-                    "hp": 60,
+                    "hp": 680,
                     "max_hp": 680,
                     "atk": 5,
                     "def": 10,
@@ -1393,7 +1238,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "バドル",
                     "job_class": "Civilian",
                     "level": 1,
-                    "hp": 77,
+                    "hp": 160,
                     "max_hp": 160,
                     "atk": 5,
                     "def": 10,
@@ -1469,7 +1314,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
             "user_id": "e8aaeff4-d6d4-43b7-aa62-31dcaf621157",
             "user_name": "シド・ザ・ブレンド",
             "avatar_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/e8aaeff4-d6d4-43b7-aa62-31dcaf621157/avatar.jpg?t=1782077585038",
-            "battle_score": 2337,
+            "battle_score": 2877,
             "defense_rank": "B",
             "is_ghost": true,
             "player_snapshot": {
@@ -1486,8 +1331,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "将哉",
                     "job_class": "Civilian",
                     "level": 14,
-                    "hp": 13,
-                    "max_hp": 284,
+                    "hp": 479,
+                    "max_hp": 479,
                     "atk": 16,
                     "def": 15,
                     "inject_cards": [
@@ -1507,8 +1352,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "Melody",
                     "job_class": "Civilian",
                     "level": 15,
-                    "hp": 32,
-                    "max_hp": 250,
+                    "hp": 460,
+                    "max_hp": 460,
                     "atk": 16,
                     "def": 18,
                     "inject_cards": [
@@ -1527,8 +1372,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "透",
                     "job_class": "Civilian",
                     "level": 10,
-                    "hp": 7,
-                    "max_hp": 187,
+                    "hp": 322,
+                    "max_hp": 322,
                     "atk": 13,
                     "def": 14,
                     "inject_cards": [
@@ -1626,7 +1471,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "ゴウ",
                     "job_class": "Civilian",
                     "level": 1,
-                    "hp": 47,
+                    "hp": 230,
                     "max_hp": 230,
                     "atk": 5,
                     "def": 10,
@@ -1641,7 +1486,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "ケンジ",
                     "job_class": "Civilian",
                     "level": 1,
-                    "hp": 46,
+                    "hp": 180,
                     "max_hp": 180,
                     "atk": 5,
                     "def": 10,
@@ -1655,7 +1500,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "レオ",
                     "job_class": "Civilian",
                     "level": 1,
-                    "hp": 52,
+                    "hp": 300,
                     "max_hp": 300,
                     "atk": 5,
                     "def": 10,
@@ -1671,7 +1516,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "ヴォルグ",
                     "job_class": "Civilian",
                     "level": 1,
-                    "hp": 49,
+                    "hp": 680,
                     "max_hp": 680,
                     "atk": 5,
                     "def": 10,
@@ -1757,133 +1602,10 @@ const GHOST_PRESETS: Record<string, any[]> = {
             ]
         },
         {
-            "user_id": "e26223d4-36b2-446e-b8ae-aa2c92be8b47",
-            "user_name": "クロノ",
-            "avatar_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/e26223d4-36b2-446e-b8ae-aa2c92be8b47/avatar.png?t=1782598149931",
-            "battle_score": 2639,
-            "defense_rank": "B",
-            "is_ghost": true,
-            "player_snapshot": {
-                "level": 14,
-                "job_class": "Warrior",
-                "hp": 228,
-                "max_hp": 228,
-                "atk": 15,
-                "def": 14
-            },
-            "party_members_snapshot": [
-                {
-                    "id": 1546,
-                    "name": "ラヴィーネ",
-                    "job_class": "Civilian",
-                    "level": 15,
-                    "hp": 15,
-                    "max_hp": 266,
-                    "atk": 41,
-                    "def": 40,
-                    "inject_cards": [
-                        1,
-                        13,
-                        37,
-                        64,
-                        114,
-                        124,
-                        119
-                    ],
-                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/c4a8cf70-6185-4725-8e07-810bb5a53d38/avatar.jpg?t=1782300093251"
-                },
-                {
-                    "id": 1564,
-                    "name": "雅人",
-                    "job_class": "Civilian",
-                    "level": 17,
-                    "hp": 63,
-                    "max_hp": 285,
-                    "atk": 33,
-                    "def": 43,
-                    "inject_cards": [
-                        40,
-                        1,
-                        14,
-                        16,
-                        25,
-                        27,
-                        37,
-                        64
-                    ],
-                    "image_url": "/avatars/adventurer.jpg"
-                }
-            ],
-            "equipped_items_snapshot": [
-                {
-                    "id": "e253bc43-6080-4069-8586-1b802aa881ea",
-                    "type": "equipment",
-                    "effect_data": {}
-                },
-                {
-                    "id": "a33a01c2-01c9-44a1-a743-4b6cc49a4a26",
-                    "type": "equipment",
-                    "effect_data": {}
-                },
-                {
-                    "id": "a8d756cc-096a-4e0c-a068-45748f37d316",
-                    "type": "equipment",
-                    "effect_data": {}
-                },
-                {
-                    "id": "106f8cb6-fd7f-4e4f-8a7e-f61acdf75537",
-                    "type": "equipment",
-                    "effect_data": {}
-                },
-                {
-                    "id": "be85d998-2553-4a3c-ad4c-5395365f226f",
-                    "type": "equipment",
-                    "effect_data": {}
-                }
-            ],
-            "skill_deck_snapshot": [
-                {
-                    "id": "124",
-                    "name": "凍てつく波動",
-                    "type": "Magic",
-                    "ap_cost": 3,
-                    "power": 0
-                },
-                {
-                    "id": "119",
-                    "name": "ダブルキャスト",
-                    "type": "Support",
-                    "ap_cost": 2,
-                    "power": 0
-                },
-                {
-                    "id": "37",
-                    "name": "メテオストライク",
-                    "type": "Magic",
-                    "ap_cost": 5,
-                    "power": 100
-                },
-                {
-                    "id": "33",
-                    "name": "奇跡",
-                    "type": "Heal",
-                    "ap_cost": 5,
-                    "power": 999
-                },
-                {
-                    "id": "57",
-                    "name": "闇の代償",
-                    "type": "Support",
-                    "ap_cost": 1,
-                    "power": 0
-                }
-            ]
-        },
-        {
             "user_id": "e50314d6-4b08-4e2a-b954-c81ff91e01f3",
             "user_name": "あめちぃ",
             "avatar_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/e50314d6-4b08-4e2a-b954-c81ff91e01f3/avatar.jpg?t=1782257002786",
-            "battle_score": 2237,
+            "battle_score": 2462,
             "defense_rank": "B",
             "is_ghost": true,
             "player_snapshot": {
@@ -1900,8 +1622,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "小野",
                     "job_class": "Civilian",
                     "level": 7,
-                    "hp": 21,
-                    "max_hp": 198,
+                    "hp": 288,
+                    "max_hp": 288,
                     "atk": 14,
                     "def": 8,
                     "inject_cards": [
@@ -1917,7 +1639,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "グリフォン",
                     "job_class": "Civilian",
                     "level": 1,
-                    "hp": 26,
+                    "hp": 260,
                     "max_hp": 260,
                     "atk": 5,
                     "def": 10,
@@ -1932,7 +1654,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "ケンジ",
                     "job_class": "Civilian",
                     "level": 1,
-                    "hp": 19,
+                    "hp": 180,
                     "max_hp": 180,
                     "atk": 5,
                     "def": 10,
@@ -1946,8 +1668,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "ドリミス",
                     "job_class": "Civilian",
                     "level": 10,
-                    "hp": 70,
-                    "max_hp": 205,
+                    "hp": 340,
+                    "max_hp": 340,
                     "atk": 14,
                     "def": 16,
                     "inject_cards": [
@@ -2019,7 +1741,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
             "user_id": "0be1a6b5-763f-4bcb-8e63-59b49a121e68",
             "user_name": "ナス",
             "avatar_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/0be1a6b5-763f-4bcb-8e63-59b49a121e68/avatar.png?t=1781702598439",
-            "battle_score": 2231,
+            "battle_score": 2681,
             "defense_rank": "B",
             "is_ghost": true,
             "player_snapshot": {
@@ -2036,8 +1758,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "なかなかな",
                     "job_class": "Civilian",
                     "level": 9,
-                    "hp": 95,
-                    "max_hp": 176,
+                    "hp": 296,
+                    "max_hp": 296,
                     "atk": 11,
                     "def": 12,
                     "inject_cards": [
@@ -2058,8 +1780,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "Jack ",
                     "job_class": "Civilian",
                     "level": 12,
-                    "hp": 98,
-                    "max_hp": 205,
+                    "hp": 370,
+                    "max_hp": 370,
                     "atk": 14,
                     "def": 14,
                     "inject_cards": [
@@ -2079,7 +1801,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "ゴウ",
                     "job_class": "Civilian",
                     "level": 1,
-                    "hp": 95,
+                    "hp": 230,
                     "max_hp": 230,
                     "atk": 5,
                     "def": 10,
@@ -2094,8 +1816,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "とらまる",
                     "job_class": "Civilian",
                     "level": 12,
-                    "hp": 98,
-                    "max_hp": 203,
+                    "hp": 368,
+                    "max_hp": 368,
                     "atk": 13,
                     "def": 12,
                     "inject_cards": [
@@ -2175,7 +1897,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
             "user_id": "b4a20ab3-18d9-44d4-8837-bacd4fc711e9",
             "user_name": "ハヤト",
             "avatar_url": "/images/icons/observer_gem.png",
-            "battle_score": 2158,
+            "battle_score": 1904,
             "defense_rank": "B",
             "is_ghost": true,
             "player_snapshot": {
@@ -2192,7 +1914,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "ヤスマサ",
                     "job_class": "Civilian",
                     "level": 1,
-                    "hp": 54,
+                    "hp": 143,
                     "max_hp": 143,
                     "atk": 5,
                     "def": 10,
@@ -2203,26 +1925,11 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "image_url": "/images/npcs/npc_yato_kannushi.png"
                 },
                 {
-                    "id": 2016,
-                    "name": "サクラ",
-                    "job_class": "Civilian",
-                    "level": 1,
-                    "hp": 55,
-                    "max_hp": 104,
-                    "atk": 5,
-                    "def": 10,
-                    "inject_cards": [
-                        4,
-                        14
-                    ],
-                    "image_url": "/images/npcs/npc_yato_miko_sakura.png"
-                },
-                {
                     "id": 2017,
                     "name": "ケンジ",
                     "job_class": "Civilian",
                     "level": 1,
-                    "hp": 50,
+                    "hp": 234,
                     "max_hp": 234,
                     "atk": 5,
                     "def": 10,
@@ -2236,7 +1943,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "ゴウ",
                     "job_class": "Civilian",
                     "level": 1,
-                    "hp": 56,
+                    "hp": 299,
                     "max_hp": 299,
                     "atk": 5,
                     "def": 10,
@@ -2322,157 +2029,10 @@ const GHOST_PRESETS: Record<string, any[]> = {
     ],
     "A": [
         {
-            "user_id": "ghost_a_1",
-            "user_name": "賢者アルス",
-            "avatar_url": "/images/npcs/npc_markand_alchemist_zoe.png",
-            "battle_score": 4100,
-            "defense_rank": "A",
-            "is_ghost": true,
-            "player_snapshot": {
-                "level": 32,
-                "job_class": "Sage",
-                "hp": 480,
-                "max_hp": 480,
-                "atk": 45,
-                "def": 28
-            },
-            "party_members_snapshot": [
-                {
-                    "id": "ghost_a_1_m1",
-                    "name": "レオ",
-                    "job_class": "Paladin",
-                    "level": 30,
-                    "hp": 550,
-                    "max_hp": 550,
-                    "atk": 35,
-                    "def": 32,
-                    "inject_cards": [
-                        11,
-                        15
-                    ],
-                    "image_url": "/images/npcs/npc_roland_paladin_leo.png"
-                },
-                {
-                    "id": "ghost_a_1_m2",
-                    "name": "クロヴィス",
-                    "job_class": "Scholar",
-                    "level": 28,
-                    "hp": 220,
-                    "max_hp": 220,
-                    "atk": 48,
-                    "def": 18,
-                    "inject_cards": [
-                        12
-                    ],
-                    "image_url": "/images/npcs/npc_roland_scholar.png"
-                }
-            ],
-            "equipped_items_snapshot": [
-                {
-                    "id": "230",
-                    "name": "大賢者の杖",
-                    "type": "equipment",
-                    "effect_data": {
-                        "atk_bonus": 20
-                    }
-                },
-                {
-                    "id": "194",
-                    "name": "十字軍の指輪",
-                    "type": "equipment",
-                    "effect_data": {
-                        "hp_bonus": 80,
-                        "def_bonus": 5
-                    }
-                }
-            ],
-            "skill_deck_snapshot": [
-                {
-                    "id": "12",
-                    "name": "裁き",
-                    "type": "Skill",
-                    "ap_cost": 3,
-                    "power": 55
-                },
-                {
-                    "id": "15",
-                    "name": "聖壁",
-                    "type": "Skill",
-                    "ap_cost": 2,
-                    "power": 0
-                }
-            ]
-        },
-        {
-            "user_id": "ghost_a_2",
-            "user_name": "不知火のゲンジ",
-            "avatar_url": "/images/npcs/npc_yato_samurai_general.png",
-            "battle_score": 4500,
-            "defense_rank": "A",
-            "is_ghost": true,
-            "player_snapshot": {
-                "level": 35,
-                "job_class": "Samurai",
-                "hp": 580,
-                "max_hp": 580,
-                "atk": 62,
-                "def": 25
-            },
-            "party_members_snapshot": [
-                {
-                    "id": "ghost_a_2_m1",
-                    "name": "ケンジ",
-                    "job_class": "Samurai",
-                    "level": 32,
-                    "hp": 480,
-                    "max_hp": 480,
-                    "atk": 58,
-                    "def": 22,
-                    "inject_cards": [
-                        25
-                    ],
-                    "image_url": "/images/npcs/npc_yato_ronin_kenji.png"
-                },
-                {
-                    "id": "ghost_a_2_m2",
-                    "name": "アヤメ",
-                    "job_class": "Ninja",
-                    "level": 30,
-                    "hp": 320,
-                    "max_hp": 320,
-                    "atk": 42,
-                    "def": 18,
-                    "inject_cards": [
-                        18
-                    ],
-                    "image_url": "/images/npcs/npc_yato_kunoichi.png"
-                }
-            ],
-            "equipped_items_snapshot": [
-                {
-                    "id": "206",
-                    "name": "草薙の剣(模造)",
-                    "type": "equipment",
-                    "effect_data": {
-                        "atk_bonus": 28
-                    }
-                }
-            ],
-            "skill_deck_snapshot": [
-                {
-                    "id": "25",
-                    "name": "居合切り",
-                    "type": "Skill",
-                    "ap_cost": 2,
-                    "power": 45
-                }
-            ]
-        },
-        {
             "user_id": "097ade0d-ff40-4b2f-a0cf-0f79076c5f77",
             "user_name": "オペラ座の暇人",
             "avatar_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/097ade0d-ff40-4b2f-a0cf-0f79076c5f77/avatar.jpeg?t=1783349233368",
-            "battle_score": 3256,
+            "battle_score": 3511,
             "defense_rank": "A",
             "is_ghost": true,
             "player_snapshot": {
@@ -2489,7 +2049,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "ハンゾウ",
                     "job_class": "Civilian",
                     "level": 1,
-                    "hp": 4,
+                    "hp": 143,
                     "max_hp": 143,
                     "atk": 5,
                     "def": 10,
@@ -2504,7 +2064,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "ホウイチ",
                     "job_class": "Civilian",
                     "level": 1,
-                    "hp": 22,
+                    "hp": 143,
                     "max_hp": 143,
                     "atk": 5,
                     "def": 10,
@@ -2519,8 +2079,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "なかなかな",
                     "job_class": "Civilian",
                     "level": 18,
-                    "hp": 77,
-                    "max_hp": 295,
+                    "hp": 550,
+                    "max_hp": 550,
                     "atk": 86,
                     "def": 40,
                     "inject_cards": [
@@ -2541,7 +2101,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "野犬",
                     "job_class": "Civilian",
                     "level": 1,
-                    "hp": 97,
+                    "hp": 39,
                     "max_hp": 39,
                     "atk": 5,
                     "def": 10,
@@ -2628,7 +2188,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
             "user_id": "205fca0d-0bc0-41b9-9687-50a00743fd0c",
             "user_name": "Melody",
             "avatar_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/205fca0d-0bc0-41b9-9687-50a00743fd0c/avatar.png?t=1781922609040",
-            "battle_score": 3448,
+            "battle_score": 3658,
             "defense_rank": "A",
             "is_ghost": true,
             "player_snapshot": {
@@ -2645,7 +2205,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "ヴォルグ",
                     "job_class": "Civilian",
                     "level": 1,
-                    "hp": 18,
+                    "hp": 680,
                     "max_hp": 680,
                     "atk": 5,
                     "def": 10,
@@ -2662,8 +2222,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "なかなかな",
                     "job_class": "Civilian",
                     "level": 15,
-                    "hp": 51,
-                    "max_hp": 267,
+                    "hp": 477,
+                    "max_hp": 477,
                     "atk": 84,
                     "def": 32,
                     "inject_cards": [
@@ -2684,7 +2244,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "クロヴィス",
                     "job_class": "Civilian",
                     "level": 1,
-                    "hp": 52,
+                    "hp": 91,
                     "max_hp": 91,
                     "atk": 5,
                     "def": 10,
@@ -2698,7 +2258,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "アベ",
                     "job_class": "Civilian",
                     "level": 1,
-                    "hp": 77,
+                    "hp": 130,
                     "max_hp": 130,
                     "atk": 5,
                     "def": 10,
@@ -2785,7 +2345,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
             "user_id": "2d6d2a29-385c-4eab-a5f2-57218264f963",
             "user_name": "えの",
             "avatar_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/2d6d2a29-385c-4eab-a5f2-57218264f963/avatar.png?t=1781596098415",
-            "battle_score": 4280,
+            "battle_score": 4955,
             "defense_rank": "A",
             "is_ghost": true,
             "player_snapshot": {
@@ -2802,8 +2362,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "ラヴィーネ",
                     "job_class": "Civilian",
                     "level": 15,
-                    "hp": 80,
-                    "max_hp": 286,
+                    "hp": 496,
+                    "max_hp": 496,
                     "atk": 41,
                     "def": 38,
                     "inject_cards": [
@@ -2822,8 +2382,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "将哉",
                     "job_class": "Civilian",
                     "level": 19,
-                    "hp": 71,
-                    "max_hp": 390,
+                    "hp": 660,
+                    "max_hp": 660,
                     "atk": 47,
                     "def": 45,
                     "inject_cards": [
@@ -2845,8 +2405,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "TB",
                     "job_class": "Civilian",
                     "level": 14,
-                    "hp": 86,
-                    "max_hp": 298,
+                    "hp": 493,
+                    "max_hp": 493,
                     "atk": 54,
                     "def": 43,
                     "inject_cards": [
@@ -2940,7 +2500,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
             "user_id": "16bafcdc-a211-482b-8850-6b94031ed6ea",
             "user_name": "せな",
             "avatar_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/16bafcdc-a211-482b-8850-6b94031ed6ea/avatar.png?t=1781626478030",
-            "battle_score": 3161,
+            "battle_score": 3731,
             "defense_rank": "A",
             "is_ghost": true,
             "player_snapshot": {
@@ -2957,7 +2517,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "ヴォルグ",
                     "job_class": "Civilian",
                     "level": 1,
-                    "hp": 93,
+                    "hp": 680,
                     "max_hp": 680,
                     "atk": 5,
                     "def": 10,
@@ -2974,8 +2534,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "ベル",
                     "job_class": "Civilian",
                     "level": 16,
-                    "hp": 92,
-                    "max_hp": 243,
+                    "hp": 468,
+                    "max_hp": 468,
                     "atk": 21,
                     "def": 26,
                     "inject_cards": [
@@ -2993,8 +2553,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "リンネ",
                     "job_class": "Civilian",
                     "level": 11,
-                    "hp": 93,
-                    "max_hp": 197,
+                    "hp": 347,
+                    "max_hp": 347,
                     "atk": 11,
                     "def": 10,
                     "inject_cards": [
@@ -3011,8 +2571,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "リマーナ",
                     "job_class": "Civilian",
                     "level": 14,
-                    "hp": 92,
-                    "max_hp": 232,
+                    "hp": 427,
+                    "max_hp": 427,
                     "atk": 22,
                     "def": 12,
                     "inject_cards": [
@@ -3091,10 +2651,133 @@ const GHOST_PRESETS: Record<string, any[]> = {
             ]
         },
         {
+            "user_id": "e26223d4-36b2-446e-b8ae-aa2c92be8b47",
+            "user_name": "クロノ",
+            "avatar_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/e26223d4-36b2-446e-b8ae-aa2c92be8b47/avatar.png?t=1782598149931",
+            "battle_score": 3089,
+            "defense_rank": "A",
+            "is_ghost": true,
+            "player_snapshot": {
+                "level": 14,
+                "job_class": "Warrior",
+                "hp": 228,
+                "max_hp": 228,
+                "atk": 15,
+                "def": 14
+            },
+            "party_members_snapshot": [
+                {
+                    "id": 1546,
+                    "name": "ラヴィーネ",
+                    "job_class": "Civilian",
+                    "level": 15,
+                    "hp": 476,
+                    "max_hp": 476,
+                    "atk": 41,
+                    "def": 40,
+                    "inject_cards": [
+                        1,
+                        13,
+                        37,
+                        64,
+                        114,
+                        124,
+                        119
+                    ],
+                    "image_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/c4a8cf70-6185-4725-8e07-810bb5a53d38/avatar.jpg?t=1782300093251"
+                },
+                {
+                    "id": 1564,
+                    "name": "雅人",
+                    "job_class": "Civilian",
+                    "level": 17,
+                    "hp": 525,
+                    "max_hp": 525,
+                    "atk": 33,
+                    "def": 43,
+                    "inject_cards": [
+                        40,
+                        1,
+                        14,
+                        16,
+                        25,
+                        27,
+                        37,
+                        64
+                    ],
+                    "image_url": "/avatars/adventurer.jpg"
+                }
+            ],
+            "equipped_items_snapshot": [
+                {
+                    "id": "e253bc43-6080-4069-8586-1b802aa881ea",
+                    "type": "equipment",
+                    "effect_data": {}
+                },
+                {
+                    "id": "a33a01c2-01c9-44a1-a743-4b6cc49a4a26",
+                    "type": "equipment",
+                    "effect_data": {}
+                },
+                {
+                    "id": "a8d756cc-096a-4e0c-a068-45748f37d316",
+                    "type": "equipment",
+                    "effect_data": {}
+                },
+                {
+                    "id": "106f8cb6-fd7f-4e4f-8a7e-f61acdf75537",
+                    "type": "equipment",
+                    "effect_data": {}
+                },
+                {
+                    "id": "be85d998-2553-4a3c-ad4c-5395365f226f",
+                    "type": "equipment",
+                    "effect_data": {}
+                }
+            ],
+            "skill_deck_snapshot": [
+                {
+                    "id": "124",
+                    "name": "凍てつく波動",
+                    "type": "Magic",
+                    "ap_cost": 3,
+                    "power": 0
+                },
+                {
+                    "id": "119",
+                    "name": "ダブルキャスト",
+                    "type": "Support",
+                    "ap_cost": 2,
+                    "power": 0
+                },
+                {
+                    "id": "37",
+                    "name": "メテオストライク",
+                    "type": "Magic",
+                    "ap_cost": 5,
+                    "power": 100
+                },
+                {
+                    "id": "33",
+                    "name": "奇跡",
+                    "type": "Heal",
+                    "ap_cost": 5,
+                    "power": 999
+                },
+                {
+                    "id": "57",
+                    "name": "闇の代償",
+                    "type": "Support",
+                    "ap_cost": 1,
+                    "power": 0
+                }
+            ]
+        },
+        {
             "user_id": "0f1c24a4-20e1-4d89-823a-7b0b20e1ab45",
             "user_name": "紅葉",
             "avatar_url": "/avatars/adventurer.jpg",
-            "battle_score": 3314,
+            "battle_score": 3599,
             "defense_rank": "A",
             "is_ghost": true,
             "player_snapshot": {
@@ -3111,7 +2794,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "ヴォルグ",
                     "job_class": "Civilian",
                     "level": 1,
-                    "hp": 91,
+                    "hp": 680,
                     "max_hp": 680,
                     "atk": 5,
                     "def": 10,
@@ -3128,7 +2811,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "ヤスマサ",
                     "job_class": "Civilian",
                     "level": 1,
-                    "hp": 1,
+                    "hp": 143,
                     "max_hp": 143,
                     "atk": 5,
                     "def": 10,
@@ -3143,8 +2826,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "将哉",
                     "job_class": "Civilian",
                     "level": 20,
-                    "hp": 42,
-                    "max_hp": 344,
+                    "hp": 629,
+                    "max_hp": 629,
                     "atk": 102,
                     "def": 30,
                     "inject_cards": [
@@ -3238,111 +2921,6 @@ const GHOST_PRESETS: Record<string, any[]> = {
     ],
     "S": [
         {
-            "user_id": "ghost_s_1",
-            "user_name": "英霊王ヴォルグ",
-            "avatar_url": "/images/npcs/npc_guest_volg.png",
-            "battle_score": 7500,
-            "defense_rank": "S",
-            "is_ghost": true,
-            "player_snapshot": {
-                "level": 50,
-                "job_class": "Hero",
-                "hp": 950,
-                "max_hp": 950,
-                "atk": 90,
-                "def": 65
-            },
-            "party_members_snapshot": [
-                {
-                    "id": "ghost_s_1_m1",
-                    "name": "ヴォルグ",
-                    "job_class": "Mercenary",
-                    "level": 50,
-                    "hp": 1200,
-                    "max_hp": 1200,
-                    "atk": 85,
-                    "def": 55,
-                    "inject_cards": [
-                        29,
-                        48
-                    ],
-                    "image_url": "/images/npcs/npc_guest_volg.png"
-                },
-                {
-                    "id": "ghost_s_1_m2",
-                    "name": "ガウェイン",
-                    "job_class": "Knight",
-                    "level": 48,
-                    "hp": 980,
-                    "max_hp": 980,
-                    "atk": 48,
-                    "def": 75,
-                    "inject_cards": [
-                        9,
-                        71
-                    ],
-                    "image_url": "/images/npcs/npc_guest_gawain.png"
-                },
-                {
-                    "id": "ghost_s_1_m3",
-                    "name": "レオ",
-                    "job_class": "Paladin",
-                    "level": 45,
-                    "hp": 800,
-                    "max_hp": 800,
-                    "atk": 52,
-                    "def": 58,
-                    "inject_cards": [
-                        15,
-                        14
-                    ],
-                    "image_url": "/images/npcs/npc_roland_paladin_leo.png"
-                }
-            ],
-            "equipped_items_snapshot": [
-                {
-                    "id": "208",
-                    "name": "青龍偃月刀",
-                    "type": "equipment",
-                    "effect_data": {
-                        "atk_bonus": 45
-                    }
-                },
-                {
-                    "id": "203",
-                    "name": "当世具足",
-                    "type": "equipment",
-                    "effect_data": {
-                        "def_bonus": 30,
-                        "hp_bonus": 200
-                    }
-                }
-            ],
-            "skill_deck_snapshot": [
-                {
-                    "id": "29",
-                    "name": "狂乱撃",
-                    "type": "Skill",
-                    "ap_cost": 2,
-                    "power": 42
-                },
-                {
-                    "id": "48",
-                    "name": "破甲斬",
-                    "type": "Skill",
-                    "ap_cost": 2,
-                    "power": 30
-                },
-                {
-                    "id": "71",
-                    "name": "王の城壁",
-                    "type": "Skill",
-                    "ap_cost": 2,
-                    "power": 0
-                }
-            ]
-        },
-        {
             "user_id": "5ad434ec-763f-473e-939f-14a5e9e1cc93",
             "user_name": "テスト",
             "avatar_url": "/avatars/adventurer.jpg",
@@ -3365,7 +2943,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
             "user_id": "c1cf67dd-527a-497e-bf88-ce10c2cb516f",
             "user_name": "きたむ",
             "avatar_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/c1cf67dd-527a-497e-bf88-ce10c2cb516f/avatar.jpeg?t=1781586725280",
-            "battle_score": 12175,
+            "battle_score": 12385,
             "defense_rank": "S",
             "is_ghost": true,
             "player_snapshot": {
@@ -3382,8 +2960,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "Melody",
                     "job_class": "Civilian",
                     "level": 15,
-                    "hp": 13,
-                    "max_hp": 265,
+                    "hp": 475,
+                    "max_hp": 475,
                     "atk": 34,
                     "def": 37,
                     "inject_cards": [
@@ -3473,7 +3051,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
             "user_id": "fac65cfe-bbae-4ca2-b647-fa95ee6ad734",
             "user_name": "なかなかな",
             "avatar_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/fac65cfe-bbae-4ca2-b647-fa95ee6ad734/avatar.png?t=1781845986217",
-            "battle_score": 5653,
+            "battle_score": 6343,
             "defense_rank": "S",
             "is_ghost": true,
             "player_snapshot": {
@@ -3490,8 +3068,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "ラヴィーネ",
                     "job_class": "Civilian",
                     "level": 16,
-                    "hp": 51,
-                    "max_hp": 321,
+                    "hp": 546,
+                    "max_hp": 546,
                     "atk": 62,
                     "def": 51,
                     "inject_cards": [
@@ -3511,7 +3089,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "カシム",
                     "job_class": "Civilian",
                     "level": 1,
-                    "hp": 62,
+                    "hp": 169,
                     "max_hp": 169,
                     "atk": 5,
                     "def": 10,
@@ -3526,8 +3104,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "ArcLine",
                     "job_class": "Civilian",
                     "level": 12,
-                    "hp": 93,
-                    "max_hp": 215,
+                    "hp": 380,
+                    "max_hp": 380,
                     "atk": 100,
                     "def": 22,
                     "inject_cards": [
@@ -3545,8 +3123,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "将哉",
                     "job_class": "Civilian",
                     "level": 21,
-                    "hp": 82,
-                    "max_hp": 353,
+                    "hp": 653,
+                    "max_hp": 653,
                     "atk": 103,
                     "def": 31,
                     "inject_cards": [
@@ -3641,7 +3219,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
             "user_id": "a52c0e53-7c2c-4929-a58b-c3a8788cfa3d",
             "user_name": "ArcLine",
             "avatar_url": "/avatars/adventurer.jpg",
-            "battle_score": 6835,
+            "battle_score": 8005,
             "defense_rank": "S",
             "is_ghost": true,
             "player_snapshot": {
@@ -3658,8 +3236,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "なかなかな",
                     "job_class": "Civilian",
                     "level": 18,
-                    "hp": 86,
-                    "max_hp": 295,
+                    "hp": 550,
+                    "max_hp": 550,
                     "atk": 86,
                     "def": 40,
                     "inject_cards": [
@@ -3680,8 +3258,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "雅人",
                     "job_class": "Civilian",
                     "level": 21,
-                    "hp": 60,
-                    "max_hp": 340,
+                    "hp": 640,
+                    "max_hp": 640,
                     "atk": 59,
                     "def": 60,
                     "inject_cards": [
@@ -3698,8 +3276,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "魔剣士 テリア",
                     "job_class": "Civilian",
                     "level": 26,
-                    "hp": 58,
-                    "max_hp": 379,
+                    "hp": 754,
+                    "max_hp": 754,
                     "atk": 84,
                     "def": 43,
                     "inject_cards": [
@@ -3724,8 +3302,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "name": "Melody",
                     "job_class": "Civilian",
                     "level": 17,
-                    "hp": 69,
-                    "max_hp": 335,
+                    "hp": 575,
+                    "max_hp": 575,
                     "atk": 63,
                     "def": 52,
                     "inject_cards": [

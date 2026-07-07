@@ -123,9 +123,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
             const npcMatch = msg.match(/^([^\sの]{2,4})の([^\s！『』]{2,})！/);
             if (npcMatch) {
                 const name = npcMatch[2];
-                if (!['出血', '毒', '火傷', 'スタン', '死亡', '気絶', '行動', '復帰', '麻痺', '混乱', '魅了'].some(k => name.includes(k))) {
-                    skillName = name;
-                }
+                skillName = name;
             }
             
             // B. プレイヤーのスキル使用/発動/服用/詠唱/「で」の検知 (文頭から安全に抽出)
@@ -136,22 +134,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                 const useMatch = msg.match(/^([✨⚠♥\s]*?)([^\s！『』]+?)(！|を使用|を発動|を服用|で|を[^\s]+?に使用)/);
                 if (useMatch) {
                     const name = useMatch[2];
-                    if (!name.includes('ダメージ') && !name.includes('効果') && !name.includes('回復') && 
-                        !['出血', '毒', '火傷', 'スタン', '死亡', '気絶', '魅了', '混乱', '麻痺'].some(k => name.includes(k))) {
-                        skillName = name;
-                    }
-                }
-            }
-            
-            // C. 味方NPCのスキル: 「[名前]の[スキル名]！」
-            if (!skillName) {
-                const npcMatch = msg.match(/^([^\sの]+?)の([^\s！『』]{2,})！/);
-                if (npcMatch) {
-                    const name = npcMatch[2];
-                    // 状態変化や特定アクションのログを除外
-                    if (!['出血', '毒', '火傷', 'スタン', '死亡', '気絶', '行動', '復帰', '麻痺', '混乱', '魅了'].some(k => name.includes(k))) {
-                        skillName = name;
-                    }
+                    skillName = name;
                 }
             }
             
@@ -160,10 +143,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                 const playerMatch = msg.match(/^([^\sに]+?)に([^\s！『』]{2,})！/);
                 if (playerMatch) {
                     const name = playerMatch[2];
-                    if (!name.includes('ダメージ') && !name.includes('効果') && !name.includes('回復') && 
-                        !['出血', '毒', '火傷', 'スタン', '死亡', '気絶', '魅了', '混乱', '麻痺'].some(k => name.includes(k))) {
-                        skillName = name;
-                    }
+                    skillName = name;
                 }
             }
             
@@ -174,8 +154,20 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                 // 魔術書や魔導書のプレフィックスを除去してカットイン名を見やすくする
                 skillName = skillName.replace(/^(魔術書|魔導書):/, '');
                 
-                // 不要な状態メッセージや計算結果を除外する最終チェック
-                if (skillName.length >= 2 && !['出血', 'ダメージ', '毒', '火傷', 'スタン', '死亡', '気絶', '回避', 'ガード', 'ミス', '効果', 'HP'].some(k => skillName.includes(k))) {
+                // 厳格な除外キーワード判定
+                const EXCLUDE_KEYWORDS = [
+                    '出血', 'ダメージ', '毒', '火傷', 'スタン', '死亡', '気絶', '回避', 'ガード', 
+                    'ミス', '効果', 'HP', 'AP', 'ターン', '成功', '失敗', '離脱', '敗北', '勝利', 
+                    'ボーナス', 'バフ', 'デバフ', '装備', '獲得', '上昇', '低下', '回復', '経験値', 
+                    'ゴールド', '手に入れた', '落とした', '逃げ', '力尽き', '開始', '終了', '状態', 
+                    '無効', '付与', '共鳴', '在駐', '連携', '連続', 'シンク', 'sync'
+                ];
+
+                const hasExcludeWord = EXCLUDE_KEYWORDS.some(k => skillName.includes(k));
+                const hasSystemSymbols = /[_:[\]]/g.test(skillName); // システムの同期文字やブラケットを除外
+                const isValidLength = skillName.length >= 2 && skillName.length <= 16;
+
+                if (isValidLength && !hasExcludeWord && !hasSystemSymbols) {
                     setPlayerActiveSkill(skillName);
                     const isStrong = /終焉|暗黒|雷撃|魂|石化|咆哮|神罰|極|超|真|神|絶|暴君/g.test(skillName);
                     if (isStrong) {
