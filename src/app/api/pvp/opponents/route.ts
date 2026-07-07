@@ -3470,10 +3470,9 @@ export async function GET(req: Request) {
         const { data: dbOpponents, error: dbError } = await supabaseServer
             .from('pvp_defense_parties')
             .select('*')
-            .eq('defense_rank', rankClass)
             .neq('user_id', userId)
             .order('updated_at', { ascending: false })
-            .limit(5);
+            .limit(20);
 
         if (dbError) {
             console.error('[PvP Opponents] Database fetch error:', dbError);
@@ -3485,17 +3484,25 @@ export async function GET(req: Request) {
         // 3. 不足分をゴーストデータで補填 (最大5件)
         const ghostCountNeeded = 5 - opponentsList.length;
         if (ghostCountNeeded > 0) {
-            const presets = GHOST_PRESETS[rankClass] || [];
-            // ランダムにプリセットから追加
+            // 全ランクのゴーストをフラットに結合したプールを作成
+            const allGhosts = [
+                ...(GHOST_PRESETS.C || []),
+                ...(GHOST_PRESETS.B || []),
+                ...(GHOST_PRESETS.A || []),
+                ...(GHOST_PRESETS.S || [])
+            ];
+            
+            const shuffledGhosts = [...allGhosts].sort(() => Math.random() - 0.5);
             let addedCount = 0;
-            // プリセットが少ない場合に備えてループするが、重複しすぎないように適宜インデックスを回す
-            for (let i = 0; i < ghostCountNeeded && presets.length > 0; i++) {
-                const presetIndex = i % presets.length;
-                opponentsList.push(presets[presetIndex]);
+            for (let i = 0; i < ghostCountNeeded && shuffledGhosts.length > 0; i++) {
+                opponentsList.push(shuffledGhosts[i % shuffledGhosts.length]);
                 addedCount++;
             }
-            console.log(`[PvP Matching] Filled list with ${addedCount} ghosts for rank ${rankClass}`);
+            console.log(`[PvP Matching] Filled list with ${addedCount} ghosts from global pool`);
         }
+
+        // リスト全体をランダムシャッフルして上位5件を対戦相手にする
+        opponentsList = [...opponentsList].sort(() => Math.random() - 0.5).slice(0, 5);
 
         return NextResponse.json({
             success: true,

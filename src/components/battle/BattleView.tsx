@@ -28,6 +28,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
     // v30: Onboarding & Battle UX/Visual Enhancements
     const [shouldShake, setShouldShake] = useState(false);
     const [shouldEnemyShake, setShouldEnemyShake] = useState(false);
+    const [shakingEnemyIds, setShakingEnemyIds] = useState<Set<string>>(new Set());
     const [enemyActiveSkill, setEnemyActiveSkill] = useState<string | null>(null);
     const [isStrongEnemyActive, setIsStrongEnemyActive] = useState(false);
     const [isStrongActive, setIsStrongActive] = useState(false);
@@ -117,18 +118,26 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
         else {
             let skillName = '';
             
+            // 0. 二重括弧『 』が含まれている場合は最優先でその中身を抽出 (スキル・魔法発動)
+            // 例: 「ハンスの『金剛壁』！」 ➔ 「金剛壁」
+            // 例: 「相手は『毒の息』を唱えた！」 ➔ 「毒の息」
+            const doubleBracketMatch = msg.match(/『([^』]{2,15})』/);
+            if (doubleBracketMatch) {
+                skillName = doubleBracketMatch[1];
+            }
+
             // A. お供NPCのスキル: 「[2〜4文字の名前]の[スキル名]！」
             // 例: 「ハンスの斬撃！」「ガウェインの五星の加護！」
-            // ※「魔術書:雷電の連鎖！」は「魔術書:雷電」が6文字のため、このNPCの条件を正しくバイパスします
-            const npcMatch = msg.match(/^([^\sの]{2,4})の([^\s！『』]{2,})！/);
-            if (npcMatch) {
-                const name = npcMatch[2];
-                skillName = name;
+            if (!skillName) {
+                const npcMatch = msg.match(/^([^\sの]{2,4})の([^\s！『』]{2,})！/);
+                if (npcMatch) {
+                    const name = npcMatch[2];
+                    skillName = name;
+                }
             }
             
             // B. プレイヤーのスキル使用/発動/服用/詠唱/「で」の検知 (文頭から安全に抽出)
             // 例: 「魔術書:雷電の連鎖！ 連鎖する紫電...」 ➔ 「魔術書:雷電の連鎖」
-            // 例: 「魔術書:ファイアウェーブで烈火の波！」 ➔ 「魔術書:ファイアウェーブ」
             // 例: 「瞑想を使用！」 ➔ 「瞑想」
             if (!skillName) {
                 const useMatch = msg.match(/^([✨⚠♥\s]*?)([^\s！『』]+?)(！|を使用|を発動|を服用|で|を[^\s]+?に使用)/);
@@ -160,7 +169,9 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                     'ミス', '効果', 'HP', 'AP', 'ターン', '成功', '失敗', '離脱', '敗北', '勝利', 
                     'ボーナス', 'バフ', 'デバフ', '装備', '獲得', '上昇', '低下', '回復', '経験値', 
                     'ゴールド', '手に入れた', '落とした', '逃げ', '力尽き', '開始', '終了', '状態', 
-                    '無効', '付与', '共鳴', '在駐', '連携', '連続', 'シンク', 'sync'
+                    '無効', '付与', '共鳴', '在駐', '連携', '連続', 'シンク', 'sync',
+                    '通常', '通常攻撃', 'かば', 'かばった', '反撃', '防御', '攻撃', '服薬', 'アイテム',
+                    '耐性', '低下'
                 ];
 
                 const hasExcludeWord = EXCLUDE_KEYWORDS.some(k => skillName.includes(k));
@@ -218,10 +229,26 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                     const id = Date.now() + Math.random();
                     setFloatingDamages(prev => [...prev, { id, amount: diff, isPlayer: false, targetEnemyId: enemy.id }]);
                     
-                    // 現在のメインターゲットの場合は画面全体やアバターも揺らす
+                    // 味方の攻撃（いずれかの敵へのダメージ）があったため、画面全体を常に揺らす
+                    setShouldShake(true);
+                    setTimeout(() => setShouldShake(false), 300);
+
+                    // ダメージを受けた個別の敵IDを揺らすstateに追加
+                    setShakingEnemyIds(prev => {
+                        const next = new Set(prev);
+                        next.add(enemy.id);
+                        return next;
+                    });
+                    setTimeout(() => {
+                        setShakingEnemyIds(prev => {
+                            const next = new Set(prev);
+                            next.delete(enemy.id);
+                            return next;
+                        });
+                    }, 300);
+                    
+                    // 現在のメインターゲットの場合は従来の大スプライト揺れもトリガー
                     if (enemy.id === battleState.enemy?.id) {
-                        setShouldShake(true);
-                        setTimeout(() => setShouldShake(false), 300);
                         setShouldEnemyShake(true);
                         setTimeout(() => setShouldEnemyShake(false), 300);
                     }
@@ -1080,6 +1107,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                             const renderEnemyButton = (enemy: any) => {
                                 const isTarget = target?.id === enemy.id;
                                 const isDead = enemy.hp <= 0;
+                                const isShaking = shakingEnemyIds.has(enemy.id);
                                 return (
                                     <button
                                         key={enemy.id}
@@ -1093,7 +1121,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                                         }}
                                         className={`flex flex-col items-center flex-shrink-0 active:scale-95 transition-all relative ${
                                             isDead ? 'opacity-40 grayscale' : ''
-                                        }`}
+                                        } ${isShaking ? 'animate-enemy-shake' : ''}`}
                                     >
                                         {/* Target marker border */}
                                         <div className={`w-18 h-18 rounded-full border-[3px] flex items-center justify-center overflow-hidden shadow-xl backdrop-blur-sm transition-all ${
