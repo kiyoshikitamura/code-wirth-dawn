@@ -137,6 +137,55 @@ export const createBattleSlice = (
     },
 
     startBattle: async (enemiesInput: Enemy | Enemy[]) => {
+        // 戦闘開始時の装備バフ・加護効果を1行に集約するヘルパー
+        const getEffectJapaneseName = (id: string): string => {
+            const map: Record<string, string> = {
+                atk_up: '攻撃力上昇',
+                def_up: '防御力上昇',
+                regen: 'リジェネ',
+                absolute_barrier: 'バリア',
+                atk_down: '攻撃力低下',
+                def_down: '防御力低下',
+                poison: '毒',
+                burn: '火傷',
+                bleed: '出血',
+                paralyze: '麻痺',
+                sleep: '睡眠',
+                taunt: '挑発',
+                drain_on_hit: '吸血',
+                ap_bonus: 'APボーナス',
+                prayer_grace: '祈りの加護'
+            };
+            return map[id] || id;
+        };
+
+        const buildBuffSummaryLine = (name: string, effects: StatusEffect[]): string | null => {
+            if (!effects || effects.length === 0) return null;
+            
+            const buffLabels: string[] = [];
+            const debuffLabels: string[] = [];
+            
+            effects.forEach(eff => {
+                const isDebuff = ['atk_down', 'def_down', 'poison', 'burn', 'bleed', 'paralyze', 'sleep'].includes(eff.id);
+                const nameLabel = getEffectJapaneseName(eff.id);
+                const durationStr = eff.duration ? `${eff.duration}T` : '';
+                const valStr = eff.value !== undefined ? `:${eff.value > 0 ? '+' : ''}${eff.value}` : '';
+                const label = `[${nameLabel}${valStr}(${durationStr})]`;
+                
+                if (isDebuff) {
+                    debuffLabels.push(label);
+                } else {
+                    buffLabels.push(label);
+                }
+            });
+            
+            const parts: string[] = [];
+            if (buffLabels.length > 0) parts.push(`バフ: ${buffLabels.join(' ')}`);
+            if (debuffLabels.length > 0) parts.push(`デバフ: ${debuffLabels.join(' ')}`);
+            
+            if (parts.length === 0) return null;
+            return `✨ ${name}の初期状態 ➔ ${parts.join(' / ')}`;
+        };
         const enemies = Array.isArray(enemiesInput) ? enemiesInput : [enemiesInput];
         enemies.forEach(e => { if (!e.status_effects) e.status_effects = []; });
         const firstEnemy = enemies[0];
@@ -296,22 +345,15 @@ export const createBattleSlice = (
                         const oldHp = currentHp;
                         currentHp = Math.min(fullHp, currentHp + healAmt);
                         const actualHeal = currentHp - oldHp;
-                        if (actualHeal > 0) {
-                            npcStartBuffMessages.push(`✨ ${pm.name}に祈りの加護が発動！(HP+${actualHeal}回復)`);
-                        } else {
-                            npcStartBuffMessages.push(`✨ ${pm.name}に祈りの加護が発動！`);
-                        }
+                        initialEffects = applyEffect(initialEffects, 'prayer_grace' as StatusEffectId, 99, actualHeal);
                     } else if (blessing.ap_bonus) {
-                        npcStartBuffMessages.push(`✨ ${pm.name}に祈りの加護が発動！(初期AP+${blessing.ap_bonus})`);
+                        initialEffects = applyEffect(initialEffects, 'ap_bonus' as StatusEffectId, 99, blessing.ap_bonus);
                     }
                 }
-                const npcStatusLogs = getBuffStatusLogMessages(initialEffects);
-                npcStatusLogs.forEach(msg => {
-                    const formatted = msg
-                        .replace('現在の強化状態', `${pm.name}の装備バフ`)
-                        .replace('現在の弱体・状態異常', `${pm.name}の装備デバフ`);
-                    npcStartBuffMessages.push(formatted);
-                });
+                const summary = buildBuffSummaryLine(pm.name, initialEffects);
+                if (summary) {
+                    npcStartBuffMessages.push(summary);
+                }
             }
 
             return {
@@ -428,27 +470,38 @@ export const createBattleSlice = (
             equipBonusMessages.push(`📦 デッキ充実ボーナス！ ${equippedCount}枚装備 → ${bonusParts.join(' / ')}`);
         }
 
-        const blessingMsg = blessingActive
-            ? (blessingHealAmount > 0
-                ? `✨ 祈りの加護が発動！(AP+1 & HP+${blessingHealAmount}回復)`
-                : `✨ 祈りの加護が発動！(AP+1)`)
-            : null;
+        // プレイヤー自身の祈りの加護を効果リストに追加して集約
+        if (blessingActive) {
+            initialPlayerEffects = applyEffect(
+                initialPlayerEffects, 
+                'prayer_grace' as StatusEffectId, 
+                99, 
+                blessingHealAmount
+            );
+        }
 
-        const playerBuffLogs = getBuffStatusLogMessages(initialPlayerEffects).map(msg =>
-            msg
-                .replace('現在の強化状態', `${userProfile?.name || 'プレイヤー'}の装備バフ`)
-                .replace('現在の弱体・状態異常', `${userProfile?.name || 'プレイヤー'}の装備デバフ`)
-        );
+        const playerBuffSummary = buildBuffSummaryLine(userProfile?.name || 'プレイヤー', initialPlayerEffects);
+        if (playerBuffSummary) {
+            startBuffMessages.push(playerBuffSummary);
+        }
+
+        // 敵全体の初期装備バフ（PvP対戦相手等のstatus_effects）を集約して各キャラ1行に
+        const enemyStartBuffMessages: string[] = [];
+        enemies.forEach(e => {
+            const summary = buildBuffSummaryLine(e.name, e.status_effects || []);
+            if (summary) {
+                enemyStartBuffMessages.push(summary);
+            }
+        });
 
         const startMessages = [
             `${enemies.map(e => e.name).join('と')}が現れた！`,
             ...equipBonusMessages,
             ...startBuffMessages,
             ...npcStartBuffMessages,
+            ...enemyStartBuffMessages,
             ...(resonanceActive ? ['⚡ 共鳳ボーナス発動！ ATK/DEF +10%（同拠点プレイヤー在駐）'] : []),
-            ...(blessingMsg ? [blessingMsg] : []),
             ...(didProtectFromNoise ? ['✨ 世界の意志の加護により、危険地帯の悪影響（ノイズ）から守られた。'] : []),
-            ...playerBuffLogs,
             `--- ターン 1 ---`
         ];
 

@@ -70,6 +70,47 @@ function adaptDefensePartyToEnemies(opponent: any): Enemy[] {
         ? JSON.parse(opponent.skill_deck_snapshot)
         : (opponent.skill_deck_snapshot || null);
     
+    // 敵プレイヤーの装備パッシブバフを status_effects に解決
+    let initialEnemyEffects: any[] = [];
+    const equippedGears = typeof opponent.equipped_items_snapshot === 'string'
+        ? JSON.parse(opponent.equipped_items_snapshot)
+        : (opponent.equipped_items_snapshot || []);
+
+    equippedGears.forEach((gear: any) => {
+        const ed = gear.effect_data;
+        if (ed && ed.battle_start_buff) {
+            const buffs = Array.isArray(ed.battle_start_buff) 
+                ? ed.battle_start_buff 
+                : [ed.battle_start_buff];
+
+            buffs.forEach((buff: any) => {
+                const id = buff.buff_type || buff.id;
+                const duration = buff.duration;
+                const val = buff.value;
+                if (id && duration) {
+                    const isTurnEndTickCompensated = (effectId: string) => {
+                        return ['atk_up', 'def_up', 'regen', 'absolute_barrier'].includes(effectId);
+                    };
+                    const finalDuration = isTurnEndTickCompensated(id)
+                        ? duration + 1
+                        : duration;
+
+                    const existing = initialEnemyEffects.find(eff => eff.id === id);
+                    if (existing) {
+                        existing.duration = Math.max(existing.duration, finalDuration);
+                        existing.value = (existing.value || 0) + val;
+                    } else {
+                        initialEnemyEffects.push({
+                            id,
+                            duration: finalDuration,
+                            value: val
+                        });
+                    }
+                }
+            });
+        }
+    });
+
     const playerEnemy: any = {
         id: `pvp_enemy_${String(opponent.user_id)}`,
         name: opponent.user_name,
@@ -82,7 +123,7 @@ function adaptDefensePartyToEnemies(opponent: any): Enemy[] {
         origin_type: 'shadow_heroic', // smart AIを適用
         ai_role: 'striker',
         signature_deck: resolveDeckSnapshot(parsedSkillDeck, opponent.inject_cards || null),
-        status_effects: [],
+        status_effects: initialEnemyEffects,
         current_ap: 6, // 初期APは6
         is_pvp_player: true,
         base_hp: baseHp,

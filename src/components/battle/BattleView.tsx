@@ -126,10 +126,11 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                 skillName = doubleBracketMatch[1];
             }
 
-            // A. お供NPCのスキル: 「[2〜4文字の名前]の[スキル名]！」
+            // A. お供NPC/エネミーのスキル: 「[名前]の[スキル名]！」
             // 例: 「ハンスの斬撃！」「ガウェインの五星の加護！」
-            if (!skillName) {
-                const npcMatch = msg.match(/^([^\sの]{2,4})の([^\s！『』]{2,})！/);
+            // ※「魔術書:」で始まらない場合のみ、文頭の「の」より前をキャラクター名として除去します
+            if (!skillName && !msg.startsWith('魔術書:') && !msg.startsWith('魔導書:')) {
+                const npcMatch = msg.match(/^([^\sの]+?)の([^\s！『』]{2,})！/);
                 if (npcMatch) {
                     const name = npcMatch[2];
                     skillName = name;
@@ -171,7 +172,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                     'ゴールド', '手に入れた', '落とした', '逃げ', '力尽き', '開始', '終了', '状態', 
                     '無効', '付与', '共鳴', '在駐', '連携', '連続', 'シンク', 'sync',
                     '通常', '通常攻撃', 'かば', 'かばった', '反撃', '防御', '攻撃', '服薬', 'アイテム',
-                    '耐性', '低下'
+                    '耐性', '低下', '行動', '手番'
                 ];
 
                 const hasExcludeWord = EXCLUDE_KEYWORDS.some(k => skillName.includes(k));
