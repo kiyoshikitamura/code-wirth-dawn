@@ -217,15 +217,16 @@ export function resolveNpcTurn(
     //  - Striker: atk_upカードを自分に使用後、攻撃
     //  - Medic: regen/def_upカードを傷ついた味方に優先
     //  - Guardian: def_upカードを自分に使用後、攻撃も行う
-    if (actions.length < MAX_ACTIONS_PER_TURN) {
+    // 4. v2.5: Role-based Buff Priority (50%の確率で優先使用。それ以外は通常攻撃ループに流して多様性を出す！)
+    if (actions.length < MAX_ACTIONS_PER_TURN && Math.random() < 0.5) {
         const buffAction = tryRoleBasedBuff(npc, deck, context);
         if (buffAction) {
             actions.push(buffAction);
         }
     }
 
-    // 4.5. v2.9.3j: デバフカード使用（stun/bind/blind/atk_down等を敵に付与）
-    if (actions.length < MAX_ACTIONS_PER_TURN) {
+    // 4.5. v2.9.3j: デバフカード使用 (50%の確率で優先使用。それ以外は通常攻撃ループに流して多様性を出す！)
+    if (actions.length < MAX_ACTIONS_PER_TURN && Math.random() < 0.5) {
         const debuffAction = tryDebuffEnemy(npc, deck, context);
         if (debuffAction) {
             actions.push(debuffAction);
@@ -404,11 +405,13 @@ function tryRoleBasedBuff(
 ): NpcAction | null {
     // バフ対象: 味方対象のeffect_idを持つカード（敵対象デバフカードは除外）
     const ENEMY_TARGETS = ['single_enemy', 'all_enemies', 'random_enemy'];
-    const buffCards = deck.filter(c =>
-        c.effect_id &&
-        getNpcCardApCost(c, npc, context.enemyEffects) <= (npc.current_ap || 0) &&
-        !(c.target_type && ENEMY_TARGETS.includes(c.target_type)) // 敵対象デバフは除外
-    );
+    const buffCards = deck
+        .filter(c =>
+            c.effect_id &&
+            getNpcCardApCost(c, npc, context.enemyEffects) <= (npc.current_ap || 0) &&
+            !(c.target_type && ENEMY_TARGETS.includes(c.target_type)) // 敵対象デバフは除外
+        )
+        .sort(() => Math.random() - 0.5); // バフ候補をランダムシャッフルして多様性を出す！
 
     if (buffCards.length === 0) return null;
 
@@ -488,19 +491,21 @@ function tryDebuffEnemy(
     context: BattleContext
 ): NpcAction | null {
     const ENEMY_TARGETS = ['single_enemy', 'all_enemies', 'random_enemy'];
-    const debuffCards = deck.filter(c =>
-        c.effect_id &&
-        ENEMY_DEBUFF_EFFECTS.includes(c.effect_id) &&
-        c.target_type && ENEMY_TARGETS.includes(c.target_type) &&
-        (c.type === 'Support' || c.type === 'Defense') &&
-        // ダメージを伴う攻撃デバフ（シールドバッシュ等）は、デバフフェーズで優先使用せず、
-        // 通常の攻撃ランダムループで処理させることで多様なスキルを使わせる！
-        // IDが '6' (シールドバッシュ) であるもの、または威力値 (power / effect_val) が 0超であるものを厳密に除外！
-        c.id !== '6' &&
-        !(c.power && Number(c.power) > 0) &&
-        !(c.effect_val && Number(c.effect_val) > 0) &&
-        getNpcCardApCost(c, npc, context.enemyEffects) <= (npc.current_ap || 0)
-    );
+    const debuffCards = deck
+        .filter(c =>
+            c.effect_id &&
+            ENEMY_DEBUFF_EFFECTS.includes(c.effect_id) &&
+            c.target_type && ENEMY_TARGETS.includes(c.target_type) &&
+            (c.type === 'Support' || c.type === 'Defense') &&
+            // ダメージを伴う攻撃デバフ（シールドバッシュ等）は、デバフフェーズで優先使用せず、
+            // 通常の攻撃ランダムループで処理させることで多様なスキルを使わせる！
+            // IDが '6' (シールドバッシュ) であるもの、または威力値 (power / effect_val) が 0超であるものを厳密に除外！
+            c.id !== '6' &&
+            !(c.power && Number(c.power) > 0) &&
+            !(c.effect_val && Number(c.effect_val) > 0) &&
+            getNpcCardApCost(c, npc, context.enemyEffects) <= (npc.current_ap || 0)
+        )
+        .sort(() => Math.random() - 0.5); // デバフ候補をランダムシャッフルして多様性を出す！
 
     if (debuffCards.length === 0) return null;
 
