@@ -1215,7 +1215,19 @@ export default function TitlePageInner() {
                             {creationStep < 4 ? (
                                 <button
                                     type="button"
-                                    onClick={() => setCreationStep(prev => prev + 1)}
+                                    onClick={() => {
+                                        if (creationStep === 2) {
+                                            const lp = userProfile?.legacy_points || 0;
+                                            const isAlive = userProfile?.is_alive ?? true;
+                                            const availableBP = !isAlive && lp > 0 ? Math.floor(lp / 300) : 0;
+                                            const spent = allocatedHpPoints + allocatedAtkPoints + allocatedDefPoints + allocatedVitPoints;
+                                            if (availableBP - spent > 0) {
+                                                alert('BPが残っています。');
+                                                return;
+                                            }
+                                        }
+                                        setCreationStep(prev => prev + 1);
+                                    }}
                                     disabled={creationStep === 1 && !name.trim()}
                                     className="w-full bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-amber-50 font-serif font-bold tracking-widest py-3 rounded-lg disabled:opacity-30 border border-amber-400/30 active:scale-[0.99] transition-all shadow-[0_4px_15px_rgba(217,119,6,0.15)] flex items-center justify-center gap-2"
                                 >

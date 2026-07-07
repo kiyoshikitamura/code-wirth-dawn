@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Star, X, Loader2 } from 'lucide-react';
+import { Star, X, Loader2, Check } from 'lucide-react';
 import { getAuthHeaders } from '@/lib/authToken';
+import { useGameStore } from '@/store/gameStore';
 
 interface HeroicRecordsModalProps {
     userId: string;
@@ -32,6 +33,110 @@ export default function HeroicRecordsModal({ userId, onClose }: HeroicRecordsMod
     const [loading, setLoading] = useState(true);
     const [heroics, setHeroics] = useState<ShadowSummary[]>([]);
     const [selectedHeroic, setSelectedHeroic] = useState<ShadowSummary | null>(null);
+    const [hirePhase, setHirePhase] = useState<'idle' | 'loading' | 'done'>('idle');
+    const [hireResultMsg, setHireResultMsg] = useState<string>('');
+
+    // ゲーム状態
+    const gold = useGameStore(state => state.gold);
+    const partyMembers = useGameStore(state => state.partyMembers);
+    const setPartyMembers = useGameStore(state => state.setPartyMembers);
+    const storeUserProfile = useGameStore(state => state.userProfile);
+
+    const fetchPartyData = async () => {
+        try {
+            const authHeaders = await getAuthHeaders();
+            const res = await fetch(`/api/party/list?owner_id=${userId}`, {
+                headers: authHeaders,
+            });
+            const data = await res.json();
+            if (data.party) setPartyMembers(data.party);
+        } catch (e) {
+            console.error("Failed to fetch party data", e);
+        }
+    };
+
+    const isAlreadyHired = (shadow: ShadowSummary): boolean => {
+        return partyMembers.some(m => String(m.id) === String(shadow.profile_id) || (m.source_user_id && String(m.source_user_id) === String(shadow.profile_id)));
+    };
+
+    const handleHire = async (shadow: ShadowSummary) => {
+        if (isAlreadyHired(shadow)) { setHireResultMsg('この冒険者は既に契約済みです。'); setHirePhase('done'); setTimeout(() => setHirePhase('idle'), 2000); return; }
+        if (partyMembers.length >= 4) { setHireResultMsg('パーティが満員です。'); setHirePhase('done'); setTimeout(() => setHirePhase('idle'), 2000); return; }
+        if (gold < shadow.contract_fee) { setHireResultMsg('ゴールドが足りません！'); setHirePhase('done'); setTimeout(() => setHirePhase('idle'), 2000); return; }
+
+        setHirePhase('loading');
+
+        const previousParty = [...partyMembers];
+        const previousGold = gold;
+        const previousProfile = storeUserProfile ? { ...storeUserProfile } : null;
+
+        // 楽観的UI
+        const optimisticMember = {
+            ...shadow,
+            id: shadow.profile_id,
+            owner_id: userId,
+            durability: shadow.stats?.hp || 100,
+            max_durability: shadow.stats?.hp || 100,
+            hp: shadow.stats?.hp || 100,
+            max_hp: shadow.stats?.hp || 100,
+            atk: shadow.stats?.atk || 0,
+            def: shadow.stats?.def || 0,
+            is_active: true,
+            source_user_id: shadow.profile_id,
+            origin_type: 'shadow_heroic',
+        };
+
+        const newGold = Math.max(0, gold - shadow.contract_fee);
+        useGameStore.setState({
+            gold: newGold,
+            partyMembers: [...partyMembers, optimisticMember as any],
+            userProfile: storeUserProfile ? {
+                ...storeUserProfile,
+                gold: newGold
+            } : null
+        });
+
+        try {
+            const authHeaders = await getAuthHeaders();
+            const res = await fetch('/api/tavern/hire', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...authHeaders
+                },
+                body: JSON.stringify({ user_id: userId, shadow: {
+                    ...shadow,
+                    id: shadow.profile_id
+                } })
+            });
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
+                throw new Error(errData.error || '不明なエラー');
+            }
+            const data = await res.json();
+            if (data.success) {
+                setHireResultMsg('パーティに加入した！ ✨');
+                setHirePhase('done');
+                fetchPartyData();
+                useGameStore.getState().fetchUserProfile();
+                setTimeout(() => {
+                    setHirePhase('idle');
+                    setSelectedHeroic(null);
+                }, 2200);
+            } else {
+                throw new Error(data.error || '不明なエラー');
+            }
+        } catch (e: any) {
+            useGameStore.setState({
+                gold: previousGold,
+                partyMembers: previousParty,
+                userProfile: previousProfile
+            });
+            setHireResultMsg(`雇用に失敗しました: ${e.message || '通信エラー'}`);
+            setHirePhase('done');
+            setTimeout(() => setHirePhase('idle'), 2500);
+        }
+    };
 
     useEffect(() => {
         setMounted(true);
@@ -168,7 +273,18 @@ export default function HeroicRecordsModal({ userId, onClose }: HeroicRecordsMod
                         </div>
 
                         {/* Details body */}
-                        <div className="p-4 space-y-4 max-h-[60vh] overflow-y-auto">
+                        <div className="p-4 space-y-4 max-h-[60vh] overflow-y-auto relative">
+                            {hirePhase !== 'idle' && (
+                                <div className="absolute inset-0 z-50 bg-[#0f172a]/95 flex flex-col items-center justify-center gap-3 text-slate-100 animate-in fade-in duration-200">
+                                    {hirePhase === 'loading' ? (
+                                        <Loader2 className="w-8 h-8 animate-spin text-purple-400" />
+                                    ) : (
+                                        <span className="text-xl">✨</span>
+                                    )}
+                                    <p className="text-sm font-bold tracking-wide">{hireResultMsg}</p>
+                                </div>
+                            )}
+
                             {/* Stats */}
                             <div className="bg-slate-900/60 rounded-lg p-2.5 border border-slate-800">
                                 <div className="text-[10px] text-purple-400 mb-1.5 font-bold">基本ステータス</div>
@@ -188,7 +304,7 @@ export default function HeroicRecordsModal({ userId, onClose }: HeroicRecordsMod
                                             <div key={i} className="flex justify-between items-center bg-[#131d31] p-1.5 rounded border border-slate-800">
                                                 <span className="font-bold text-[9px] uppercase tracking-wide text-purple-400 bg-purple-950/40 px-1 rounded flex-shrink-0">
                                                     {toJpSlotName(eq.slot)}
-                                                </span>
+                                                 </span>
                                                 <span className="truncate ml-2 text-[10px] font-medium flex-1 text-right text-slate-200">{eq.name}</span>
                                             </div>
                                         ))}
@@ -210,13 +326,33 @@ export default function HeroicRecordsModal({ userId, onClose }: HeroicRecordsMod
                         </div>
 
                         {/* Footer button */}
-                        <div className="bg-slate-950/40 p-3 border-t border-slate-900 flex justify-end">
+                        <div className="bg-slate-950/40 p-3 border-t border-slate-900 flex justify-end gap-2">
                             <button
                                 onClick={() => setSelectedHeroic(null)}
-                                className="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs font-bold rounded text-slate-300 transition-colors"
+                                className="px-4 py-1.5 bg-slate-850 hover:bg-slate-800 text-xs font-bold rounded text-slate-400 hover:text-slate-300 transition-colors"
                             >
                                 閉じる
                             </button>
+                            {isAlreadyHired(selectedHeroic) ? (
+                                <button
+                                    disabled
+                                    className="px-4 py-1.5 bg-slate-800 text-slate-500 text-xs font-bold rounded cursor-not-allowed"
+                                >
+                                    雇用中
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={async () => {
+                                        await handleHire(selectedHeroic);
+                                    }}
+                                    disabled={hirePhase !== 'idle' || gold < selectedHeroic.contract_fee || partyMembers.length >= 4 || storeUserProfile?.subscription_tier === 'free'}
+                                    className="px-4 py-1.5 bg-purple-700 hover:bg-purple-600 disabled:bg-purple-950/40 disabled:text-[#8b6f4e] text-xs font-bold rounded text-white transition-colors"
+                                >
+                                    {storeUserProfile?.subscription_tier === 'free'
+                                        ? 'Basic/Premium専用'
+                                        : hirePhase === 'loading' ? '契約中...' : `雇用する (${selectedHeroic.contract_fee.toLocaleString()} G)`}
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>

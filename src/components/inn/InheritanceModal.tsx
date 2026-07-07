@@ -41,7 +41,7 @@ export default function InheritanceModal({ onClose, cause = 'voluntary' }: Inher
                 
                 // Fetch registered heroics for replacement
                 const authHeaders = await getAuthHeaders();
-                const res = await fetch('/api/tavern/my-heroic', { headers: authHeaders });
+                const res = await fetch(`/api/tavern/my-heroic?user_id=${userProfile?.id}`, { headers: authHeaders });
                 if (res.ok) {
                     const data = await res.json();
                     setExistingHeroics(data.heroics || []);
