@@ -758,7 +758,7 @@ export class ShadowService {
                 slug: npcSlug,
                 epithet: npcEpithet,
                 image_url: npcImageUrl,
-                source_user_id: shadow.origin_type === 'system_mercenary' ? null : shadow.profile_id,
+                source_user_id: shadow.origin_type === 'shadow_active' ? shadow.profile_id : null,
                 origin_type: shadow.origin_type,
                 durability: 100, // 初期VITを100に設定
                 max_durability: snapshotHp, // v25: 正しいmax_durabilityを保存
