@@ -21,15 +21,6 @@ export default function QuestBoardModal({ isOpen, onClose, quests, loading, user
         setMounted(true);
     }, []);
 
-    useEffect(() => {
-        if (isOpen && isTourJustCompleted && quests.length > 0) {
-            const quest6002 = quests.find((q: any) => Number(q.id) === 6002 || q.slug === 'main_ep02');
-            if (quest6002) {
-                setDetailQuest(quest6002);
-            }
-        }
-    }, [isOpen, isTourJustCompleted, quests]);
-
     const isRecommendedQuest = (s: Scenario) => {
         const qId = Number(s.id);
         const isIdMatch = !isNaN(qId) && qId >= 6001 && qId <= 6020;
