@@ -329,9 +329,9 @@ export const createBattleSlice = (
                         const duration = buff.duration;
                         const val = buff.value;
                         if (id && duration) {
-                            const finalDuration = isTurnEndTickCompensated(id as StatusEffectId)
-                                ? duration + 1
-                                : duration;
+                            // 戦闘開始時に付与される装備初期バフは、最初のターン開始時の手番クリンナップ（tickEffects）で減少するため、
+                            // 無条件で duration + 1 補正を行い、1T目が無駄に消滅するのを防ぐ！
+                            const finalDuration = duration + 1;
                             initialEffects = applyEffect(initialEffects, id as StatusEffectId, finalDuration, val);
                         }
                     });
@@ -428,9 +428,9 @@ export const createBattleSlice = (
                     const duration = buff.duration;
                     const val = buff.value;
                     if (id && duration) {
-                        const finalDuration = isTurnEndTickCompensated(id as StatusEffectId)
-                            ? duration + 1
-                            : duration;
+                        // 戦闘開始時に付与される装備初期バフは、最初のターン開始時の手番クリンナップ（tickEffects）で減少するため、
+                        // 無条件で duration + 1 補正を行い、1T目が無駄に消滅するのを防ぐ！
+                        const finalDuration = duration + 1;
 
                         initialPlayerEffects = applyEffect(
                             initialPlayerEffects,
