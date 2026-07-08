@@ -862,7 +862,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
     };
 
     return (
-        <div className={`h-full w-full font-sans relative flex flex-col overflow-hidden text-slate-200 transition-colors duration-1000 ${
+        <div className={`h-full w-full font-sans relative flex flex-col overflow-y-auto no-scrollbar text-slate-200 transition-colors duration-1000 ${
             isBossEncounter ? 'bg-red-950/20 shadow-[inset_0_0_100px_rgba(153,27,27,0.5)]' : 'bg-slate-900'
         } ${shouldShake ? 'shake-active' : ''}`}>
 
@@ -928,6 +928,8 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
 
             {/* CSS for animations */}
             <style jsx>{`
+                .no-scrollbar::-webkit-scrollbar { display: none; }
+                .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
                 @keyframes targetPulse {
                     0%, 100% { border-color: rgb(239 68 68); box-shadow: 0 0 8px rgba(239,68,68,0.4); }
                     50% { border-color: rgb(239 68 68 / 0.4); box-shadow: 0 0 2px rgba(239,68,68,0.1); }
@@ -1896,7 +1898,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                 </div>
 
                 {/* Hand Cards (Horizontal Scrollable Layout) — 2段階アクション対応 */}
-                <div className="relative w-full h-40 sm:h-48 flex items-end">
+                <div className="relative w-full h-42 sm:h-48 flex items-end">
                     {/* カスタムスクロールバー用インラインスタイル */}
                     <style dangerouslySetInnerHTML={{ __html: `
                         .custom-scrollbar::-webkit-scrollbar {
@@ -1916,7 +1918,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                         }
                     `}} />
                     <div 
-                        className="w-full h-full overflow-x-auto custom-scrollbar snap-x snap-mandatory flex items-end pl-4 pr-[10%] pb-3 pt-6 sm:pt-12 gap-0"
+                        className="w-full h-full overflow-x-auto custom-scrollbar snap-x snap-mandatory flex items-end pl-4 pr-[10%] pb-3 pt-8 sm:pt-12 gap-0"
                     >
                         {hand.map((card, idx) => {
                             const apCost = card.ap_cost ?? 1;
@@ -1935,11 +1937,11 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                                     onClick={() => handleCardClick(idx)}
                                     disabled={!canInteract}
                                     className={`relative group transition-all duration-300 flex-shrink-0 snap-center
-                                         ${isSelected ? 'w-[70px] sm:w-28 scale-110 z-50 -translate-y-4' : 'w-[60px] sm:w-24'}
+                                         ${isSelected ? 'w-[78px] sm:w-28 scale-110 z-50 -translate-y-4' : 'w-[68px] sm:w-24'}
                                          ${!canInteract ? 'opacity-40 grayscale pointer-events-none' : ''}
                                          ${!isActivePlayable ? 'opacity-65 grayscale-[50%]' : ''}
                                          ${selectedCardIndex !== null && !isSelected ? 'opacity-50 scale-95' : ''}
-                                         ${idx > 0 ? '-ml-5 sm:-ml-8' : ''}
+                                         ${idx > 0 ? '-ml-6 sm:-ml-8' : ''}
                                       `}
                                     style={{
                                         zIndex: isSelected ? 50 : idx
@@ -1947,7 +1949,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                                     onMouseEnter={(e) => !isSelected && (e.currentTarget.style.zIndex = '50')}
                                     onMouseLeave={(e) => !isSelected && (e.currentTarget.style.zIndex = String(idx))}
                                 >
-                                <div className={`h-26 sm:h-36 border-2 rounded-xl flex flex-col overflow-hidden pointer-events-none transition-all
+                                <div className={`h-28 sm:h-36 border-2 rounded-xl flex flex-col overflow-hidden pointer-events-none transition-all
                                     ${isSelected ? 'animate-[cardSelectPulse_1s_ease-in-out_infinite] border-white' : getCostStyles(apCost)}
                                     ${!isSelected ? 'group-hover:border-amber-400 group-hover:shadow-[0_0_25px_rgba(245,158,11,0.8)]' : ''}
                                 `}>
