@@ -8264,7 +8264,7 @@ export async function GET(req: Request) {
             challenger_score: totalScore,
             challenger_rank: rankClass,
             challenger_stats: statsResult.data || { wins: 0, losses: 0, current_streak: 0, max_streak: 0, rating: 1500 },
-            has_defense_party: !!defensePartyCheck,
+            has_defense_party: !!defensePartyCheck?.data,
             opponents: opponentsList
         });
 
