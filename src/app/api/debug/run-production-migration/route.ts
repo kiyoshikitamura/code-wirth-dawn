@@ -19,12 +19,14 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const dbUrl = process.env.DATABASE_URL || process.env.SUPABASE_DB_URL;
-    if (!dbUrl) {
-        return NextResponse.json({ error: 'Missing DATABASE_URL / SUPABASE_DB_URL env vars' }, { status: 500 });
-    }
+    // 本番用のプロジェクトIDと東京リージョンのプーラー接続先をデフォルトに設定
+    const projectRef = 'zvoroixjuypnintkpmux';
+    const password = 'izasama5723';
+    const dbUrl = process.env.DATABASE_URL 
+        || process.env.SUPABASE_DB_URL
+        || `postgresql://postgres.${projectRef}:${password}@aws-0-ap-northeast-1.pooler.supabase.com:5432/postgres`;
 
-    console.log('[RunProductionMigration] Connecting to database...');
+    console.log('[RunProductionMigration] Connecting to PRODUCTION database via:', dbUrl.split('@')[1]);
     const pool = new Pool({
         connectionString: dbUrl,
         ssl: { rejectUnauthorized: false },
