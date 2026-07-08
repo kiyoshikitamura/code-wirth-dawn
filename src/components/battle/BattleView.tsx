@@ -28,15 +28,31 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
     // v30: Onboarding & Battle UX/Visual Enhancements
     const [shouldShake, setShouldShake] = useState(false);
     const [shouldEnemyShake, setShouldEnemyShake] = useState(false);
+    const [shakingEnemyIds, setShakingEnemyIds] = useState<Set<string>>(new Set());
     const [enemyActiveSkill, setEnemyActiveSkill] = useState<string | null>(null);
     const [isStrongEnemyActive, setIsStrongEnemyActive] = useState(false);
     const [isStrongActive, setIsStrongActive] = useState(false);
-    const [floatingDamages, setFloatingDamages] = useState<{ id: number; amount: number; isPlayer: boolean }[]>([]);
+    const [floatingDamages, setFloatingDamages] = useState<{ id: number; amount: number; isPlayer: boolean; targetEnemyId?: string; targetMemberId?: string; offsetX?: number; offsetY?: number }[]>([]);
+    const nextPopupIdRef = useRef(1);
+    const addPopup = (amount: number, isPlayer: boolean, targetEnemyId?: string, targetMemberId?: string) => {
+        const id = nextPopupIdRef.current++;
+        const offsetX = Math.floor(Math.random() * 40) - 20; // -20px 〜 20px
+        const offsetY = Math.floor(Math.random() * 20) - 10; // -10px 〜 10px
+        setFloatingDamages(prev => [...prev, { id, amount, isPlayer, targetEnemyId, targetMemberId, offsetX, offsetY }]);
+        setTimeout(() => {
+            setFloatingDamages(prev => prev.filter(d => d.id !== id));
+        }, 1500);
+    };
     const [apErrorActive, setApErrorActive] = useState(false);
+    const [selectedEnemyDetail, setSelectedEnemyDetail] = useState<any | null>(null);
+    const [playerActiveSkill, setPlayerActiveSkill] = useState<string | null>(null);
+    const [isStrongPlayerActive, setIsStrongPlayerActive] = useState(false);
+    const [partyActiveSkill, setPartyActiveSkill] = useState<string | null>(null);
+    const [isStrongPartyActive, setIsStrongPartyActive] = useState(false);
 
     const prevLiveHpRef = useRef<number | null>(null);
-    const prevTargetHpRef = useRef<number | null>(null);
-    const prevTargetIdRef = useRef<string | null>(null);
+    const prevEnemiesHpRef = useRef<Record<string, number>>({});
+    const prevPartyHpRef = useRef<Record<string, number>>({});
 
     // Concurrency phase lock for NEXT button
     const [isTransitioning, setIsTransitioning] = useState(false);
@@ -84,12 +100,137 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
         completeActiveMessage,
         enqueuedUpToRef,
     } = useBattleTypewriter(userProfile?.hp, (msg) => {
+        // 敵・味方・プレイヤーへのダメージログ検知とポップアップ ＆ 個別揺れ追加
+        let matched = false;
+        
+        // A. 敵全体 / 味方全員へのダメージ
+        if (msg.includes('敵全体') || msg.includes('味方全員') || msg.includes('各敵に')) {
+            const match = msg.match(/(?:敵全体|味方全員|各敵)に\s*(\d+)\s*(?:の)?ダメージ/);
+            if (match) {
+                const amount = parseInt(match[1], 10);
+                (battleState?.enemies || []).filter((e: any) => e.hp > 0).forEach((targetEnemy: any) => {
+                    addPopup(amount, false, targetEnemy.id);
+                    setShakingEnemyIds(prev => {
+                        const next = new Set(prev);
+                        next.add(targetEnemy.id);
+                        return next;
+                    });
+                    setTimeout(() => {
+                        setShakingEnemyIds(prev => {
+                            const next = new Set(prev);
+                            next.delete(targetEnemy.id);
+                            return next;
+                        });
+                    }, 300);
+                });
+                setShouldShake(true);
+                setTimeout(() => setShouldShake(false), 200);
+                matched = true;
+            }
+        }
+        
+        // B. あなた（プレイヤー）へのダメージ
+        if (!matched && msg.includes('あなたに')) {
+            const match = msg.match(/あなたに\s*(\d+)\s*ダメージ/);
+            if (match) {
+                const amount = parseInt(match[1], 10);
+                addPopup(amount, true);
+                setShouldShake(true);
+                setTimeout(() => setShouldShake(false), 300);
+                matched = true;
+            }
+        }
+        
+        // C. 個別の敵や味方お供への被ダメージ
+        if (!matched) {
+            const match = msg.match(/([^\s]+?)に\s*(\d+)\s*(?:の)?ダメージ/);
+            if (match) {
+                const targetName = match[1];
+                const amount = parseInt(match[2], 10);
+                
+                // 敵の検索
+                const targetEnemy = (battleState?.enemies || []).find((e: any) => e.name === targetName);
+                if (targetEnemy) {
+                    addPopup(amount, false, targetEnemy.id);
+                    setShakingEnemyIds(prev => {
+                        const next = new Set(prev);
+                        next.add(targetEnemy.id);
+                        return next;
+                    });
+                    setTimeout(() => {
+                        setShakingEnemyIds(prev => {
+                            const next = new Set(prev);
+                            next.delete(targetEnemy.id);
+                            return next;
+                        });
+                    }, 300);
+                    
+                    setShouldShake(true);
+                    setTimeout(() => setShouldShake(false), 200);
+                    
+                    if (targetEnemy.id === battleState.enemy?.id) {
+                        setShouldEnemyShake(true);
+                        setTimeout(() => setShouldEnemyShake(false), 300);
+                    }
+                    matched = true;
+                } else {
+                    // 味方お供の検索
+                    const targetMember = (battleState?.party || []).find((m: any) => m.name === targetName);
+                    if (targetMember) {
+                        addPopup(amount, false, undefined, String(targetMember.id));
+                        setShouldShake(true);
+                        setTimeout(() => setShouldShake(false), 200);
+                        matched = true;
+                    }
+                }
+            }
+        }
+
+        // 1. スキル警告カットインの検知 (の『スキル名』形式)
         if (msg.includes('の『')) {
-            const isEnemyPhase = battleState.battlePhase !== 'player';
-            if (isEnemyPhase) {
-                const match = msg.match(/の『(.+?)』/);
-                const skillName = match ? match[1] : '';
-                if (skillName) {
+            const hasStealthMarker = msg.startsWith('\u200B');
+            const cleanMsg = hasStealthMarker ? msg.replace(/^\u200B/, '') : msg;
+
+            const charMatch = cleanMsg.match(/^([^\sの]+?)の『(.+?)』/);
+            const charName = charMatch ? charMatch[1] : '';
+            const skillName = charMatch ? charMatch[2] : '';
+            
+            if (skillName) {
+                const isPartyMemberAction = hasStealthMarker;
+                const pvpOpponent = (useGameStore.getState() as any).pvpOpponent;
+                const isOpponentPlayer = pvpOpponent?.user_name && charName === pvpOpponent.user_name;
+                const isPlayerAction = (charName === 'あなた' || charName === 'プレイヤー' || (userProfile?.user_name && charName === userProfile.user_name)) && !isOpponentPlayer;
+
+                if (isPlayerAction) {
+                    // プレイヤー本人のスキルカットイン (画面下部・青色系)
+                    setPlayerActiveSkill(skillName);
+                    const isStrong = /終焉|暗黒|雷撃|魂|石化|咆哮|神罰|極|超|真|神|絶|暴君/g.test(skillName);
+                    if (isStrong) {
+                        setIsStrongPlayerActive(true);
+                        setShouldShake(true);
+                        setTimeout(() => setShouldShake(false), 300);
+                    }
+                    const displayTime = isStrong ? 2500 : 2000;
+                    setTimeout(() => {
+                        setPlayerActiveSkill(null);
+                        setIsStrongPlayerActive(false);
+                    }, displayTime);
+                } else if (isPartyMemberAction) {
+                    // 味方お供NPCのスキルカットイン (画面下部・緑色系)
+                    setPartyActiveSkill(skillName);
+                    const isStrong = /終焉|暗黒|雷撃|魂|石化|咆哮|神罰|極|超|真|神|絶|暴君/g.test(skillName);
+                    if (isStrong) {
+                        setIsStrongPartyActive(true);
+                        setShouldShake(true);
+                        setTimeout(() => setShouldShake(false), 300);
+                    }
+                    const displayTime = isStrong ? 2500 : 2000;
+                    setTimeout(() => {
+                        setPartyActiveSkill(null);
+                        setIsStrongPartyActive(false);
+                    }, displayTime);
+                } else {
+                    // 敵エネミースキル警告カットイン (画面中央・赤系)
                     setEnemyActiveSkill(skillName);
                     const isStrong = /終焉|暗黒|雷撃|魂|石化|咆哮|神罰|極|超|真|神|絶|暴君/g.test(skillName);
                     if (isStrong) {
@@ -101,15 +242,130 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                             setTimeout(() => setShouldShake(false), 300);
                         }, 150);
                     } else {
-                        // 弱・通常攻撃時も軽く揺らして臨場感を出す
                         setShouldShake(true);
                         setTimeout(() => setShouldShake(false), 200);
                     }
+                    const displayTime = isStrong ? 2500 : 2000;
                     setTimeout(() => {
                         setEnemyActiveSkill(null);
                         setIsStrongEnemyActive(false);
-                    }, 1000);
+                    }, displayTime);
                 }
+            }
+        }
+        // 2. 味方（プレイヤー ＆ 味方NPC）スキルの検知
+        else {
+            let skillName = '';
+            
+            // 同行NPCのスキルカットインは行わない (プレイヤー本人のみ対象)
+            const npcNames = (battleState?.party || []).map((m: any) => m.name).filter(Boolean);
+            const isNpcAction = npcNames.some((name: string) => msg.startsWith(name));
+            
+            // PvP対戦相手（敵プレイヤー ＆ 敵お供NPC）の名前を抽出して除外
+            const opponentNames: string[] = [];
+            const pvpOpponent = (useGameStore.getState() as any).pvpOpponent;
+            if (pvpOpponent) {
+                if (pvpOpponent.user_name) opponentNames.push(pvpOpponent.user_name);
+                if (Array.isArray(pvpOpponent.party_members_snapshot)) {
+                    pvpOpponent.party_members_snapshot.forEach((m: any) => {
+                        if (m.name) opponentNames.push(m.name);
+                    });
+                }
+            }
+            if (battleState?.enemy?.name) opponentNames.push(battleState.enemy.name);
+            if (battleState?.enemies) {
+                battleState.enemies.forEach((e: any) => {
+                    if (e.name) opponentNames.push(e.name);
+                });
+            }
+            const isEnemyAction = opponentNames.some((name: string) => msg.startsWith(name));
+            
+            const isExplicitCardAction = 
+                msg.includes('『') || 
+                msg.startsWith('魔術書:') || 
+                msg.startsWith('魔導書:') ||
+                msg.includes('を使用！') || 
+                msg.includes('を使用しました') || 
+                msg.includes('を発動！') || 
+                msg.includes('を服用！') ||
+                msg.includes('を唱えた！');
+
+            if (!isNpcAction && !isEnemyAction && isExplicitCardAction) {
+            
+            // 0. 二重括弧『 』が含まれている場合は最優先でその中身を抽出 (スキル・魔法発動)
+            // 例: 「ハンスの『金剛壁』！」 ➔ 「金剛壁」
+            // 例: 「相手は『毒の息』を唱えた！」 ➔ 「毒の息」
+            const doubleBracketMatch = msg.match(/『([^』]{2,15})』/);
+            if (doubleBracketMatch) {
+                skillName = doubleBracketMatch[1];
+            }
+
+            // A. お供NPC/エネミーのスキル: 「[名前]の[スキル名]！」
+            // 例: 「ハンスの斬撃！」「ガウェインの五星の加護！」
+            // ※「魔術書:」で始まらない場合のみ、文頭の「の」より前をキャラクター名として除去します
+            if (!skillName && !msg.startsWith('魔術書:') && !msg.startsWith('魔導書:')) {
+                const npcMatch = msg.match(/^([^\sの]+?)の([^\s！『』]{2,})！/);
+                if (npcMatch) {
+                    const name = npcMatch[2];
+                    skillName = name;
+                }
+            }
+            
+            // B. プレイヤーのスキル使用/発動/服用/詠唱/「で」の検知 (文頭から安全に抽出)
+            // 例: 「魔術書:雷電の連鎖！ 連鎖する紫電...」 ➔ 「魔術書:雷電の連鎖」
+            // 例: 「瞑想を使用！」 ➔ 「瞑想」
+            if (!skillName) {
+                const useMatch = msg.match(/^([✨⚠♥\s]*?)([^\s！『』]+?)(！|を使用|を発動|を服用|で|を[^\s]+?に使用)/);
+                if (useMatch) {
+                    const name = useMatch[2];
+                    skillName = name;
+                }
+            }
+            
+            // C. プレイヤーのターゲット指定スキル: 「[対象名]に[スキル名]！」
+            if (!skillName) {
+                const playerMatch = msg.match(/^([^\sに]+?)に([^\s！『』]{2,})！/);
+                if (playerMatch) {
+                    const name = playerMatch[2];
+                    skillName = name;
+                }
+            }
+            
+            if (skillName) {
+                // 装飾文字をクリンナップ
+                skillName = skillName.replace(/^[♥✨⚠\s]+/, '').trim();
+                
+                // 魔術書や魔導書のプレフィックスを除去してカットイン名を見やすくする
+                skillName = skillName.replace(/^(魔術書|魔導書):/, '');
+                
+                // 厳格な除外キーワード判定
+                const EXCLUDE_KEYWORDS = [
+                    '出血', 'ダメージ', '毒', '火傷', 'スタン', '死亡', '気絶', '回避', 'ガード', 
+                    'ミス', '効果', 'HP', 'AP', 'ターン', '成功', '失敗', '離脱', '敗北', '勝利', 
+                    'ボーナス', 'バフ', 'デバフ', '装備', '獲得', '上昇', '低下', '回復', '経験値', 
+                    'ゴールド', '手に入れた', '落とした', '逃げ', '力尽き', '開始', '終了', '状態', 
+                    '無効', '付与', '共鳴', '在駐', '連携', '連続', 'シンク', 'sync',
+                    '通常', '通常攻撃', 'かば', 'かばった', '反撃', '防御', '攻撃', '服薬', 'アイテム',
+                    '耐性', '低下', '行動', '手番'
+                ];
+
+                const hasExcludeWord = EXCLUDE_KEYWORDS.some(k => skillName.includes(k));
+                const hasSystemSymbols = /[_:[\]]/g.test(skillName); // システムの同期文字やブラケットを除外
+                const isValidLength = skillName.length >= 2 && skillName.length <= 16;
+
+                if (isValidLength && !hasExcludeWord && !hasSystemSymbols) {
+                    setPlayerActiveSkill(skillName);
+                    const isStrong = /終焉|暗黒|雷撃|魂|石化|咆哮|神罰|極|超|真|神|絶|暴君/g.test(skillName);
+                    if (isStrong) {
+                        setIsStrongPlayerActive(true);
+                    }
+                    const displayTime = isStrong ? 2500 : 2000;
+                    setTimeout(() => {
+                        setPlayerActiveSkill(null);
+                        setIsStrongPlayerActive(false);
+                    }, displayTime);
+                }
+            }
             }
         }
 
@@ -127,45 +383,66 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
             if (diff > 0) {
                 setShouldShake(true);
                 setTimeout(() => setShouldShake(false), 300);
-
-                const id = Date.now() + Math.random();
-                setFloatingDamages(prev => [...prev, { id, amount: diff, isPlayer: true }]);
-                setTimeout(() => {
-                    setFloatingDamages(prev => prev.filter(d => d.id !== id));
-                }, 1000);
             }
         }
         prevLiveHpRef.current = liveHp;
     }, [liveHp]);
 
-    // 敵の被ダメージ検知
+    // 敵全員の被ダメージ検知
     useEffect(() => {
-        const currentTarget = battleState.enemy;
-        if (currentTarget && currentTarget.hp !== null) {
-            // ターゲットIDが一致し、かつ前回のHP記録がある場合のみ被ダメージ検知を行う
-            if (prevTargetIdRef.current === currentTarget.id && prevTargetHpRef.current !== null) {
-                const diff = prevTargetHpRef.current - currentTarget.hp;
+        const currentEnemies = battleState.enemies || [];
+        currentEnemies.forEach(enemy => {
+            const prevHp = prevEnemiesHpRef.current[enemy.id];
+            if (prevHp !== undefined && enemy.hp !== null) {
+                const diff = prevHp - enemy.hp;
                 if (diff > 0) {
+                    // 味方の攻撃（いずれかの敵へのダメージ）があったため、画面全体を常に揺らす
                     setShouldShake(true);
                     setTimeout(() => setShouldShake(false), 300);
 
-                    setShouldEnemyShake(true);
-                    setTimeout(() => setShouldEnemyShake(false), 300);
-
-                    const id = Date.now() + Math.random();
-                    setFloatingDamages(prev => [...prev, { id, amount: diff, isPlayer: false }]);
+                    // ダメージを受けた個別の敵IDを揺らすstateに追加
+                    setShakingEnemyIds(prev => {
+                        const next = new Set(prev);
+                        next.add(enemy.id);
+                        return next;
+                    });
                     setTimeout(() => {
-                        setFloatingDamages(prev => prev.filter(d => d.id !== id));
-                    }, 1000);
+                        setShakingEnemyIds(prev => {
+                            const next = new Set(prev);
+                            next.delete(enemy.id);
+                            return next;
+                        });
+                    }, 300);
+                    
+                    // 現在のメインターゲットの場合は従来の大スプライト揺れもトリガー
+                    if (enemy.id === battleState.enemy?.id) {
+                        setShouldEnemyShake(true);
+                        setTimeout(() => setShouldEnemyShake(false), 300);
+                    }
                 }
             }
-            prevTargetHpRef.current = currentTarget.hp;
-            prevTargetIdRef.current = currentTarget.id;
-        } else {
-            prevTargetHpRef.current = null;
-            prevTargetIdRef.current = null;
-        }
-    }, [battleState.enemy?.hp, battleState.enemy?.id]);
+            if (enemy.hp !== null) {
+                prevEnemiesHpRef.current[enemy.id] = enemy.hp;
+            }
+        });
+    }, [JSON.stringify((battleState.enemies || []).map(e => ({ id: e.id, hp: e.hp })))]);
+
+    // 味方お供（パーティメンバー）全員の被ダメージ検知
+    useEffect(() => {
+        const party = battleState.party || [];
+        party.forEach(member => {
+            const prevHp = prevPartyHpRef.current[member.id];
+            const currentHp = member.durability ?? member.hp ?? 0;
+            if (prevHp !== undefined && currentHp !== null) {
+                const diff = prevHp - currentHp;
+                if (diff > 0) {
+                    setShouldShake(true);
+                    setTimeout(() => setShouldShake(false), 200);
+                }
+            }
+            prevPartyHpRef.current[member.id] = currentHp;
+        });
+    }, [JSON.stringify((battleState.party || []).map(m => ({ id: m.id, hp: m.durability ?? m.hp ?? 0 })))]);
 
     // v15.0: オーバーレイ表示管理（ターン/フェーズ）
     const lastShownTurnRef = useRef(0);        // TURN N overlay表示済み番号
@@ -228,12 +505,11 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
             lastShownTurnRef.current = battleState.turn;
             // TURN N オーバーレイ（2000ms） → PLAYER オーバーレイ（1000ms）
             setShowTurnOverlay(true);
-            const t1 = setTimeout(() => {
+            setTimeout(() => {
                 setShowTurnOverlay(false);
                 setShowPhaseOverlay('player');
             }, 2000);
-            const t2 = setTimeout(() => setShowPhaseOverlay(null), 3000);
-            return () => { clearTimeout(t1); clearTimeout(t2); };
+            setTimeout(() => setShowPhaseOverlay(null), 3000);
         }
     }, [battleState.battlePhase, battleState.turn]);
 
@@ -535,7 +811,8 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
         }
     }, [battleState.isVictory, battleState.isDefeat, isEscaped, battleState.messages, displayedLogs, isTypingDone, activeMessage]);
 
-    if (!hasHydrated) return (
+    try {
+        if (!hasHydrated) return (
         <div className="relative w-full h-full flex flex-col items-center justify-center bg-slate-950/80 text-white p-8">
             {bgImageUrl && (
                 <div 
@@ -648,13 +925,66 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
     };
 
     return (
-        <div className={`h-full w-full font-sans relative flex flex-col overflow-hidden text-slate-200 transition-colors duration-1000 ${
+        <div className={`h-full w-full font-sans relative flex flex-col overflow-y-auto custom-scrollbar-vertical text-slate-200 transition-colors duration-1000 ${
             isBossEncounter ? 'bg-red-950/20 shadow-[inset_0_0_100px_rgba(153,27,27,0.5)]' : 'bg-slate-900'
         } ${shouldShake ? 'shake-active' : ''}`}>
 
             {/* 強スキル発動時のフラッシュオーバーレイ */}
             {isStrongActive && (
                 <div className="absolute inset-0 z-50 pointer-events-none bg-white animate-strong-flash" />
+            )}
+
+            {/* プレイヤー/味方NPCスキルカットイン ＆ スラッシュエフェクト (上下反転 ＆ 青系) */}
+            {playerActiveSkill && (
+                <div className="absolute inset-0 z-50 pointer-events-none flex flex-col items-center justify-center overflow-hidden">
+                    <div className="absolute inset-0 bg-blue-950/10 animate-pulse" />
+                    
+                    {/* スキル名カットイン帯 (画面下部に配置: bottom-1/4) */}
+                    <div className="absolute inset-x-0 bottom-1/4 flex flex-col items-center justify-center z-50">
+                        <div className={`w-full py-3 border-y flex flex-col items-center justify-center shadow-2xl backdrop-blur-sm ${
+                            isStrongPlayerActive
+                                ? 'bg-sky-950/90 text-cyan-400 border-cyan-400/50 shadow-[0_0_40px_rgba(34,211,238,0.8)]'
+                                : 'bg-slate-900/90 text-sky-400 border-sky-400/50 shadow-[0_0_25px_rgba(56,189,248,0.6)]'
+                        }`}>
+                            <span className="text-[10px] uppercase tracking-[0.3em] opacity-80 font-bold mb-1">ALLY SKILL ACTIVATED</span>
+                            <span className={`font-serif font-extrabold tracking-widest animate-pulse whitespace-nowrap px-4 ${
+                                (playerActiveSkill?.length || 0) > 8 
+                                    ? 'text-lg md:text-xl' 
+                                    : (playerActiveSkill?.length || 0) > 5 
+                                        ? 'text-xl md:text-2xl' 
+                                        : 'text-2xl md:text-3xl'
+                            }`}>
+                                『{playerActiveSkill}』
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* 味方お供NPCスキルカットイン (画面下部 ＆ 緑系) */}
+            {partyActiveSkill && (
+                <div className="absolute inset-0 z-50 pointer-events-none flex flex-col items-center justify-center overflow-hidden">
+                    <div className="absolute inset-0 bg-emerald-950/10 animate-pulse" />
+                    
+                    <div className="absolute inset-x-0 bottom-1/4 flex flex-col items-center justify-center z-50">
+                        <div className={`w-full py-3 border-y flex flex-col items-center justify-center shadow-2xl backdrop-blur-sm ${
+                            isStrongPartyActive
+                                ? 'bg-emerald-950/95 text-emerald-300 border-emerald-400/60 shadow-[0_0_40px_rgba(52,211,153,0.9)]'
+                                : 'bg-slate-900/90 text-emerald-400 border-emerald-500/40 shadow-[0_0_25px_rgba(52,211,153,0.5)]'
+                        }`}>
+                            <span className="text-[10px] uppercase tracking-[0.3em] opacity-80 font-bold mb-1">PARTY MEMBER SKILL</span>
+                            <span className={`font-serif font-extrabold tracking-widest animate-pulse whitespace-nowrap px-4 ${
+                                (partyActiveSkill?.length || 0) > 8 
+                                    ? 'text-lg md:text-xl' 
+                                    : (partyActiveSkill?.length || 0) > 5 
+                                        ? 'text-xl md:text-2xl' 
+                                        : 'text-2xl md:text-3xl'
+                            }`}>
+                                『{partyActiveSkill}』
+                            </span>
+                        </div>
+                    </div>
+                </div>
             )}
 
             {/* エネミースキル警告カットイン ＆ 被攻撃スワイプ爪痕エフェクト */}
@@ -671,7 +1001,13 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                                 : 'bg-amber-950/90 text-amber-500 border-amber-500/50 shadow-[0_0_25px_rgba(245,158,11,0.6)]'
                         }`}>
                             <span className="text-[10px] uppercase tracking-[0.3em] opacity-80 font-bold mb-1">ENEMY SKILL WARNING</span>
-                            <span className="font-serif text-2xl md:text-3xl font-extrabold tracking-widest animate-pulse">
+                            <span className={`font-serif font-extrabold tracking-widest animate-pulse whitespace-nowrap px-4 ${
+                                (enemyActiveSkill?.length || 0) > 8 
+                                    ? 'text-lg md:text-xl' 
+                                    : (enemyActiveSkill?.length || 0) > 5 
+                                        ? 'text-xl md:text-2xl' 
+                                        : 'text-2xl md:text-3xl'
+                            }`}>
                                 『{enemyActiveSkill}』
                             </span>
                         </div>
@@ -681,6 +1017,8 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
 
             {/* CSS for animations */}
             <style jsx>{`
+                .no-scrollbar::-webkit-scrollbar { display: none; }
+                .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
                 @keyframes targetPulse {
                     0%, 100% { border-color: rgb(239 68 68); box-shadow: 0 0 8px rgba(239,68,68,0.4); }
                     50% { border-color: rgb(239 68 68 / 0.4); box-shadow: 0 0 2px rgba(239,68,68,0.1); }
@@ -706,17 +1044,18 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                 }
                 @keyframes floatDamage {
                     0% { transform: translateY(0) scale(0.6); opacity: 0; }
-                    15% { transform: translateY(-25px) scale(1.2); opacity: 1; }
-                    40% { transform: translateY(-35px) scale(1.0); }
-                    100% { transform: translateY(-45px) scale(1.0); opacity: 0; }
+                    10% { transform: translateY(-25px) scale(1.2); opacity: 1; }
+                    30% { transform: translateY(-35px) scale(1.0); }
+                    80% { transform: translateY(-40px) scale(1.0); opacity: 1; }
+                    100% { transform: translateY(-48px) scale(0.9); opacity: 0; }
                 }
                 .damage-pop-player {
-                    animation: floatDamage 1.0s forwards;
+                    animation: floatDamage 2.0s forwards;
                     color: #ef4444; /* red-500 */
                     text-shadow: 0 0 8px rgba(0, 0, 0, 0.9), 0 0 2px rgba(0, 0, 0, 0.9);
                 }
                 .damage-pop-enemy {
-                    animation: floatDamage 1.0s forwards;
+                    animation: floatDamage 2.0s forwards;
                     color: #f59e0b; /* amber-500 */
                     text-shadow: 0 0 8px rgba(0, 0, 0, 0.9), 0 0 2px rgba(0, 0, 0, 0.9);
                 }
@@ -967,14 +1306,96 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                 </div>
             )}
 
-            {/* Enemies Layout — 左:ターゲット大（スプライト表示） / 右:非ターゲット小（アイコンリスト） */}
-            <div className="w-full relative z-10 bg-gradient-to-b from-transparent to-slate-950/80 pt-2 pb-1 flex-shrink-0">
-                <div className="w-full flex items-center justify-center gap-6 sm:gap-10 px-4">
+            {/* Enemies Layout — 左:ターゲット大（スプライト表示） / 右:非ターゲット小（アイコンリスト） または PvP時の横並び丸型アイコン */}
+            <div className="w-full relative z-10 bg-gradient-to-b from-transparent to-slate-950/80 pt-4 pb-2 flex-shrink-0">
+                {enemies.some((e: any) => e.is_pvp_player || e.is_pvp_member) ? (
+                    <div className="w-full flex flex-col items-center justify-center py-4 px-4 min-h-[220px] gap-3">
+                        {(() => {
+                            const renderEnemyButton = (enemy: any) => {
+                                const isTarget = target?.id === enemy.id;
+                                const isDead = enemy.hp <= 0;
+                                const isShaking = shakingEnemyIds.has(enemy.id);
+                                return (
+                                    <button
+                                        key={enemy.id}
+                                        disabled={isDead}
+                                        onClick={() => {
+                                            if (isTarget) {
+                                                setSelectedEnemyDetail(enemy);
+                                            } else {
+                                                setTarget(enemy.id);
+                                            }
+                                        }}
+                                        className={`flex flex-col items-center flex-shrink-0 active:scale-95 transition-all relative ${
+                                            isDead ? 'opacity-40 grayscale' : ''
+                                        } ${isShaking ? 'animate-enemy-shake' : ''}`}
+                                    >
+                                        {/* Target marker border */}
+                                        <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full border-[3px] flex items-center justify-center overflow-hidden shadow-xl backdrop-blur-sm transition-all ${
+                                            isTarget 
+                                                ? 'border-red-500 scale-105 shadow-[0_0_20px_rgba(239,68,68,0.8)]' 
+                                                : 'border-slate-500/60 bg-black/50 hover:border-amber-500/40'
+                                        }`}>
+                                            {enemy.image_url ? (
+                                                <img src={enemy.image_url} alt="" className="w-full h-full object-cover" />
+                                            ) : (
+                                                <Skull size={24} className="text-slate-500" />
+                                            )}
+                                        </div>
+
+                                        {/* Floating Damage Numbers for Enemy */}
+                                        {floatingDamages.filter(d => !d.isPlayer && d.targetEnemyId === enemy.id).map(d => (
+                                            <div key={d.id} className="absolute z-50 pointer-events-none font-serif text-2xl font-black tracking-wider damage-pop-enemy" style={{ transform: `translate(${d.offsetX || 0}px, ${d.offsetY || 0}px)` }}>
+                                                -{d.amount}
+                                            </div>
+                                        ))}
+
+                                        {/* HP Bar */}
+                                        <div className="w-14 sm:w-16 h-1.5 mt-1.5 bg-black/65 rounded-full overflow-hidden border border-white/10 shadow-inner">
+                                            <div 
+                                                className="h-full bg-gradient-to-r from-red-600 to-red-500 transition-all duration-500" 
+                                                style={{ width: `${Math.max(0, Math.min(100, (enemy.hp / (enemy.maxHp || 1)) * 100))}%` }} 
+                                            />
+                                        </div>
+
+                                        {/* Name */}
+                                        <span className="text-[10px] text-slate-100 font-bold w-[64px] sm:w-[72px] text-center truncate mt-1 drop-shadow-md">
+                                            {enemy.name}
+                                        </span>
+                                        
+                                        {/* Status badges */}
+                                        {(enemy.status_effects || []).length > 0 && !isDead && (
+                                            <div className="absolute top-0 left-0 -translate-y-1/4 z-30 pointer-events-none">
+                                                <StatusEffectBadges effects={enemy.status_effects || []} size="sm" maxBadges={3} />
+                                            </div>
+                                        )}
+                                    </button>
+                                );
+                            };
+
+                            return (
+                                <>
+                                    {/* 後列 (上: 最大2名) */}
+                                    <div className="flex justify-center gap-8 sm:gap-12">
+                                        {enemies.slice(0, 2).map(renderEnemyButton)}
+                                    </div>
+                                    {/* 前列 (下: 最大3名) */}
+                                    {enemies.length > 2 && (
+                                        <div className="flex justify-center gap-6 sm:gap-10">
+                                            {enemies.slice(2, 5).map(renderEnemyButton)}
+                                        </div>
+                                    )}
+                                </>
+                            );
+                        })()}
+                    </div>
+                ) : (
+                    <div className="w-full flex items-center justify-center gap-6 sm:gap-10 px-4">
                     {/* LEFT: Target enemy (Sprite) */}
                     {target && (
                         <div className="relative transition-all duration-500 flex flex-col items-center flex-shrink-0 z-20">
                             {/* Huge Sprite Image */}
-                            <div className={`w-[160px] h-[160px] sm:w-[220px] sm:h-[220px] relative transition-all duration-500 flex items-center justify-center
+                            <div className={`w-[130px] h-[130px] sm:w-[190px] sm:h-[190px] relative transition-all duration-500 flex items-center justify-center
                                 ${(target.hp > 0 || (activeEffect && activeEffect !== 'BUFF')) ? 'drop-shadow-[0_0_20px_rgba(220,38,38,0.6)] scale-105' : 'opacity-40 grayscale blur-[1px]'}
                                 ${activeEffect && activeEffect !== 'BUFF' ? 'flash-active' : ''}
                                 ${shouldEnemyShake ? 'animate-enemy-shake' : ''}
@@ -986,8 +1407,8 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                                 )}
 
                                 {/* Floating Damage Numbers for Enemy */}
-                                {floatingDamages.filter(d => !d.isPlayer).map(d => (
-                                    <div key={d.id} className="absolute z-50 pointer-events-none font-serif text-3xl font-black tracking-wider damage-pop-enemy">
+                                {floatingDamages.filter(d => !d.isPlayer && d.targetEnemyId === target.id).map(d => (
+                                    <div key={d.id} className="absolute z-50 pointer-events-none font-serif text-3xl font-black tracking-wider damage-pop-enemy" style={{ transform: `translate(${d.offsetX || 0}px, ${d.offsetY || 0}px)` }}>
                                         -{d.amount}
                                     </div>
                                 ))}
@@ -1143,6 +1564,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                         );
                     })()}
                 </div>
+                )}
             </div>
 
             {/* PLAYER & PARTY STATUS PANEL */}
@@ -1159,7 +1581,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                             >
                                 {/* Floating Damage Numbers for Player */}
                                 {floatingDamages.filter(d => d.isPlayer).map(d => (
-                                    <div key={d.id} className="absolute z-50 pointer-events-none font-serif text-2xl font-black tracking-wider damage-pop-player">
+                                    <div key={d.id} className="absolute z-50 pointer-events-none font-serif text-2xl font-black tracking-wider damage-pop-player" style={{ transform: `translate(${d.offsetX || 0}px, ${d.offsetY || 0}px)` }}>
                                         -{d.amount}
                                     </div>
                                 ))}
@@ -1192,12 +1614,19 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                                     onClick={() => setSelectedPartyMember(member)}
                                     className="flex flex-col items-center flex-shrink-0 active:scale-90 transition-transform relative"
                                 >
-                                    <div className={`w-10 h-10 rounded-full border-[2px] ${(member.durability ?? member.hp) > 0 ? 'border-sky-400/80 bg-black/50' : 'border-white/20 bg-black/80 opacity-60'} flex items-center justify-center overflow-hidden shadow-lg backdrop-blur-sm`}>
+                                    <div className={`w-10 h-10 rounded-full border-[2px] ${(member.durability ?? member.hp) > 0 ? 'border-sky-400/80 bg-black/50' : 'border-white/20 bg-black/80 opacity-60'} flex items-center justify-center overflow-hidden shadow-lg backdrop-blur-sm relative`}>
                                         {(member.icon_url || member.image_url || member.avatar_url) ? (
                                             <img src={member.icon_url || member.image_url || member.avatar_url} alt="" className="w-full h-full object-cover" />
                                         ) : (
                                             <User size={18} className={member.is_guest ? 'text-emerald-400' : 'text-sky-400'} />
                                         )}
+
+                                        {/* Floating Damage Numbers for Party Member */}
+                                        {floatingDamages.filter(d => d.targetMemberId === String(member.id)).map(d => (
+                                            <div key={d.id} className="absolute z-50 pointer-events-none font-serif text-sm font-black tracking-wider text-red-500 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] animate-bounce" style={{ top: '25%', left: '25%', transform: `translate(${d.offsetX || 0}px, ${d.offsetY || 0}px)` }}>
+                                                -{d.amount}
+                                            </div>
+                                        ))}
                                     </div>
                                     {/* パーティアイコン左上：状態異常バッジ — button 相対に配置しoverflow-hiddenを回避 */}
                                     {(member.status_effects || []).length > 0 && (member.durability ?? member.hp) > 0 && (
@@ -1258,6 +1687,68 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                                 <div className="mt-1 flex flex-wrap gap-1">
                                     {(selectedPartyMember.skill_names || selectedPartyMember.skills || selectedPartyMember.abilities || []).length > 0 ? (
                                         (selectedPartyMember.skill_names || selectedPartyMember.skills || selectedPartyMember.abilities).map((skill: any, si: number) => (
+                                            <span key={si} className="px-1.5 py-0.5 bg-amber-900/30 border border-amber-800/50 rounded text-[9px] text-amber-300">
+                                                {typeof skill === 'string' ? skill : skill.name || skill}
+                                            </span>
+                                        ))
+                                    ) : (
+                                        <span className="text-[9px] text-slate-500 italic">なし</span>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Enemy Status Detail Popup */}
+            {selectedEnemyDetail && (
+                <div className="absolute inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setSelectedEnemyDetail(null)}>
+                    <div className="bg-black/60 backdrop-blur-xl border border-white/20 rounded-xl p-4 w-[280px] shadow-2xl drop-shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-2">
+                                <div className="w-10 h-10 rounded-full border-2 border-red-500 bg-slate-800 flex items-center justify-center overflow-hidden">
+                                    {selectedEnemyDetail.image_url ? (
+                                        <img src={selectedEnemyDetail.image_url} alt="" className="w-full h-full object-cover" />
+                                    ) : (
+                                        <Skull size={18} className="text-red-400" />
+                                    )}
+                                </div>
+                                <div>
+                                    <p className="text-sm font-bold text-slate-200 truncate max-w-[140px]">{selectedEnemyDetail.name || 'エネミー'}</p>
+                                    <p className="text-[9px] text-slate-500">Lv.{selectedEnemyDetail.level || 1} {selectedEnemyDetail.is_pvp_player ? 'プレイヤー (防衛)' : '同行英霊 (防衛)'}</p>
+                                </div>
+                            </div>
+                            <button onClick={() => setSelectedEnemyDetail(null)} className="text-slate-500 hover:text-slate-300">
+                                <X size={16} />
+                            </button>
+                        </div>
+                        <div className="space-y-2 text-[11px]">
+                            {/* HP with PvP scaling information */}
+                            <div className="flex flex-col bg-slate-800/50 rounded px-2.5 py-2">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-red-400 font-bold">HP</span>
+                                    <span className="text-slate-200 font-mono font-bold">
+                                        {selectedEnemyDetail.hp} / {selectedEnemyDetail.maxHp}
+                                    </span>
+                                </div>
+                                <div className="text-[9px] text-slate-400 mt-1 border-t border-slate-700/50 pt-1 text-right">
+                                    ベース: {selectedEnemyDetail.base_hp || Math.round(selectedEnemyDetail.maxHp / 6)} + PvP補正: +{(selectedEnemyDetail.base_hp || Math.round(selectedEnemyDetail.maxHp / 6)) * 5}
+                                </div>
+                            </div>
+                            <div className="flex justify-between items-center bg-slate-800/50 rounded px-2 py-1.5">
+                                <span className="text-red-400 font-bold">攻撃力</span>
+                                <span className="text-slate-200 font-mono">{selectedEnemyDetail.atk || 0}</span>
+                            </div>
+                            <div className="flex justify-between items-center bg-slate-800/50 rounded px-2 py-1.5">
+                                <span className="text-sky-400 font-bold">防御力</span>
+                                <span className="text-slate-200 font-mono">{selectedEnemyDetail.def || 0}</span>
+                            </div>
+                            <div className="bg-slate-800/50 rounded px-2 py-1.5">
+                                <span className="text-amber-400 font-bold text-[10px]">所持スキル (デッキ)</span>
+                                <div className="mt-1 flex flex-wrap gap-1 max-h-[80px] overflow-y-auto">
+                                    {(selectedEnemyDetail.signature_deck || []).length > 0 ? (
+                                        selectedEnemyDetail.signature_deck.map((skill: any, si: number) => (
                                             <span key={si} className="px-1.5 py-0.5 bg-amber-900/30 border border-amber-800/50 rounded text-[9px] text-amber-300">
                                                 {typeof skill === 'string' ? skill : skill.name || skill}
                                             </span>
@@ -1496,10 +1987,41 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                 </div>
 
                 {/* Hand Cards (Horizontal Scrollable Layout) — 2段階アクション対応 */}
-                <div className="relative w-full h-48 flex items-end">
+                <div className="relative w-full h-42 sm:h-48 flex items-end">
+                    {/* カスタムスクロールバー用インラインスタイル */}
+                    <style dangerouslySetInnerHTML={{ __html: `
+                        .custom-scrollbar::-webkit-scrollbar {
+                            height: 5px;
+                        }
+                        .custom-scrollbar::-webkit-scrollbar-track {
+                            background: rgba(15, 23, 42, 0.4);
+                            border-radius: 999px;
+                        }
+                        .custom-scrollbar::-webkit-scrollbar-thumb {
+                            background: rgba(245, 158, 11, 0.4);
+                            border-radius: 999px;
+                            border: 1px solid rgba(251, 191, 36, 0.2);
+                        }
+                        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+                            background: rgba(245, 158, 11, 0.75);
+                        }
+                        .custom-scrollbar-vertical::-webkit-scrollbar {
+                            width: 6px;
+                        }
+                        .custom-scrollbar-vertical::-webkit-scrollbar-track {
+                            background: rgba(15, 23, 42, 0.4);
+                        }
+                        .custom-scrollbar-vertical::-webkit-scrollbar-thumb {
+                            background: rgba(245, 158, 11, 0.4);
+                            border-radius: 999px;
+                            border: 1px solid rgba(251, 191, 36, 0.2);
+                        }
+                        .custom-scrollbar-vertical::-webkit-scrollbar-thumb:hover {
+                            background: rgba(245, 158, 11, 0.75);
+                        }
+                    `}} />
                     <div 
-                        className="w-full h-full overflow-x-auto no-scrollbar snap-x snap-mandatory flex items-end px-[10%] pb-3 pt-12 gap-0"
-                        style={{ maskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)', WebkitMaskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)' }}
+                        className="w-full h-full overflow-x-auto custom-scrollbar snap-x snap-mandatory flex items-end pl-4 pr-[10%] pb-3 pt-8 sm:pt-12 gap-0"
                     >
                         {hand.map((card, idx) => {
                             const apCost = card.ap_cost ?? 1;
@@ -1518,19 +2040,19 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                                     onClick={() => handleCardClick(idx)}
                                     disabled={!canInteract}
                                     className={`relative group transition-all duration-300 flex-shrink-0 snap-center
-                                        ${isSelected ? 'w-[80px] sm:w-28 scale-110 z-50 -translate-y-6' : 'w-[72px] sm:w-24'}
-                                        ${!canInteract ? 'opacity-40 grayscale pointer-events-none' : ''}
-                                        ${!isActivePlayable ? 'opacity-65 grayscale-[50%]' : ''}
-                                        ${selectedCardIndex !== null && !isSelected ? 'opacity-50 scale-95' : ''}
-                                        ${idx > 0 ? '-ml-6 sm:-ml-8' : ''}
-                                     `}
+                                         ${isSelected ? 'w-[78px] sm:w-28 scale-110 z-50 -translate-y-4' : 'w-[68px] sm:w-24'}
+                                         ${!canInteract ? 'opacity-40 grayscale pointer-events-none' : ''}
+                                         ${!isActivePlayable ? 'opacity-65 grayscale-[50%]' : ''}
+                                         ${selectedCardIndex !== null && !isSelected ? 'opacity-50 scale-95' : ''}
+                                         ${idx > 0 ? '-ml-6 sm:-ml-8' : ''}
+                                      `}
                                     style={{
                                         zIndex: isSelected ? 50 : idx
                                     }}
                                     onMouseEnter={(e) => !isSelected && (e.currentTarget.style.zIndex = '50')}
                                     onMouseLeave={(e) => !isSelected && (e.currentTarget.style.zIndex = String(idx))}
                                 >
-                                <div className={`h-32 sm:h-36 border-2 rounded-xl flex flex-col overflow-hidden pointer-events-none transition-all
+                                <div className={`h-28 sm:h-36 border-2 rounded-xl flex flex-col overflow-hidden pointer-events-none transition-all
                                     ${isSelected ? 'animate-[cardSelectPulse_1s_ease-in-out_infinite] border-white' : getCostStyles(apCost)}
                                     ${!isSelected ? 'group-hover:border-amber-400 group-hover:shadow-[0_0_25px_rgba(245,158,11,0.8)]' : ''}
                                 `}>
@@ -1831,4 +2353,14 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
             )}
         </div>
     );
+    } catch (error: any) {
+        console.error("BattleView Render Error:", error);
+        return (
+            <div className="p-6 bg-red-950 border-4 border-red-500 rounded-xl text-red-100 font-mono text-xs overflow-auto max-h-[80vh] relative z-[9999] select-text">
+                <h2 className="text-lg font-bold text-red-400 mb-2">BattleView レンダリングエラー</h2>
+                <p className="font-bold mb-2">{error?.message || String(error)}</p>
+                <pre className="mt-4 whitespace-pre-wrap text-[10px] leading-relaxed">{error?.stack}</pre>
+            </div>
+        );
+    }
 }

@@ -73,7 +73,7 @@ export default function StatusModal({ onClose, isCampMode, questLocked, onRetire
                                 <span className="text-[9px] text-gray-600 shrink-0">{userProfile?.exp ?? 0}/{GROWTH_RULES.EXP_FORMULA(userProfile?.level || 1)}</span>
                             </div>
                             <div className="flex items-center gap-2 text-[11px] text-gray-500 mt-0.5">
-                                <span>年齢:{userProfile?.age ?? 20}</span>
+                                <span>年齢:{(userProfile?.age ?? 20) + Math.floor((userProfile?.accumulated_days || 0) / 365)}歳</span>
                                 <span className="text-gray-700">|</span>
                                 <span>{userProfile?.gender === 'Male' ? '男性' : userProfile?.gender === 'Female' ? '女性' : '不明'}</span>
                                 <span className="text-gray-700">|</span>

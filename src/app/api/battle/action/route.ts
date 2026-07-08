@@ -11,7 +11,7 @@ import { supabaseServer } from '@/lib/supabase-admin';
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        const { battle_session_id, action_type, card, target_id, log_message } = body;
+        const { battle_session_id, action_type, card, target_id, log_message, battle_logs } = body;
         
         const client = createAuthClient(req);
 
@@ -33,6 +33,10 @@ export async function POST(req: Request) {
         let playerState = { ...session.player_state };
         let enemyData = [...session.enemy_data];
         let messages = [log_message || ''];
+
+        if (battle_logs && Array.isArray(battle_logs)) {
+            playerState.battle_logs = battle_logs;
+        }
 
         // Process Action
         if (action_type === 'attack_enemy' && card) {

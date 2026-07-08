@@ -34,7 +34,8 @@ function drawCardsFromDeck(drawCount: number, deck: Card[], discardPile: Card[])
 }
 
 const isTurnEndTickCompensated = (id: StatusEffectId): boolean => {
-    return false; // キャラクター別の手番開始時クリンナップへ移行したため、補正は不要
+    // 敵のターン中にのみ意味を持つ行動制限デバフについて、付与時に+1ターン補正する
+    return ['stun', 'bind', 'freeze'].includes(id);
 };
 
 // ─── ノイズカードのフォールバック ────────────────────────────────────────────
@@ -130,11 +131,39 @@ export const createBattleSlice = (
                 vitDamageTakenThisTurn: false,
                 battle_result: undefined,
                 activeSupportBuffs: [],
+                lastPlayedCard: null,
             }
         }));
     },
 
     startBattle: async (enemiesInput: Enemy | Enemy[]) => {
+        const buildBuffSummaryLine = (name: string, effects: StatusEffect[]): string | null => {
+            if (!effects || !Array.isArray(effects) || effects.length === 0) return null;
+            
+            const buffLabels: string[] = [];
+            const debuffLabels: string[] = [];
+            
+            effects.forEach(eff => {
+                const isDebuff = ['atk_down', 'def_down', 'poison', 'burn', 'bleed', 'paralyze', 'sleep'].includes(eff.id);
+                const nameLabel = getEffectName(eff.id as any, eff.value);
+                const durationStr = eff.duration ? `${eff.duration}T` : '';
+                const valStr = eff.value !== undefined ? `:${eff.value > 0 ? '+' : ''}${eff.value}` : '';
+                const label = `[${nameLabel}${valStr}(${durationStr})]`;
+                
+                if (isDebuff) {
+                    debuffLabels.push(label);
+                } else {
+                    buffLabels.push(label);
+                }
+            });
+            
+            const parts: string[] = [];
+            if (buffLabels.length > 0) parts.push(`バフ: ${buffLabels.join(' ')}`);
+            if (debuffLabels.length > 0) parts.push(`デバフ: ${debuffLabels.join(' ')}`);
+            
+            if (parts.length === 0) return null;
+            return `✨ ${name}の初期状態 ➔ ${parts.join(' / ')}`;
+        };
         const enemies = Array.isArray(enemiesInput) ? enemiesInput : [enemiesInput];
         enemies.forEach(e => { if (!e.status_effects) e.status_effects = []; });
         const firstEnemy = enemies[0];
@@ -278,9 +307,9 @@ export const createBattleSlice = (
                         const duration = buff.duration;
                         const val = buff.value;
                         if (id && duration) {
-                            const finalDuration = isTurnEndTickCompensated(id as StatusEffectId)
-                                ? duration + 1
-                                : duration;
+                            // 戦闘開始時に付与される装備初期バフは、最初のターン開始時の手番クリンナップ（tickEffects）で減少するため、
+                            // 無条件で duration + 1 補正を行い、1T目が無駄に消滅するのを防ぐ！
+                            const finalDuration = duration + 1;
                             initialEffects = applyEffect(initialEffects, id as StatusEffectId, finalDuration, val);
                         }
                     });
@@ -294,22 +323,14 @@ export const createBattleSlice = (
                         const oldHp = currentHp;
                         currentHp = Math.min(fullHp, currentHp + healAmt);
                         const actualHeal = currentHp - oldHp;
-                        if (actualHeal > 0) {
-                            npcStartBuffMessages.push(`✨ ${pm.name}に祈りの加護が発動！(HP+${actualHeal}回復)`);
-                        } else {
-                            npcStartBuffMessages.push(`✨ ${pm.name}に祈りの加護が発動！`);
-                        }
+                        initialEffects = applyEffect(initialEffects, 'prayer_grace' as StatusEffectId, 99, actualHeal);
                     } else if (blessing.ap_bonus) {
-                        npcStartBuffMessages.push(`✨ ${pm.name}に祈りの加護が発動！(初期AP+${blessing.ap_bonus})`);
+                        initialEffects = applyEffect(initialEffects, 'ap_bonus' as StatusEffectId, 99, blessing.ap_bonus);
                     }
                 }
-                const npcStatusLogs = getBuffStatusLogMessages(initialEffects);
-                npcStatusLogs.forEach(msg => {
-                    const formatted = msg
-                        .replace('現在の強化状態', `${pm.name}の装備バフ`)
-                        .replace('現在の弱体・状態異常', `${pm.name}の装備デバフ`);
-                    npcStartBuffMessages.push(formatted);
-                });
+                if (initialEffects && initialEffects.length > 0) {
+                    npcStartBuffMessages.push(`✨ ${pm.name}は初期バフ効果を得た。`);
+                }
             }
 
             return {
@@ -385,9 +406,9 @@ export const createBattleSlice = (
                     const duration = buff.duration;
                     const val = buff.value;
                     if (id && duration) {
-                        const finalDuration = isTurnEndTickCompensated(id as StatusEffectId)
-                            ? duration + 1
-                            : duration;
+                        // 戦闘開始時に付与される装備初期バフは、最初のターン開始時の手番クリンナップ（tickEffects）で減少するため、
+                        // 無条件で duration + 1 補正を行い、1T目が無駄に消滅するのを防ぐ！
+                        const finalDuration = duration + 1;
 
                         initialPlayerEffects = applyEffect(
                             initialPlayerEffects,
@@ -426,17 +447,29 @@ export const createBattleSlice = (
             equipBonusMessages.push(`📦 デッキ充実ボーナス！ ${equippedCount}枚装備 → ${bonusParts.join(' / ')}`);
         }
 
-        const blessingMsg = blessingActive
-            ? (blessingHealAmount > 0
-                ? `✨ 祈りの加護が発動！(AP+1 & HP+${blessingHealAmount}回復)`
-                : `✨ 祈りの加護が発動！(AP+1)`)
-            : null;
+        // プレイヤー自身の祈りの加護を効果リストに追加して集約
+        if (blessingActive) {
+            initialPlayerEffects = applyEffect(
+                initialPlayerEffects, 
+                'prayer_grace' as StatusEffectId, 
+                99, 
+                blessingHealAmount
+            );
+        }
 
-        const playerBuffLogs = getBuffStatusLogMessages(initialPlayerEffects).map(msg =>
-            msg
-                .replace('現在の強化状態', `${userProfile?.name || 'プレイヤー'}の装備バフ`)
-                .replace('現在の弱体・状態異常', `${userProfile?.name || 'プレイヤー'}の装備デバフ`)
-        );
+        const playerBuffSummary = buildBuffSummaryLine(userProfile?.name || 'プレイヤー', initialPlayerEffects);
+        if (playerBuffSummary) {
+            startBuffMessages.push(playerBuffSummary);
+        }
+
+        // 敵全体の初期装備バフ（PvP対戦相手等のstatus_effects）を集約して各キャラ1行に
+        const enemyStartBuffMessages: string[] = [];
+        enemies.forEach(e => {
+            const summary = buildBuffSummaryLine(e.name, e.status_effects || []);
+            if (summary) {
+                enemyStartBuffMessages.push(summary);
+            }
+        });
 
         const startMessages = [
             `${enemies.map(e => e.name).join('と')}が現れた！`,
@@ -444,9 +477,7 @@ export const createBattleSlice = (
             ...startBuffMessages,
             ...npcStartBuffMessages,
             ...(resonanceActive ? ['⚡ 共鳳ボーナス発動！ ATK/DEF +10%（同拠点プレイヤー在駐）'] : []),
-            ...(blessingMsg ? [blessingMsg] : []),
             ...(didProtectFromNoise ? ['✨ 世界の意志の加護により、危険地帯の悪影響（ノイズ）から守られた。'] : []),
-            ...playerBuffLogs,
             `--- ターン 1 ---`
         ];
 
@@ -555,7 +586,8 @@ export const createBattleSlice = (
                     body: JSON.stringify({
                         battle_session_id: battleState.battle_session_id,
                         action_type: 'end_turn',
-                        log_message: 'Player turn ended'
+                        log_message: 'Player turn ended',
+                        battle_logs: battleState.messages || []
                     })
                 }).then(res => res.json()).then(data => {
                     if (data.error) console.warn('Server end_turn validation failed:', data.error);
@@ -613,7 +645,19 @@ export const createBattleSlice = (
     runEnemyPhase: async () => { await get().processEnemyTurn(true); },
 
     advanceTurn: () => {
-        const { battleState, userProfile } = get();
+        const { battleState, userProfile, hand, deck, discardPile } = get();
+        
+        const restoreCost = (c: Card) => {
+            if (c.is_temp_halved && c.original_ap_cost !== undefined) {
+                return { ...c, ap_cost: c.original_ap_cost, is_temp_halved: undefined, original_ap_cost: undefined };
+            }
+            return c;
+        };
+        const nextHand = hand.map(restoreCost);
+        const nextDeck = deck.map(restoreCost);
+        const nextDiscardPile = discardPile.map(restoreCost);
+        
+        set({ hand: nextHand, deck: nextDeck, discardPile: nextDiscardPile });
         
         // プレイヤーターン開始時のクリンナップ (DoT、即死、AP回復)
         let playerEffects = [...(battleState.player_effects || [])] as StatusEffect[];
@@ -823,7 +867,11 @@ export const createBattleSlice = (
                         itemMessages.push(`✨ 天使の涙の奇跡により、${m.name}が蘇生した！ (HP: ${maxDur}/${maxDur})`);
                         itemMessages.push(`__party_sync:${m.id}:${maxDur}`);
                         if (m.id && m.origin_type !== 'quest_guest') {
-                            supabase.from('party_members').update({ durability: maxDur, is_active: true }).eq('id', m.id).then();
+                            const isColosseum = (get().userProfile?.current_quest_id && String(get().userProfile.current_quest_id).startsWith('colosseum_')) || 
+                                                (get().battleState.enemies || []).some(e => e.is_pvp_player || e.is_pvp_member);
+                            if (!isColosseum) {
+                                supabase.from('party_members').update({ durability: maxDur, is_active: true }).eq('id', m.id).then();
+                            }
                         }
                         return {
                             ...m,
@@ -1118,7 +1166,8 @@ export const createBattleSlice = (
                 battleState: {
                     ...state.battleState,
                     current_ap: (battleState.current_ap || 0) - finalApCost,
-                    cardsPlayedThisTurn: (state.battleState.cardsPlayedThisTurn || 0) + 1
+                    cardsPlayedThisTurn: (state.battleState.cardsPlayedThisTurn || 0) + 1,
+                    lastPlayedCard: card.id !== '139' ? { ...card } : state.battleState.lastPlayedCard
                 }
             }));
 
@@ -1156,7 +1205,8 @@ export const createBattleSlice = (
                             action_type: 'attack_enemy',
                             card,
                             target_id: targetEnemyId,
-                            log_message: `Used ${card?.name}`
+                            log_message: `Used ${card?.name}`,
+                            battle_logs: battleState.messages || []
                         })
                     });
                     const data = await res.json();
@@ -2034,12 +2084,15 @@ export const createBattleSlice = (
                         break;
                     }
                     case 'time_reverse': {
-                        const lastPlayedCard = nextDiscardPile[nextDiscardPile.length - 1];
+                        const lastPlayedCard = battleState.lastPlayedCard;
                         if (lastPlayedCard) {
-                            nextDiscardPile = nextDiscardPile.slice(0, -1);
+                            nextDiscardPile = nextDiscardPile.filter(c => c.id !== lastPlayedCard.id);
+                            currentExhaustPile = currentExhaustPile.filter(c => c.id !== lastPlayedCard.id);
                             const halvedCard = {
                                 ...lastPlayedCard,
-                                ap_cost: Math.floor((lastPlayedCard.ap_cost ?? 1) / 2)
+                                original_ap_cost: lastPlayedCard.ap_cost,
+                                ap_cost: Math.floor((lastPlayedCard.ap_cost ?? 1) / 2),
+                                is_temp_halved: true
                             };
                             nextHand.push(halvedCard);
                             logMsg = `${card.name}を使用！ 直前に使用した「${lastPlayedCard.name}」を手札に戻し、そのAPコストを半分にした！`;
@@ -2308,7 +2361,8 @@ export const createBattleSlice = (
                         break;
                     }
                     case 'multi_attack': {
-                        const hitsCount = 2;
+                        const baseId = card.id.match(/^(\d+)/)?.[1] || card.id;
+                        const hitsCount = baseId === '115' ? 3 : 2;
                         let hitLogs: string[] = [];
                         let totalDmg = 0;
                         const basePower = ((card.power ?? 0) / hitsCount) * damageMultiplier;
@@ -2321,7 +2375,8 @@ export const createBattleSlice = (
                                 const targetHasCritVul = freshEnemy.status_effects?.some(e => e.id === 'crit_vulnerability' && e.duration > 0);
                                 const finalCritRate = targetHasCritVul ? BATTLE_RULES.PLAYER_CRIT_RATE + 0.15 : BATTLE_RULES.PLAYER_CRIT_RATE;
 
-                                const result = calculateDamageV4(basePower, freshEnemy.def || 0, currentPlayerEffects as StatusEffect[], freshEnemy.status_effects as StatusEffect[] || [], false, effectivePlayerAtk, finalCritRate);
+                                const targetDef = hit > 0 ? 0 : (freshEnemy.def || 0);
+                                const result = calculateDamageV4(basePower, targetDef, currentPlayerEffects as StatusEffect[], freshEnemy.status_effects as StatusEffect[] || [], false, effectivePlayerAtk, finalCritRate);
                                 totalDmg += result.damage;
 
                                 currentEnemies = currentEnemies.map(e => e.id === freshEnemy.id ? { ...e, hp: Math.max(0, e.hp - result.damage) } : e);
@@ -2356,7 +2411,8 @@ export const createBattleSlice = (
                                 }
                             }
                             damage = 0;
-                            logMsg = `${loopTargetEnemy.name}に${card.name}を使用！ 怒涛の2連撃！\n` + hitLogs.join('\n');
+                            const comboLabel = hitsCount === 3 ? '怒涛の3連撃！' : '怒涛の2連撃！';
+                            logMsg = `${loopTargetEnemy.name}に${card.name}を使用！ ${comboLabel}\n` + hitLogs.join('\n');
                         } else {
                             logMsg = `${card.name}を使用！`;
                         }
@@ -2843,43 +2899,14 @@ export const createBattleSlice = (
             let member = { ...updatedParty[i] };
             if (!member.is_active || (member.durability ?? 100) <= 0) continue;
 
-            // 各味方NPCの手番開始時クリンナップ (行動直前)
-            const mEffects = [...(member.status_effects || [])] as StatusEffect[];
-            const maxDur = member.max_durability || member.durability || 100;
-            const mTick = tickEffects(mEffects, maxDur, member.name);
-            newMessages.push(...mTick.messages);
-
-            let newDur = Math.max(0, (member.durability || 0) + mTick.hpDelta);
-            newDur = Math.min(maxDur, newDur);
-            if (mTick.hpDelta !== 0) {
-                newMessages.push(`__party_sync:${member.id}:${newDur}`);
-            }
-
-            const isNowActive = newDur > 0;
-            if (!isNowActive && member.is_active) {
-                newMessages.push(`${member.name}は力尽きた...`);
-                // 非同期でDB更新
-                supabase.from('party_members').update({ durability: 0, is_active: false }).eq('id', member.id).then();
-            }
-
-            member.durability = newDur;
-            member.status_effects = mTick.newEffects;
-            member.is_active = isNowActive;
-
-            if (!isNowActive) {
-                updatedParty[i] = member;
-                continue;
-            }
-
-            member.used_this_turn = [];
-
-            // 味方NPCのスタン・拘束・凍結チェック (Bug F & G)
             const memberEffects = (member.status_effects || []) as StatusEffect[];
             if (isStunned(memberEffects)) {
                 newMessages.push(`${member.name}は行動不能状態で行動できない！`);
                 updatedParty[i] = member;
                 continue;
             }
+
+            member.used_this_turn = [];
 
             const targetEnemy = freshBattle.enemies.find(e => e.id === currentTargetId);
             const enemyEffects = targetEnemy ? targetEnemy.status_effects : [];
@@ -2901,7 +2928,11 @@ export const createBattleSlice = (
             const lastUsedCardId = (member as any).lastUsedCardId;
 
             for (const action of actions) {
-                newMessages.push(action.message);
+                // 味方お供NPCのアクションログの先頭にゼロ幅スペース（\u200B）をステルスマーカーとして付与
+                const markedMessage = (action.message && action.message.includes('の『')) 
+                    ? `\u200B${action.message}` 
+                    : action.message;
+                newMessages.push(markedMessage);
 
                 if ((action.type === 'attack' || action.type === 'debuff') && action.damage) {
                     const isAoe = action.card?.target_type === 'all_enemies';
@@ -3070,7 +3101,37 @@ export const createBattleSlice = (
                 }
             }
 
-            updatedParty[i] = { ...member, current_ap: member.current_ap, lastUsedCardId } as any;
+            // 各味方NPCの手番終了時クリンナップ (行動直後)
+            const mEffects = [...(member.status_effects || [])] as StatusEffect[];
+            const maxDur = member.max_durability || member.durability || 100;
+            const mTick = tickEffects(mEffects, maxDur, member.name);
+            newMessages.push(...mTick.messages);
+
+            let newDur = Math.max(0, (member.durability || 0) + mTick.hpDelta);
+            newDur = Math.min(maxDur, newDur);
+            if (mTick.hpDelta !== 0) {
+                newMessages.push(`__party_sync:${member.id}:${newDur}`);
+            }
+
+            const isNowActive = newDur > 0;
+            if (!isNowActive && member.is_active) {
+                newMessages.push(`${member.name}は力尽きた...`);
+                // 非同期でDB更新
+                const isColosseum = (get().userProfile?.current_quest_id && String(get().userProfile.current_quest_id).startsWith('colosseum_')) || 
+                                    (get().battleState.enemies || []).some(e => e.is_pvp_player || e.is_pvp_member);
+                if (!isColosseum) {
+                    supabase.from('party_members').update({ durability: 0, is_active: false }).eq('id', member.id).then();
+                }
+            }
+
+            updatedParty[i] = {
+                ...member,
+                durability: newDur,
+                status_effects: mTick.newEffects,
+                is_active: isNowActive,
+                current_ap: member.current_ap,
+                lastUsedCardId
+            } as any;
         }
 
         let updatedEnemies = trackedEnemies;
@@ -3191,6 +3252,7 @@ export const createBattleSlice = (
         let vitDamageTaken = battleState.vitDamageTakenThisTurn;
 
         for (const enemy of activeEnemies) {
+            if ((newUserProfile?.hp || 0) <= 0) break;
             let currentEnemyStatus = updatedEnemies.find(e => e.id === enemy.id);
             if (!currentEnemyStatus || currentEnemyStatus.hp <= 0) continue;
 
@@ -3240,6 +3302,16 @@ export const createBattleSlice = (
                 }
             }
 
+            // PvPエネミーの場合、毎ターン手番開始時にAPを3回復させる（上限15）
+            const isPvPEnemy = enemy.is_pvp_player || enemy.is_pvp_member;
+            if (isPvPEnemy) {
+                const newAp = Math.min(15, ((enemy as any).current_ap ?? 6) + 3);
+                (enemy as any).current_ap = newAp;
+                if (currentEnemyStatus) {
+                    (currentEnemyStatus as any).current_ap = newAp;
+                }
+            }
+
             newMessages.push(`${enemy.name}の行動！`);
 
             const actions = (enemy as any).action_pattern || [];
@@ -3247,8 +3319,125 @@ export const createBattleSlice = (
             let selectedSkillName: string = '攻撃'; // v2.7: スキル名保持
             let applyStun = false;
             let isDrainVit = false;
+            let chosenCard: any = null;
 
-            if (actions.length > 0) {
+            const sigDeck = enemy.signature_deck || [];
+            if (isPvPEnemy && sigDeck.length > 0) {
+                const currentAp = (enemy as any).current_ap ?? 6;
+                // 使用可能なスキルを抽出 (APが足りるもの ＆ 使用禁止カードを除外)
+                const EXCLUDED_NPC_CARDS = ['56', '57', '58', '59', '60', '73', '85', '110', '117', '118', '120', '132', '137', '138', '139', '140'];
+                const playableSkills = sigDeck.filter((c: any) => {
+                    const apCost = c.ap_cost ?? 1;
+                    return currentAp >= apCost && !EXCLUDED_NPC_CARDS.includes(String(c.id));
+                });
+
+                if (playableSkills.length > 0) {
+                    chosenCard = playableSkills[Math.floor(Math.random() * playableSkills.length)];
+                    const apCost = chosenCard.ap_cost ?? 1;
+                    const nextAp = Math.max(0, currentAp - apCost);
+                    (enemy as any).current_ap = nextAp;
+                    if (currentEnemyStatus) {
+                        (currentEnemyStatus as any).current_ap = nextAp;
+                    }
+
+                    // プレイヤーのスキルカードIDからエネミースキルのslugを引くマップ
+                    const cardToEnemySkillMap: Record<string, string> = {
+                        '1': 'skill_heavy_blow',       // 強打
+                        '2': 'skill_heavy_blow',       // 斬撃
+                        '3': 'skill_heavy_blow',       // 突き
+                        '4': 'skill_counter_stance',   // 防御 (反撃の構え)
+                        '6': 'skill_shield_bash',      // シールドバッシュ (スタン物理)
+                        '9': 'skill_counter_stance',   // 挑発
+                        '11': 'skill_michael_blade',   // 聖剣 (防御無視物理)
+                        '12': 'skill_thunder_strike',  // 裁き (スタン魔法)
+                        '13': 'skill_boss_heal',       // 祈り (回復)
+                        '14': 'skill_boss_heal',       // 治癒 (回復)
+                        '15': 'skill_counter_stance',  // 聖壁
+                        '16': 'skill_gabriel_horn',    // 砂の罠 (全体デバフ)
+                        '17': 'skill_sand_blind',      // 砂塵の目眩まし (目潰し)
+                        '18': 'skill_poison_attack',   // 毒刃 (毒物理)
+                        '22': 'skill_claw_rend',       // クナイ投げ (出血物理)
+                        '25': 'skill_ares_strike',     // 居合切り
+                        '26': 'skill_thunder_strike',  // 氷槍 (スタン魔法/代替)
+                        '29': 'skill_heavy_blow',      // 強打
+                        '45': 'skill_ares_strike',     // 岩砕き
+                        '48': 'skill_michael_blade',   // 天翔斬
+                        '71': 'skill_zeus_aegis',      // 五星の加護
+                        '101': 'skill_katana_slash',   // カタルシス (単体物理)
+                        '102': 'skill_claw_rend',      // 傷口をえぐる (単体出血)
+                        '103': 'skill_heavy_blow',     // 無防備な獲物 (単体スタン追撃)
+                        '104': 'skill_poison_breath',  // 伝染病の霧 (全体毒)
+                        '105': 'skill_shield_bash',    // シールドスラム (単体物理/スタン)
+                        '109': 'skill_assassinate',    // デスペラード (単体高威力)
+                        '111': 'skill_heavy_blow',     // 捨て身の一撃 (単体物理)
+                        '112': 'skill_aoe_blast',      // デトネーション (全体攻撃)
+                        '114': 'skill_thunder_strike', // フリーズランサー (単体スタン)
+                        '115': 'skill_thunder_strike', // 雷電の連鎖 (3連撃)
+                        '116': 'skill_uriel_flame',    // プロミネンス (全体火炎)
+                        '121': 'skill_death_sentence', // 死神 of 宣告 (防御DOWNデバフ)
+                        '122': 'skill_katana_slash',   // 血の追撃 (単体物理)
+                        '123': 'skill_uriel_flame',    // フレイムバースト (全体火炎)
+                        '124': 'skill_gabriel_horn',   // 凍てつく波動 (全体デバフ)
+                        '129': 'skill_heavy_blow',     // 成金の一撃 (単体物理)
+                        '130': 'skill_katana_slash',   // ギャンブラーダイス (単体物理)
+                        '134': 'skill_god_purge',      // プラズマシャワー (全体スタン物理)
+                        '135': 'skill_aoe_blast',      // アブソリュートゼロ (全体魔法/スタン)
+                        '136': 'skill_uriel_flame',    // ファイアウェーブ (全体火炎)
+                        '1': 'skill_attack',           // 攻撃
+                        '3': 'skill_katana_slash',     // 突き
+                        '4': 'skill_heavy_blow',       // 強打
+                        '5': 'skill_heavy_blow',       // 岩砕き
+                        '6': 'skill_shield_bash',      // シールドバッシュ
+                        '7': 'skill_arrow',            // 火の矢
+                        '8': 'skill_thunder_strike',   // アイスパイク
+                        '9': 'skill_boss_heal',        // ヒーリング
+                        '10': 'skill_heal_minor',      // 瞑想
+                        '11': 'skill_heal_minor',      // 応急処置
+                        '29': 'skill_poison_attack',   // 毒牙
+                        '30': 'skill_shield_bash',     // 砂の罠 (スタン物理)
+                    };
+                    
+                    const cardIdStr = String(chosenCard.id);
+                    
+                    // 闇の代償 (57)
+                    if (cardIdStr === '57') {
+                        const selfDmg = 40;
+                        const nextSelfHp = Math.max(1, currentEnemyStatus.hp - selfDmg);
+                        const nextAp = Math.min(15, (currentEnemyStatus.current_ap || 0) + 6);
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, hp: nextSelfHp, current_ap: nextAp } : e);
+                        newMessages.push(`${enemy.name}の『闇の代償』！ 自身の生命を削り、APを回復した！`);
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, lastUsedSkill: selectedSkillSlug } as any : e);
+                        continue;
+                    }
+
+                    const mappedSlug = cardToEnemySkillMap[cardIdStr];
+                    
+                    if (mappedSlug) {
+                        selectedSkillSlug = mappedSlug;
+                    } else {
+                        // マップに無い場合は、回復か攻撃かで判定
+                        const isHeal = String(chosenCard.name).includes('治癒') || String(chosenCard.name).includes('回復') || (chosenCard.power || 0) < 0;
+                        selectedSkillSlug = isHeal ? 'skill_boss_heal' : 'skill_shield_bash';
+                    }
+                    
+                    // 戦闘ログ表示に元のスキルカード名を使用する
+                    selectedSkillName = chosenCard.name;
+                } else {
+                    // APが1以上あれば通常攻撃
+                    if (currentAp >= 1) {
+                        chosenCard = { id: '1', name: '攻撃', power: 15, ap_cost: 1 };
+                        const nextAp = Math.max(0, currentAp - 1);
+                        (enemy as any).current_ap = nextAp;
+                        if (currentEnemyStatus) {
+                            (currentEnemyStatus as any).current_ap = nextAp;
+                        }
+                        selectedSkillSlug = 'skill_attack';
+                        selectedSkillName = '攻撃';
+                    } else {
+                        newMessages.push(`${enemy.name}はAPが足りず、行動できない！`);
+                    }
+                }
+            } else if (actions.length > 0) {
                 const validActions = actions.filter((a: any) => {
                     if (!a.condition) return true;
                     const parts = String(a.condition).split(':');
@@ -3286,7 +3475,277 @@ export const createBattleSlice = (
             let applyDefDown = false;
 
             if (skillDef) {
-                selectedSkillName = skillDef.name;
+                // PvP敵お供が特殊なカードを使用した場合の個別解決ロジック
+                if (isPvPEnemy && chosenCard) {
+                    const cardIdStr = String(chosenCard.id);
+
+                    // A. カタルシス (101) ➔ プレイヤーの毒・炎上の残りDoTダメージを一挙に発生させて状態異常を消去
+                    if (cardIdStr === '101') {
+                        const dotEffects = currentPlayerEffects.filter(e => e.id === 'poison' || e.id === 'burn');
+                        let totalDmg = 25; // 基本ダメージ
+                        if (dotEffects.length > 0) {
+                            totalDmg = 0;
+                            dotEffects.forEach(e => {
+                                const duration = e.duration || 1;
+                                totalDmg += duration * 100;
+                            });
+                            currentPlayerEffects = currentPlayerEffects.filter(e => e.id !== 'poison' && e.id !== 'burn');
+                            newMessages.push(`${enemy.name}の『カタルシス』！ あなたの毒・炎上状態を大爆発させた！`);
+                        } else {
+                            newMessages.push(`${enemy.name}の『カタルシス』！`);
+                        }
+                        
+                        const def = getEffectiveDef(newUserProfile, get().battleState);
+                        const defBonus = getDefBonus(currentPlayerEffects);
+                        const defDownMod = getDefDownMod(currentPlayerEffects);
+                        const effectiveDef = Math.floor((def + defBonus) * defDownMod);
+                        const finalDmg = Math.max(1, totalDmg - effectiveDef);
+                        
+                        if (newUserProfile) {
+                            const prevHp = newUserProfile.hp || 0;
+                            const newHp = Math.max(0, prevHp - finalDmg);
+                            newUserProfile.hp = newHp;
+                            newMessages.push(`起爆の衝撃！ あなたに ${finalDmg} ダメージ (HP: ${prevHp} → ${newHp})`);
+                            newMessages.push(`__hp_sync:${newHp}`);
+                        }
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, lastUsedSkill: selectedSkillSlug } as any : e);
+                        continue;
+                    }
+
+                    // B. シールドスラム (105) ➔ 自身の防御増加バフをすべて消費して大ダメージを与える
+                    if (cardIdStr === '105') {
+                        const defUpEffects = (currentEnemyStatus.status_effects || []).filter(e => e.id === 'def_up');
+                        let extraDmg = 0;
+                        defUpEffects.forEach(e => {
+                            extraDmg += Number(e.val) || 30;
+                        });
+                        
+                        const nextEffects = (currentEnemyStatus.status_effects || []).filter(e => e.id !== 'def_up');
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, status_effects: nextEffects } : e);
+                        
+                        const totalPower = 10 + extraDmg;
+                        const baseAtk = (enemy as any).atk || ((enemy.level || 1) * 3 + 5);
+                        const atkDownMod = getAtkDownMod(enemyStatusEffects);
+                        const enemyAtkValue = Math.floor(baseAtk * (totalPower / 20) * atkDownMod);
+                        
+                        const def = getEffectiveDef(newUserProfile, get().battleState);
+                        const defBonus = getDefBonus(currentPlayerEffects);
+                        const defDownMod = getDefDownMod(currentPlayerEffects);
+                        const effectiveDef = Math.floor((def + defBonus) * defDownMod);
+                        const finalDmg = Math.max(1, enemyAtkValue - effectiveDef);
+                        
+                        newMessages.push(`${enemy.name}の『シールドスラム』！ 自身の防御バフを全て威力に上乗せして叩きつけた！`);
+                        if (newUserProfile) {
+                            const prevHp = newUserProfile.hp || 0;
+                            const newHp = Math.max(0, prevHp - finalDmg);
+                            newUserProfile.hp = newHp;
+                            newMessages.push(`あなたに ${finalDmg} ダメージ (HP: ${prevHp} → ${newHp})`);
+                            newMessages.push(`__hp_sync:${newHp}`);
+                        }
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, lastUsedSkill: selectedSkillSlug } as any : e);
+                        continue;
+                    }
+
+                    // C. オアシスの水 (20) ➔ 敵全員の状態異常を治療しHPを 60 回復
+                    if (cardIdStr === '20') {
+                        updatedEnemies = updatedEnemies.map(e => {
+                            if (e.hp <= 0) return e;
+                            const cleanEffects = (e.status_effects || []).filter(eff => !['poison', 'bleed', 'bleed_minor', 'burn', 'stun', 'bind', 'freeze', 'blind'].includes(eff.id));
+                            const nextHp = Math.min(e.maxHp || 100, e.hp + 60);
+                            return { ...e, status_effects: cleanEffects, hp: nextHp };
+                        });
+                        newMessages.push(`${enemy.name}の『オアシスの水』！ 敵全員の状態異常を解除し、HPを 60 回復した。`);
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, lastUsedSkill: selectedSkillSlug } as any : e);
+                        continue;
+                    }
+
+                    // D. 清め (24) ➔ 敵全員のデバフを払い除けHPを 50 回復
+                    if (cardIdStr === '24') {
+                        updatedEnemies = updatedEnemies.map(e => {
+                            if (e.hp <= 0) return e;
+                            const cleanEffects = (e.status_effects || []).filter(eff => !['atk_down', 'def_down', 'spd_down'].includes(eff.id));
+                            const nextHp = Math.min(e.maxHp || 100, e.hp + 50);
+                            return { ...e, status_effects: cleanEffects, hp: nextHp };
+                        });
+                        newMessages.push(`${enemy.name}の『清め』！ 敵全員のデバフを解除し、HPを 50 回復した。`);
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, lastUsedSkill: selectedSkillSlug } as any : e);
+                        continue;
+                    }
+                    
+                    // 1. ダブルキャスト (116)
+                    if (cardIdStr === '116') {
+                        const doubleCastEffect: StatusEffect = {
+                            id: 'double_cast',
+                            name: 'ダブルキャスト',
+                            duration: 3,
+                            val: 1,
+                            type: 'buff'
+                        };
+                        const updatedEffects = [...(currentEnemyStatus.status_effects || []), doubleCastEffect];
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, status_effects: updatedEffects } : e);
+                        newMessages.push(`${enemy.name}の『ダブルキャスト』！ 自身にダブルキャスト状態を付与した。`);
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, lastUsedSkill: selectedSkillSlug } as any : e);
+                        continue; // ダメージ処理を行わずにターン終了！
+                    }
+                    
+                    // 2. 瞑想 (64)
+                    if (cardIdStr === '10' || cardIdStr === '64') {
+                        const nextAp = Math.min(10, (currentEnemyStatus.current_ap || 0) + 4);
+                        const nextHp = Math.min(enemy.maxHp, currentEnemyStatus.hp + 30);
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, current_ap: nextAp, hp: nextHp } : e);
+                        newMessages.push(`${enemy.name}の『瞑想』！ 自身のAPとHPが回復した。`);
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, lastUsedSkill: selectedSkillSlug } as any : e);
+                        continue; // ダメージ処理を行わずにターン終了！
+                    }
+
+                    // タイムリバース (139)
+                    if (cardIdStr === '139') {
+                        const nextAp = Math.min(10, (currentEnemyStatus.current_ap || 0) + 3);
+                        const cleanEffects = (currentEnemyStatus.status_effects || []).filter(eff => !['atk_down', 'def_down', 'spd_down', 'blind', 'poison', 'bleed', 'bleed_minor', 'burn'].includes(eff.id));
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, current_ap: nextAp, status_effects: cleanEffects } : e);
+                        newMessages.push(`${enemy.name}の『タイムリバース』！ 時間を巻き戻し、APと状態異常を回復した。`);
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, lastUsedSkill: selectedSkillSlug } as any : e);
+                        continue;
+                    }
+
+
+
+                    // 3. スパイクアーマー (106)
+                    if (cardIdStr === '106') {
+                        const effect: StatusEffect = { id: 'counter_spike', name: '棘の鎧', duration: 3, val: 1, type: 'buff' };
+                        const updatedEffects = [...(currentEnemyStatus.status_effects || []), effect];
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, status_effects: updatedEffects } : e);
+                        newMessages.push(`${enemy.name}の『スパイクアーマー』！ 自身にダメージ反射の茨を纏った。`);
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, lastUsedSkill: selectedSkillSlug } as any : e);
+                        continue;
+                    }
+
+                    // 4. 不屈の防陣 (107)
+                    if (cardIdStr === '107') {
+                        updatedEnemies = updatedEnemies.map(e => {
+                            if (e.hp <= 0) return e;
+                            const effect: StatusEffect = { id: 'unyielding_barrier', name: '不屈の防陣', duration: 3, val: 30, type: 'buff' };
+                            const updatedEffects = [...(e.status_effects || []), effect];
+                            return { ...e, status_effects: updatedEffects };
+                        });
+                        newMessages.push(`${enemy.name}の『不屈の防陣』！ 敵パーティ全体の受けるダメージが減少した。`);
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, lastUsedSkill: selectedSkillSlug } as any : e);
+                        continue;
+                    }
+
+                    // 5. 犠牲の誓約 (108)
+                    if (cardIdStr === '108') {
+                        const selfDmg = 20;
+                        const nextSelfHp = Math.max(1, currentEnemyStatus.hp - selfDmg);
+                        const otherAllies = updatedEnemies.filter(e => e.id !== enemy.id && e.hp > 0);
+                        if (otherAllies.length > 0) {
+                            const targetAlly = otherAllies.reduce((a, b) => a.hp < b.hp ? a : b);
+                            updatedEnemies = updatedEnemies.map(e => {
+                                if (e.id === enemy.id) return { ...e, hp: nextSelfHp };
+                                if (e.id === targetAlly.id) {
+                                    const effect: StatusEffect = { id: 'unyielding_barrier', name: '犠牲の誓約', duration: 3, val: 30, type: 'buff' };
+                                    const updatedEffects = [...(e.status_effects || []), effect];
+                                    return { ...e, status_effects: updatedEffects };
+                                }
+                                return e;
+                            });
+                            newMessages.push(`${enemy.name}の『犠牲の誓約』！ 自身のHPを削り、${targetAlly.name}の受けるダメージを減少した。`);
+                        } else {
+                            updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, hp: nextSelfHp } : e);
+                            newMessages.push(`${enemy.name}の『犠牲の誓約』！ 自身のHPを削った。`);
+                        }
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, lastUsedSkill: selectedSkillSlug } as any : e);
+                        continue;
+                    }
+
+                    // 6. 生贄の儀式 (110)
+                    if (cardIdStr === '110') {
+                        const selfDmg = 15;
+                        const nextSelfHp = Math.max(1, currentEnemyStatus.hp - selfDmg);
+                        const nextAp = Math.min(10, (currentEnemyStatus.current_ap || 0) + 3);
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, hp: nextSelfHp, current_ap: nextAp } : e);
+                        newMessages.push(`${enemy.name}の『生贄の儀式』！ 自身のHPを削り、APを回復した。`);
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, lastUsedSkill: selectedSkillSlug } as any : e);
+                        continue;
+                    }
+
+                    // 7. マナチャージ (113)
+                    if (cardIdStr === '113') {
+                        const nextAp = Math.min(10, (currentEnemyStatus.current_ap || 0) + 3);
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, current_ap: nextAp } : e);
+                        newMessages.push(`${enemy.name}の『マナチャージ』！ 自身のAPを回復した。`);
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, lastUsedSkill: selectedSkillSlug } as any : e);
+                        continue;
+                    }
+
+                    // 8. サーチライト (118)
+                    if (cardIdStr === '118') {
+                        const effect: StatusEffect = { id: 'precision', name: 'サーチライト', duration: 3, val: 1, type: 'buff' };
+                        const updatedEffects = [...(currentEnemyStatus.status_effects || []), effect];
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, status_effects: updatedEffects } : e);
+                        newMessages.push(`${enemy.name}の『サーチライト』！ 攻撃が必中になった。`);
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, lastUsedSkill: selectedSkillSlug } as any : e);
+                        continue;
+                    }
+
+                    // 9. アイアンバスティオン (125)
+                    if (cardIdStr === '125') {
+                        const effect: StatusEffect = { id: 'cover_all', name: 'かばう', duration: 3, val: 1, type: 'buff' };
+                        const updatedEffects = [...(currentEnemyStatus.status_effects || []), effect];
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, status_effects: updatedEffects } : e);
+                        newMessages.push(`${enemy.name}の『アイアンバスティオン』！ 自身がかばう状態になった。`);
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, lastUsedSkill: selectedSkillSlug } as any : e);
+                        continue;
+                    }
+
+                    // 10. リベンジシールド (126)
+                    if (cardIdStr === '126') {
+                        const effect: StatusEffect = { id: 'revenge_shield', name: '報復の盾', duration: 3, val: 1, type: 'buff' };
+                        const updatedEffects = [...(currentEnemyStatus.status_effects || []), effect];
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, status_effects: updatedEffects } : e);
+                        newMessages.push(`${enemy.name}の『リベンジシールド』！ ダメージをそのまま反射するシールドを展開した。`);
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, lastUsedSkill: selectedSkillSlug } as any : e);
+                        continue;
+                    }
+
+                    // 11. グラウンディング (128)
+                    if (cardIdStr === '128') {
+                        const effect: StatusEffect = { id: 'stun_immune', name: '気絶無効', duration: 3, val: 1, type: 'buff' };
+                        const updatedEffects = [...(currentEnemyStatus.status_effects || []), effect];
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, status_effects: updatedEffects } : e);
+                        newMessages.push(`${enemy.name}の『グラウンディング』！ 気絶免疫を獲得した。`);
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, lastUsedSkill: selectedSkillSlug } as any : e);
+                        continue;
+                    }
+
+                    // 12. ソウルブースト (131)
+                    if (cardIdStr === '131') {
+                        const nextAp = Math.min(10, (currentEnemyStatus.current_ap || 0) + 4);
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, current_ap: nextAp } : e);
+                        newMessages.push(`${enemy.name}の『ソウルブースト』！ 魂を高めてAPを回復した。`);
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, lastUsedSkill: selectedSkillSlug } as any : e);
+                        continue;
+                    }
+
+                    // 13. 属性の共鳴 (133)
+                    if (cardIdStr === '133') {
+                        updatedEnemies = updatedEnemies.map(e => {
+                            if (e.hp <= 0) return e;
+                            const effect: StatusEffect = { id: 'atk_up', name: '属性の共鳴', duration: 3, val: 0.1, type: 'buff' };
+                            const updatedEffects = [...(e.status_effects || []), effect];
+                            return { ...e, status_effects: updatedEffects };
+                        });
+                        newMessages.push(`${enemy.name}の『属性の共鳴』！ 敵パーティ全体の攻撃力が上がった。`);
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, lastUsedSkill: selectedSkillSlug } as any : e);
+                        continue;
+                    }
+                }
+
+                // PvP敵お供の場合、ログのスキル名は元のカード名（ファイアウェーブ等）を維持し、
+                // モンスタースキルの名前に上書きされるのを防ぐ！
+                if (!isPvPEnemy) {
+                    selectedSkillName = skillDef.name;
+                }
                 // v2.9.3g: CSVのatk値を使用。未設定時はlevelベースのフォールバック
                 const baseAtk = (enemy as any).atk || ((enemy.level || 1) * 3 + 5);
                 switch (skillDef.effect_type) {
@@ -3424,198 +3883,315 @@ export const createBattleSlice = (
                 const skillLabel = skillDef ? `『${selectedSkillName}』` : '攻撃';
                 newMessages.push(`${enemy.name}の${skillLabel}は外れた！ ミス！ (${totalMiss}%)`);
                 // v4.0: lastUsedSkill更新
-                updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, lastUsedSkill: selectedSkillSlug } as any : e);
+                updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...currentEnemyStatus, lastUsedSkill: selectedSkillSlug } as any : e);
                 continue;
             }
 
-            if (enemyAtk <= 0) continue;
-
-            // v4.0: ダメージ揺らぎ + クリティカル（DEF減算前）
-            const enemyCritRate = (enemy.level || 1) >= 20 ? BATTLE_RULES.ENEMY_BOSS_CRIT_RATE : BATTLE_RULES.ENEMY_CRIT_RATE;
-            const playerHasCritVul = currentPlayerEffects.some(e => e.id === 'crit_vulnerability' && e.duration > 0);
-            const finalEnemyCritRate = playerHasCritVul ? enemyCritRate + 0.15 : enemyCritRate; // 被クリティカルUP反映 (Bug W)
-            const variance = BATTLE_RULES.DAMAGE_VARIANCE_MIN + Math.random() * (BATTLE_RULES.DAMAGE_VARIANCE_MAX - BATTLE_RULES.DAMAGE_VARIANCE_MIN);
-            let variedAtk = enemyAtk * variance;
-            const isEnemyCrit = Math.random() < finalEnemyCritRate;
-            if (isEnemyCrit) {
-                variedAtk = variedAtk * BATTLE_RULES.CRIT_MULTIPLIER;
-            }
-            const finalEnemyAtk = Math.max(1, Math.floor(variedAtk));
-            const enemyCritLabel = isEnemyCrit ? ' クリティカルヒット！' : '';
-
-            // v4.0: lastUsedSkill更新
-            updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, lastUsedSkill: selectedSkillSlug } as any : e);
-
-            const evasionChance = getEvasionChance(currentPlayerEffects);
-            if (evasionChance > 0 && Math.random() < evasionChance) {
-                newMessages.push(`${enemy.name}の攻撃を華麗に回避した！ (evasion_up)`);
-                continue;
+            // 敵お供NPCが「雷電の連鎖 (115)」を使用した場合、ヒット数を 3 に設定
+            const isChainLightning = isPvPEnemy && chosenCard && String(chosenCard.id) === '115';
+            
+            // 自身に double_cast バフがかかっているかチェック
+            const hasDoubleCast = enemyStatusEffects.some(e => e.id === 'double_cast');
+            
+            // ダブルキャストのバフを消費
+            if (hasDoubleCast) {
+                const updatedEffects = enemyStatusEffects.filter(e => e.id !== 'double_cast');
+                updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, status_effects: updatedEffects } : e);
             }
 
-            let result = routeDamage(newParty, finalEnemyAtk);
+            const hitCount = isChainLightning ? 3 : 1;
+            const castCount = hasDoubleCast ? 2 : 1;
+            const totalHits = hitCount * castCount;
 
-            // cover_all check: if player has cover_all, redirect any PartyMember attack to Player
-            const hasCoverAll = currentPlayerEffects.some(e => e.id === 'cover_all' && e.duration > 0);
-            if (hasCoverAll && result.target === 'PartyMember') {
-                result = {
-                    target: 'Player',
-                    damage: result.damage,
-                    isCovered: true,
-                    message: `身代わりの盾！ あなたが攻撃を肩代わりした！`
-                };
-            }
+            for (let h = 0; h < totalHits; h++) {
+                // すでにプレイヤーのHPが0の場合はループを抜ける
+                if ((newUserProfile?.hp || 0) <= 0) break;
+                if (enemyAtk <= 0) break;
 
-            if (result.target === 'PartyMember' && result.targetId) {
-                newParty = newParty.map(p => {
-                    if (p.id === result.targetId) {
-                        const baseDef = p.def || 0;
-                        const pEffects = (p.status_effects || []) as StatusEffect[];
-                        const defBonus = getDefBonus(pEffects);
-                        const defDownMod = getDefDownMod(pEffects);
-                        const effectiveDef = Math.floor((baseDef + defBonus) * defDownMod);
-                        let mitigated = Math.max(1, result.damage - effectiveDef);
-                        if (pEffects.some(e => e.id === 'unyielding_barrier' && e.duration > 0)) {
-                            mitigated = Math.max(1, mitigated - 30);
-                        }
-                        const newDur = Math.max(0, p.durability - mitigated);
-                        const skillLabel = skillDef ? `『${selectedSkillName}』` : '攻撃';
-                        const defDesc = effectiveDef > 0 ? ` (防御減算 -${effectiveDef})` : '';
-                        if (result.isCovered) {
-                            newMessages.push(`${enemy.name}の${skillLabel}！${enemyCritLabel} ${p.name}がかばった！ ${mitigated} ダメージ${defDesc} (HP: ${p.durability} → ${newDur})`);
-                        } else {
-                            newMessages.push(`${enemy.name}の${skillLabel}！${enemyCritLabel} ${p.name}に ${mitigated} ダメージ${defDesc} (HP: ${p.durability} → ${newDur})`);
-                        }
-                        newMessages.push(`__party_sync:${p.id}:${newDur}`);
-                        if (newDur <= 0) {
-                            newMessages.push(`${p.name}は力尽きた...`);
-                            if (p.origin_type !== 'quest_guest') {
-                                supabase.from('party_members').update({ durability: 0, is_active: false }).eq('id', p.id).then();
-                            }
-                        }
-                        return { ...p, durability: newDur, is_active: newDur > 0 };
-                    }
-                    return p;
-                });
-            }
+                // v4.0: ダメージ揺らぎ + クリティカル（DEF減算前）
+                const enemyCritRate = (enemy.level || 1) >= 20 ? BATTLE_RULES.ENEMY_BOSS_CRIT_RATE : BATTLE_RULES.ENEMY_CRIT_RATE;
+                const playerHasCritVul = currentPlayerEffects.some(e => e.id === 'crit_vulnerability' && e.duration > 0);
+                const finalEnemyCritRate = playerHasCritVul ? enemyCritRate + 0.15 : enemyCritRate; // 被クリティカルUP反映 (Bug W)
+                const variance = BATTLE_RULES.DAMAGE_VARIANCE_MIN + Math.random() * (BATTLE_RULES.DAMAGE_VARIANCE_MAX - BATTLE_RULES.DAMAGE_VARIANCE_MIN);
+                
+                // 雷電の連鎖の場合は1ヒットあたりの威力を0.4倍にする（3ヒットで合計1.2倍）
+                const baseAtkMultiplier = isChainLightning ? 0.4 : 1.0;
+                let variedAtk = enemyAtk * variance * baseAtkMultiplier;
+                
+                const isEnemyCrit = Math.random() < finalEnemyCritRate;
+                if (isEnemyCrit) {
+                    variedAtk = variedAtk * BATTLE_RULES.CRIT_MULTIPLIER;
+                }
+                const finalEnemyAtk = Math.max(1, Math.floor(variedAtk));
+                const enemyCritLabel = isEnemyCrit ? ' クリティカルヒット！' : '';
 
-            if (result.target === 'Player') {
-                const def = getEffectiveDef(newUserProfile, get().battleState);
-                const defBonus = getDefBonus(currentPlayerEffects);
-                // v2.9.3h: DEF DOWNデバフ適用（DEF半減）
-                const defDownMod = getDefDownMod(currentPlayerEffects);
-                const effectiveDef = Math.floor((def + defBonus) * defDownMod);
-                let mitigated = Math.max(1, result.damage - effectiveDef);
-                if (currentPlayerEffects.some(e => e.id === 'unyielding_barrier' && e.duration > 0)) {
-                    mitigated = Math.max(1, mitigated - 30);
+                // v4.0: lastUsedSkill更新
+                updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...currentEnemyStatus, lastUsedSkill: selectedSkillSlug } as any : e);
+
+                // v4.0: ミス判定（基礎ミス率 + blind 加算方式）
+                const blindMissRate = getMissChance(enemyStatusEffects);
+                if (rollMiss(BATTLE_RULES.ENEMY_MISS_RATE, blindMissRate)) {
+                    const totalMiss = Math.min(95, Math.floor((BATTLE_RULES.ENEMY_MISS_RATE + blindMissRate) * 100));
+                    const skillLabel = skillDef ? `『${selectedSkillName}』` : '攻撃';
+                    newMessages.push(`${enemy.name}の${skillLabel}は外れた！ ミス！ (${totalMiss}%)`);
+                    continue;
                 }
 
-                if (newUserProfile) {
-                    const prevHp = newUserProfile.hp || 0;
-                    const newHp = Math.max(0, prevHp - mitigated);
-                    const actualDamage = prevHp - newHp;
-                    newUserProfile.hp = newHp;
-                    const skillLabel = skillDef ? `『${selectedSkillName}』` : '攻撃';
+                const evasionChance = getEvasionChance(currentPlayerEffects);
+                if (evasionChance > 0 && Math.random() < evasionChance) {
+                    newMessages.push(`${enemy.name}の攻撃を華麗に回避した！ (evasion_up)`);
+                    continue;
+                }
 
-                    if (mitigated > 0) {
-                        const defDesc = effectiveDef > 0 ? ` (防御減算 -${effectiveDef})` : '';
-                        if (result.isCovered) {
-                            newMessages.push(`身代わりの盾！ あなたが攻撃を肩代わりした！`);
-                        }
-                        newMessages.push(`${enemy.name}の${skillLabel}！${enemyCritLabel} あなたに ${mitigated} ダメージ${defDesc} (HP: ${prevHp} → ${newHp})`);
-                        newMessages.push(`__hp_sync:${newHp}`);
+                let result = routeDamage(newParty, finalEnemyAtk);
 
-                        // Reflection check
-                        let reflectDmg = 0;
-                        let reflectMsgs: string[] = [];
+                // cover_all check: if player has cover_all, redirect any PartyMember attack to Player
+                const hasCoverAll = currentPlayerEffects.some(e => e.id === 'cover_all' && e.duration > 0);
+                if (hasCoverAll && result.target === 'PartyMember') {
+                    result = {
+                        target: 'Player',
+                        damage: result.damage,
+                        isCovered: true,
+                        message: `身代わりの盾！ あなたが攻撃を肩代わりした！`
+                    };
+                }
 
-                        if (currentPlayerEffects.some(e => e.id === 'counter_spike' && e.duration > 0)) {
-                            const spikeDmg = Math.max(1, Math.floor(def / 2));
-                            reflectDmg += spikeDmg;
-                            reflectMsgs.push(`棘の鎧の効果で ${enemy.name} に ${spikeDmg} ダメージを反射！`);
-                        }
-                        if (currentPlayerEffects.some(e => e.id === 'revenge_shield' && e.duration > 0)) {
-                            const revDmg = mitigated;
-                            reflectDmg += revDmg;
-                            reflectMsgs.push(`報復の盾の効果で ${enemy.name} に ${revDmg} ダメージを反射！`);
-                        }
-
-                        if (reflectDmg > 0) {
-                            const eIdx = updatedEnemies.findIndex(e => e.id === enemy.id);
-                            if (eIdx !== -1) {
-                                const newEnemyHp = Math.max(0, updatedEnemies[eIdx].hp - reflectDmg);
-                                updatedEnemies[eIdx] = { ...updatedEnemies[eIdx], hp: newEnemyHp };
-                                newMessages.push(...reflectMsgs);
-                                if (newEnemyHp <= 0) {
-                                    newMessages.push(`${enemy.name}は反射ダメージで倒れた！`);
+                if (result.target === 'PartyMember' && result.targetId) {
+                    newParty = newParty.map(p => {
+                        if (p.id === result.targetId) {
+                            const baseDef = p.def || 0;
+                            const pEffects = (p.status_effects || []) as StatusEffect[];
+                            const defBonus = getDefBonus(pEffects);
+                            const defDownMod = getDefDownMod(pEffects);
+                            const effectiveDef = Math.floor((baseDef + defBonus) * defDownMod);
+                            let mitigated = Math.max(1, result.damage - effectiveDef);
+                            if (pEffects.some(e => e.id === 'unyielding_barrier' && e.duration > 0)) {
+                                mitigated = Math.max(1, mitigated - 30);
+                            }
+                            const newDur = Math.max(0, p.durability - mitigated);
+                            const skillLabel = skillDef ? `『${selectedSkillName}』` : '攻撃';
+                            const defDesc = effectiveDef > 0 ? ` (防御減算 -${effectiveDef})` : '';
+                            if (result.isCovered) {
+                                newMessages.push(`${enemy.name}の${skillLabel}！${enemyCritLabel} ${p.name}がかばった！ ${mitigated} ダメージ${defDesc} (HP: ${p.durability} → ${newDur})`);
+                            } else {
+                                newMessages.push(`${enemy.name}の${skillLabel}！${enemyCritLabel} ${p.name}に ${mitigated} ダメージ${defDesc} (HP: ${p.durability} → ${newDur})`);
+                            }
+                            newMessages.push(`__party_sync:${p.id}:${newDur}`);
+                            if (newDur <= 0) {
+                                newMessages.push(`${p.name}は力尽きた...`);
+                                if (p.origin_type !== 'quest_guest') {
+                                    const isColosseum = (get().userProfile?.current_quest_id && String(get().userProfile.current_quest_id).startsWith('colosseum_')) || 
+                                                        (get().battleState.enemies || []).some(e => e.is_pvp_player || e.is_pvp_member);
+                                    if (!isColosseum) {
+                                        supabase.from('party_members').update({ durability: 0, is_active: false }).eq('id', p.id).then();
+                                    }
                                 }
                             }
+                            return { ...p, durability: newDur, is_active: newDur > 0 };
                         }
-                    } else {
-                        newMessages.push('あなたに攻撃！ しかしもう意識がない…');
+                        return p;
+                    });
+                }
+
+                if (result.target === 'Player') {
+                    const def = getEffectiveDef(newUserProfile, get().battleState);
+                    const defBonus = getDefBonus(currentPlayerEffects);
+                    // v2.9.3h: DEF DOWNデバフ適用（DEF半減）
+                    const defDownMod = getDefDownMod(currentPlayerEffects);
+                    const effectiveDef = Math.floor((def + defBonus) * defDownMod);
+                    let mitigated = Math.max(1, result.damage - effectiveDef);
+                    if (currentPlayerEffects.some(e => e.id === 'unyielding_barrier' && e.duration > 0)) {
+                        mitigated = Math.max(1, mitigated - 30);
                     }
 
-                    if (isDrainVit && actualDamage > 0 && newHp > 0 && !vitDamageTaken) {
-                        const currentVit = newUserProfile.vitality ?? 100;
-                        if (currentVit > 0) {
-                            newUserProfile.vitality = currentVit - 1;
-                            vitDamageTaken = true;
-                            newMessages.push('生命力を奪われた！ (Vitality -1)');
-                            const { selectedProfileId } = get();
-                            consumeVitalityHelper(1, get().userProfile?.id || selectedProfileId);
-                        }
-                    }
+                    if (newUserProfile) {
+                        const prevHp = newUserProfile.hp || 0;
+                        const newHp = Math.max(0, prevHp - mitigated);
+                        const actualDamage = prevHp - newHp;
+                        newUserProfile.hp = newHp;
+                        const skillLabel = skillDef ? `『${selectedSkillName}』` : '攻撃';
 
-                    if (applyStun && actualDamage > 0) {
-                        // 状態異常判定時に最新の効果（スタン免疫等）を参照するように修正 (Bug AA & AJ)
-                        const hasStunImmunity = currentPlayerEffects.some(e => e.id === 'stun_immune' && e.duration > 0);
-                        if (hasStunImmunity) {
-                            newMessages.push('強靭な意志で気絶現象を弾き返した！');
-                        } else if (!rollDebuffSuccess('stun')) {
-                            newMessages.push('気絶攻撃に耐え抜いた！');
-                        } else {
-                            newMessages.push('凄まじい衝撃で気絶した！');
-                            currentPlayerEffects = applyEffect(currentPlayerEffects, 'stun', 1);
-                            currentPlayerEffects = applyEffect(currentPlayerEffects, 'stun_immune', 2);
-                        }
-                    }
+                        if (mitigated > 0) {
+                            const defDesc = effectiveDef > 0 ? ` (防御減算 -${effectiveDef})` : '';
+                            if (result.isCovered) {
+                                newMessages.push(`身代わりの盾！ あなたが攻撃を肩代わりした！`);
+                            }
+                            newMessages.push(`${enemy.name}の${skillLabel}！${enemyCritLabel} あなたに ${mitigated} ダメージ${defDesc} (HP: ${prevHp} → ${newHp})`);
+                            newMessages.push(`__hp_sync:${newHp}`);
 
-                    // v2.9.3h: 状態異常付与（ダメージ命中時のみ） + v2.9.3k: 確率判定
-                    if (applyPoison && actualDamage > 0) {
-                        if (rollDebuffSuccess('poison')) {
-                            newMessages.push('毒に侵された！ (毒 3T)');
-                            currentPlayerEffects = applyEffect(currentPlayerEffects, 'poison', 3);
-                        } else {
-                            newMessages.push('毒を弾き返した！');
-                        }
-                    }
-                    if (applyBlind && actualDamage > 0) {
-                        if (rollDebuffSuccess('blind_minor')) {
-                            newMessages.push('目が眩んだ！ (目潰し 2T)');
-                            currentPlayerEffects = applyEffect(currentPlayerEffects, 'blind_minor', 2);
-                        } else {
-                            newMessages.push('目潰しを回避した！');
-                        }
-                    }
-                    if (applyBleed && actualDamage > 0) {
-                        if (rollDebuffSuccess('bleed')) {
-                            newMessages.push('傷口から血が流れ出す！ (出血 2T)');
-                            currentPlayerEffects = applyEffect(currentPlayerEffects, 'bleed', 2);
-                        } else {
-                            newMessages.push('出血を堪えた！');
-                        }
-                    }
-                    if (applyDefDown && actualDamage > 0) {
-                        if (rollDebuffSuccess('def_down')) {
-                            newMessages.push('防御が崩された！ (防御力低下 2T)');
-                            currentPlayerEffects = applyEffect(currentPlayerEffects, 'def_down', 2);
-                        } else {
-                            newMessages.push('防御崩しに耐えた！');
-                        }
-                    }
+                            // Reflection check
+                            let reflectDmg = 0;
+                            let reflectMsgs: string[] = [];
 
-                    if (newHp <= 0) break;
+                            if (currentPlayerEffects.some(e => e.id === 'counter_spike' && e.duration > 0)) {
+                                const spikeDmg = Math.max(1, Math.floor(def / 2));
+                                reflectDmg += spikeDmg;
+                                reflectMsgs.push(`棘の鎧の効果で ${enemy.name} に ${spikeDmg} ダメージを反射！`);
+                            }
+                            if (currentPlayerEffects.some(e => e.id === 'revenge_shield' && e.duration > 0)) {
+                                const revDmg = mitigated;
+                                reflectDmg += revDmg;
+                                reflectMsgs.push(`報復の盾の効果で ${enemy.name} に ${revDmg} ダメージを反射！`);
+                            }
+
+                            if (reflectDmg > 0) {
+                                const eIdx = updatedEnemies.findIndex(e => e.id === enemy.id);
+                                if (eIdx !== -1) {
+                                    const newEnemyHp = Math.max(0, updatedEnemies[eIdx].hp - reflectDmg);
+                                    updatedEnemies[eIdx] = { ...updatedEnemies[eIdx], hp: newEnemyHp };
+                                    newMessages.push(...reflectMsgs);
+                                    if (newEnemyHp <= 0) {
+                                        newMessages.push(`${enemy.name}は反射ダメージで倒れた！`);
+                                    }
+                                }
+                            }
+                        } else {
+                            newMessages.push('あなたに攻撃！ しかしもう意識がない…');
+                        }
+
+                        if (isDrainVit && actualDamage > 0 && newHp > 0 && !vitDamageTaken) {
+                            const currentVit = newUserProfile.vitality ?? 100;
+                            if (currentVit > 0) {
+                                newUserProfile.vitality = currentVit - 1;
+                                vitDamageTaken = true;
+                                newMessages.push('生命力を奪われた！ (Vitality -1)');
+                                const { selectedProfileId } = get();
+                                consumeVitalityHelper(1, get().userProfile?.id || selectedProfileId);
+                            }
+                        }
+
+                        if (applyStun && actualDamage > 0) {
+                            const hasStunImmunity = currentPlayerEffects.some(e => e.id === 'stun_immune' && e.duration > 0);
+                            if (hasStunImmunity) {
+                                newMessages.push('強靭な意志で気絶現象を弾き返した！');
+                            } else if (!rollDebuffSuccess('stun')) {
+                                newMessages.push('気絶攻撃に耐え抜いた！');
+                            } else {
+                                newMessages.push('凄まじい衝撃で気絶した！');
+                                currentPlayerEffects = applyEffect(currentPlayerEffects, 'stun', 1);
+                                currentPlayerEffects = applyEffect(currentPlayerEffects, 'stun_immune', 2);
+                            }
+                        }
+
+                        if (applyPoison && actualDamage > 0) {
+                            if (rollDebuffSuccess('poison')) {
+                                newMessages.push('毒に侵された！ (毒 3T)');
+                                currentPlayerEffects = applyEffect(currentPlayerEffects, 'poison', 3);
+                            } else {
+                                newMessages.push('毒を弾き返した！');
+                            }
+                        }
+                        if (applyBlind && actualDamage > 0) {
+                            if (rollDebuffSuccess('blind_minor')) {
+                                newMessages.push('目が眩んだ！ (目潰し 2T)');
+                                currentPlayerEffects = applyEffect(currentPlayerEffects, 'blind_minor', 2);
+                            } else {
+                                newMessages.push('目潰しを回避した！');
+                            }
+                        }
+                        if (applyBleed && actualDamage > 0) {
+                            if (rollDebuffSuccess('bleed')) {
+                                newMessages.push('傷口から血が流れ出す！ (出血 2T)');
+                                currentPlayerEffects = applyEffect(currentPlayerEffects, 'bleed', 2);
+                            } else {
+                                newMessages.push('出血を堪えた！');
+                            }
+                        }
+                        if (applyDefDown && actualDamage > 0) {
+                            if (rollDebuffSuccess('def_down')) {
+                                newMessages.push('防御が崩された！ (防御力低下 2T)');
+                                currentPlayerEffects = applyEffect(currentPlayerEffects, 'def_down', 2);
+                            } else {
+                                newMessages.push('防御崩しに耐えた！');
+                            }
+                        }
+
+                        if (newHp <= 0) break;
+                    }
                 }
             }
+        }
+
+        const finalAllEnemiesDead = updatedEnemies.every(e => e.hp <= 0);
+
+        if (finalAllEnemiesDead) {
+            soundManager?.playSE('se_battle_win');
+            const { selectedScenario } = get();
+            const finalMessages = [...newMessages, '敵パーティが力尽きた！ 勝利！'];
+            const isQuestBattle = useQuestState.getState().isInQuest;
+            try {
+                getAuthHeaders().then(authHeaders => {
+                    const headers: HeadersInit = {
+                        'Content-Type': 'application/json',
+                        ...authHeaders
+                    };
+                    if (!isQuestBattle) {
+                        fetch('/api/report-action', {
+                            method: 'POST',
+                            headers,
+                            body: JSON.stringify({ action: 'victory', impacts: selectedScenario?.impacts, scenario_id: selectedScenario?.id })
+                        }).catch(console.error);
+                    }
+                    const bsid = get().battleState.battle_session_id;
+                    if (bsid) {
+                        fetch('/api/battle/validate-result', {
+                            method: 'POST',
+                            headers,
+                            body: JSON.stringify({ battle_session_id: bsid, claimed_result: 'victory' })
+                        }).then(vRes => vRes.json()).then(vData => {
+                            if (vData.battle_completion_token) {
+                                set(state => ({
+                                    battleState: { ...state.battleState, battle_completion_token: vData.battle_completion_token }
+                                }));
+                            }
+                        }).catch(err => console.error('Validation failed:', err));
+                    }
+                }).catch(console.error);
+
+                const battleHp = get().userProfile?.hp;
+                const battleVit = get().userProfile?.vitality;
+                const battleUserId = get().userProfile?.id;
+                if (battleHp != null && battleUserId) {
+                    const updateBody: any = { hp: Math.max(0, battleHp) };
+                    if (battleVit != null) updateBody.vitality = battleVit;
+                    updateProfileStatusHelper(updateBody, battleUserId);
+                }
+                get().fetchWorldState();
+                get().fetchUserProfile().then(() => {
+                    const preservedHp = get().userProfile?.hp;
+                    const preservedVit = get().userProfile?.vitality;
+                    if (preservedHp != null) {
+                        set(state => ({
+                            userProfile: state.userProfile
+                                ? { ...state.userProfile, hp: preservedHp, vitality: preservedVit ?? state.userProfile.vitality }
+                                : state.userProfile
+                        }));
+                    }
+                }).catch(console.error);
+
+                if (!isQuestBattle) {
+                    const partyCount = (newParty.length || 0) + 1;
+                    const rewardGold = selectedScenario?.reward_gold || 50;
+                    const reward = Math.floor(rewardGold / partyCount);
+                    get().addGold(reward);
+                    finalMessages.push(`報酬 金貨 ${rewardGold} 枚を獲得。`);
+                    if (partyCount > 1) finalMessages.push(`(パーティ分配: 1人あたり ${reward} 枚)`);
+                    updateProfileStatusHelper({ gold: get().gold }, get().userProfile?.id || null);
+                }
+            } catch (e) { console.error(e); }
+            
+            set(state => ({
+                userProfile: newUserProfile,
+                battleState: {
+                    ...state.battleState,
+                    isVictory: true,
+                    battle_result: 'victory',
+                    enemies: updatedEnemies.map(e => ({ ...e, hp: 0 })),
+                    enemy: null,
+                    messages: finalMessages
+                }
+            }));
+            return;
         }
 
         if (newUserProfile && (newUserProfile.hp ?? 0) <= 0) {

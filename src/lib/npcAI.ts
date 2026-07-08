@@ -11,6 +11,7 @@
 import { Card, PartyMember } from '@/types/game';
 import { BATTLE_RULES } from '@/constants/battle_rules';
 import { getMissChance, StatusEffect, hasEffect } from './statusEffects';
+import { getCardEffectInfo } from './cardEffects';
 
 // ─── Types ───────────────────────────────────────────────
 export type AIRole = 'striker' | 'guardian' | 'medic';
@@ -82,7 +83,7 @@ export function determineRole(member: PartyMember): AIRole {
  * - everything else → random
  */
 export function determineGrade(member: PartyMember): AIGrade {
-    return member.origin_type === 'shadow_heroic' ? 'smart' : 'random';
+    return 'smart';
 }
 
 // v2.8: Max actions per NPC per turn to prevent action spam
@@ -169,11 +170,10 @@ export function resolveNpcTurn(
 
     // NPCが使用できない・不具合を引き起こす特殊効果付きのカードを除外
     const EXCLUDED_NPC_CARDS = [
-        // 既存カード (10種)
-        '20', '24', '56', '57', '58', '59', '60', '64', '73', '85',
-        // 新カードパック「魔術学院」追加カード (18種)
-        '101', '105', '110', '111', '112', '114', '115', '116', '118', '119', '120', 
-        '124', '129', '131', '132', '133', '139', '140'
+        // 既存カード (手札・デッキ操作や自滅防止のため除外維持: 7種)
+        '56', '57', '58', '59', '60', '73', '85',
+        // 新カードパック「魔術学院」追加カード (ドロー・手札操作等のため除外維持)
+        '110', '117', '118', '120', '132', '137', '138', '139', '140'
     ];
     const deck = (npc.signature_deck || []).filter(c => !EXCLUDED_NPC_CARDS.includes(c.id));
     if (deck.length === 0) {
@@ -216,15 +216,16 @@ export function resolveNpcTurn(
     //  - Striker: atk_upカードを自分に使用後、攻撃
     //  - Medic: regen/def_upカードを傷ついた味方に優先
     //  - Guardian: def_upカードを自分に使用後、攻撃も行う
-    if (actions.length < MAX_ACTIONS_PER_TURN) {
+    // 4. v2.5: Role-based Buff Priority (30%の確率で優先使用。それ以外は通常攻撃ループに流して多様性を出す！)
+    if (actions.length < MAX_ACTIONS_PER_TURN && Math.random() < 0.3) {
         const buffAction = tryRoleBasedBuff(npc, deck, context);
         if (buffAction) {
             actions.push(buffAction);
         }
     }
 
-    // 4.5. v2.9.3j: デバフカード使用（stun/bind/blind/atk_down等を敵に付与）
-    if (actions.length < MAX_ACTIONS_PER_TURN) {
+    // 4.5. v2.9.3j: デバフカード使用 (30%の確率で優先使用。それ以外は通常攻撃ループに流して多様性を出す！)
+    if (actions.length < MAX_ACTIONS_PER_TURN && Math.random() < 0.3) {
         const debuffAction = tryDebuffEnemy(npc, deck, context);
         if (debuffAction) {
             actions.push(debuffAction);
@@ -234,13 +235,63 @@ export function resolveNpcTurn(
     // 5. Attack: v4.1 — Smart AI は2枚/ターン、Random AI は1枚/ターン
     // v4.0: lastUsedCardId による連打防止 — 直前ターンと同じカードは使わない
     const ENEMY_TARGETS = ['single_enemy', 'all_enemies', 'random_enemy'];
+    // シナジー（コンボ）スコアを計算して、効果的なカードを最優先にするロジックを導入！
+    const getSynergyScore = (card: Card): number => {
+        const cardIdStr = String(card.id);
+        const enemyEffects = context.enemyEffects || [];
+        const selfEffects = (npc.status_effects || []) as StatusEffect[];
+        const hasBleed = enemyEffects.some(e => e.id === 'bleed' || e.id === 'bleed_minor');
+        const hasBindOrFreeze = enemyEffects.some(e => e.id === 'bind' || e.id === 'freeze');
+
+        // 1. 傷口をえぐる (102) または 烈風突き (122) ➔ 敵が出血状態なら最優先！
+        if ((cardIdStr === '102' || cardIdStr === '122') && hasBleed) {
+            return 100;
+        }
+        // 2. フリーズランサー (114) ➔ 敵が拘束または凍結状態なら最優先！
+        if (cardIdStr === '114' && hasBindOrFreeze) {
+            return 100;
+        }
+        // 3. ダブルキャスト (116) のバフがかかっている時 ➔ 強力な魔法 (コスト3以上) を最優先！
+        const hasDoubleCast = selfEffects.some(e => e.id === 'double_cast');
+        if (hasDoubleCast && (card.type === 'Magic' || card.type === 'Skill') && (card.ap_cost ?? 0) >= 3) {
+            return 120; // 2回発動させたい大技魔法を最優先！
+        }
+        // 4. 自分または味方にデバフ（毒、出血、炎上、スタン、攻撃力低下、暗闇等）がかかっている時 ➔ 解除系を優先！
+        // 対象カード: オアシスの水 (20), 清め (24)
+        const teamHasDebuff = context.partyMembers.some(m =>
+            m.is_active && (m.durability ?? 0) > 0 &&
+            ((m.status_effects || []) as StatusEffect[]).some(e => ['poison', 'bleed', 'bleed_minor', 'burn', 'stun', 'atk_down', 'def_down', 'blind'].includes(e.id))
+        ) || (context.playerEffects || []).some(e => ['poison', 'bleed', 'bleed_minor', 'burn', 'stun', 'atk_down', 'def_down', 'blind'].includes(e.id));
+
+        if ((cardIdStr === '20' || cardIdStr === '24') && teamHasDebuff) {
+            return 90; // デバフ治療コンボ
+        }
+
+        // 5. カタルシス (101) ➔ 敵が毒または炎上状態なら最優先！
+        const hasDoT = enemyEffects.some(e => e.id === 'poison' || e.id === 'burn');
+        if (cardIdStr === '101' && hasDoT) {
+            return 100;
+        }
+
+        // 6. シールドスラム (105) ➔ 自身に防御力上昇バフがあるなら最優先！
+        const hasDefUp = selfEffects.some(e => e.id === 'def_up');
+        if (cardIdStr === '105' && hasDefUp) {
+            return 100;
+        }
+
+        return 0;
+    };
+
     const attackCards = deck
         .filter(c => {
             if (c.type === 'Skill' || c.type === 'Magic') return true;
             if ((c.type === 'Defense' || c.type === 'Support') && c.target_type && ENEMY_TARGETS.includes(c.target_type)) return true;
             return false;
         })
-        .sort((a, b) => getNpcCardApCost(b, npc, context.enemyEffects) - getNpcCardApCost(a, npc, context.enemyEffects));
+        // 基本は完全にランダムにシャッフルする
+        .sort(() => Math.random() - 0.5)
+        // さらにシナジースコアが高い（コンボ成立）カードを配列の先頭（最優先）に押し上げる！
+        .sort((a, b) => getSynergyScore(b) - getSynergyScore(a));
 
     const lastUsed = (npc as any).lastUsedCardId as string | undefined;
     const maxAttackCards = npc.ai_grade === 'smart' ? 2 : 1; // v4.1: Smart は2枚
@@ -282,21 +333,9 @@ export function resolveNpcTurn(
             break; // これ以上使えるカードなし
         }
     }
-
-    // カード攻撃が0回だった場合は基本攻撃フォールバック
-    if (attacksUsed === 0 && !actions.some(a => a.type === 'attack') && actions.length < MAX_ACTIONS_PER_TURN) {
-        actions.push(createBasicAttack(npc, effectiveContext));
-        (npc as any).lastUsedCardId = undefined;
-    }
-
-    // 攻撃アクションが1件もない場合は基本攻撃フォールバック
-    const hasAttackAction = actions.some(a => a.type === 'attack');
-    if (!hasAttackAction && actions.length < MAX_ACTIONS_PER_TURN) {
-        actions.push(createBasicAttack(npc, context));
-    }
-
-    return actions;
-}
+ 
+     return actions;
+ }
 
 // ─── Sub-routines ────────────────────────────────────────
 
@@ -400,11 +439,13 @@ function tryRoleBasedBuff(
 ): NpcAction | null {
     // バフ対象: 味方対象のeffect_idを持つカード（敵対象デバフカードは除外）
     const ENEMY_TARGETS = ['single_enemy', 'all_enemies', 'random_enemy'];
-    const buffCards = deck.filter(c =>
-        c.effect_id &&
-        getNpcCardApCost(c, npc, context.enemyEffects) <= (npc.current_ap || 0) &&
-        !(c.target_type && ENEMY_TARGETS.includes(c.target_type)) // 敵対象デバフは除外
-    );
+    const buffCards = deck
+        .filter(c =>
+            c.effect_id &&
+            getNpcCardApCost(c, npc, context.enemyEffects) <= (npc.current_ap || 0) &&
+            !(c.target_type && ENEMY_TARGETS.includes(c.target_type)) // 敵対象デバフは除外
+        )
+        .sort(() => Math.random() - 0.5); // バフ候補をランダムシャッフルして多様性を出す！
 
     if (buffCards.length === 0) return null;
 
@@ -484,21 +525,31 @@ function tryDebuffEnemy(
     context: BattleContext
 ): NpcAction | null {
     const ENEMY_TARGETS = ['single_enemy', 'all_enemies', 'random_enemy'];
-    const debuffCards = deck.filter(c =>
-        c.effect_id &&
-        ENEMY_DEBUFF_EFFECTS.includes(c.effect_id) &&
-        c.target_type && ENEMY_TARGETS.includes(c.target_type) &&
-        (c.type === 'Support' || c.type === 'Defense') &&
-        getNpcCardApCost(c, npc, context.enemyEffects) <= (npc.current_ap || 0)
-    );
+    const debuffCards = deck
+        .filter(c =>
+            c.effect_id &&
+            ENEMY_DEBUFF_EFFECTS.includes(c.effect_id) &&
+            c.target_type && ENEMY_TARGETS.includes(c.target_type) &&
+            (c.type === 'Support' || c.type === 'Defense') &&
+            // ダメージを伴う攻撃デバフ（シールドバッシュ等）は、デバフフェーズで優先使用せず、
+            // 通常の攻撃ランダムループで処理させることで多様なスキルを使わせる！
+            // IDが '6' (シールドバッシュ) であるもの、または威力値 (power / effect_val) が 0超であるものを厳密に除外！
+            c.id !== '6' &&
+            !(c.power && Number(c.power) > 0) &&
+            !(c.effect_val && Number(c.effect_val) > 0) &&
+            getNpcCardApCost(c, npc, context.enemyEffects) <= (npc.current_ap || 0)
+        )
+        .sort(() => Math.random() - 0.5); // デバフ候補をランダムシャッフルして多様性を出す！
 
     if (debuffCards.length === 0) return null;
 
-    // 既に敵に付与済みのデバフは除外
+    // 既に敵に付与済みのデバフは除外（重複使用を完全に避ける！）
     const unusedDebuff = debuffCards.find(c => {
         const alreadyApplied = context.enemyEffects?.some(e => e.id === c.effect_id); // 敵の効果配列を参照 (Bug AC)
         return !alreadyApplied;
-    }) || debuffCards[0]; // 全部付与済みなら最初のを使う
+    });
+
+    if (!unusedDebuff) return null; // 重複する場合は優先使用せず、通常攻撃ループへ譲る！
 
     npc.current_ap = (npc.current_ap || 0) - getNpcCardApCost(unusedDebuff, npc, context.enemyEffects);
 
@@ -509,7 +560,7 @@ function tryDebuffEnemy(
         card: unusedDebuff,
         damage: damage > 0 ? Math.max(1, damage + (npc.atk || 0) - context.enemyDef) : undefined,
         effectId: unusedDebuff.effect_id,
-        effectDuration: unusedDebuff.effect_duration || 2,
+        effectDuration: getCardEffectInfo(unusedDebuff).effectDuration || unusedDebuff.effect_duration || 2,
         targetEnemyName: context.enemyName,
         message: damage > 0
             ? `${npc.name}の${unusedDebuff.name}！ ${context.enemyName}に ${Math.max(1, damage + (npc.atk || 0) - context.enemyDef)} のダメージ！`
@@ -532,10 +583,10 @@ function executeCard(
             type: 'buff',
             card,
             effectId: card.effect_id,
-            effectDuration: card.effect_duration || 3,
+            effectDuration: getCardEffectInfo(card).effectDuration || card.effect_duration || 3,
             targetName,
             usedCardId: card.id,
-            message: `${npc.name}の${card.name}！ ${targetName}に効果が発動した。`
+            message: `${npc.name}の『${card.name}』！ ${targetName}に効果が発動した。`
         };
     }
 
@@ -547,7 +598,7 @@ function executeCard(
             healAmount,
             targetName: 'あなた',
             usedCardId: card.id,
-            message: `${npc.name}の${card.name}！ HPが ${healAmount} 回復した。`
+            message: `${npc.name}の『${card.name}』！ HPが ${healAmount} 回復した。`
         };
     }
 
@@ -570,6 +621,59 @@ function executeCard(
 
     // v4.0: ダメージ計算フロー (base → 揺らぎ → クリティカル → DEF)
     const npcAtk = npc.atk || 0;
+    const baseId = card.id.match(/^(\d+)/)?.[1] || card.id;
+    const isMultiAttack = baseId === '115' || card.effect_id === 'multi_hit';
+    const hitsCount = baseId === '115' ? 3 : (isMultiAttack ? 2 : 1);
+
+    if (hitsCount > 1) {
+        let hitLogs: string[] = [];
+        let totalDmg = 0;
+        const basePower = (power / hitsCount);
+
+        for (let hit = 0; hit < hitsCount; hit++) {
+            let dmg = (basePower + npcAtk) || (4 + Math.floor(Math.random() * 3) + npcAtk);
+            const variance = BATTLE_RULES.DAMAGE_VARIANCE_MIN
+                + Math.random() * (BATTLE_RULES.DAMAGE_VARIANCE_MAX - BATTLE_RULES.DAMAGE_VARIANCE_MIN);
+            dmg = dmg * variance;
+
+            const isHitCritical = Math.random() < critRate;
+            if (isHitCritical) {
+                dmg = dmg * BATTLE_RULES.CRIT_MULTIPLIER;
+            }
+
+            const targetDef = hit > 0 ? 0 : context.enemyDef;
+            const isMagic = card.name.includes('魔法') ||
+                card.name.toLowerCase().includes('magic') ||
+                card.name.toLowerCase().includes('fire') ||
+                card.name.toLowerCase().includes('ice');
+            if (!isMagic) {
+                dmg = dmg - targetDef;
+            }
+
+            const hitDmg = Math.max(1, Math.floor(dmg));
+            totalDmg += hitDmg;
+
+            const critLabel = isHitCritical ? ' クリティカル！' : '';
+            hitLogs.push(`${hit + 1}撃目: ${context.enemyName}に ${hitDmg} ダメージ${critLabel}`);
+        }
+
+        const isAoe = card.target_type === 'all_enemies';
+        const targetMsg = isAoe ? '敵全体' : context.enemyName;
+        const comboLabel = hitsCount === 3 ? '怒涛の3連撃！' : '怒涛の2連撃！';
+
+        return {
+            type: 'attack',
+            card,
+            damage: totalDmg,
+            isCritical: false,
+            effectId: card.effect_id,
+            effectDuration: card.effect_duration || 3,
+            targetEnemyName: targetMsg,
+            usedCardId: card.id,
+            message: `${npc.name}の『${card.name}』！ ${comboLabel}\n` + hitLogs.join('\n')
+        };
+    }
+
     let dmg = (power + npcAtk) || (8 + Math.floor(Math.random() * 5) + npcAtk);
 
     // 揺らぎ
@@ -607,7 +711,7 @@ function executeCard(
         effectDuration: card.effect_duration || 3,
         targetEnemyName: targetMsg,
         usedCardId: card.id,
-        message: `${npc.name}の${card.name}！${critLabel} ${targetMsg}に ${finalDmg} のダメージ！`
+        message: `${npc.name}の『${card.name}』！${critLabel} ${targetMsg}に ${finalDmg} のダメージ！`
     };
 }
 

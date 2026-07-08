@@ -18,12 +18,790 @@ import { Swords, ScrollText } from 'lucide-react';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { soundManager } from '@/lib/soundManager';
 
+// PvP防衛パーティをエネミー配列に変換するアダプター
+function adaptDefensePartyToEnemies(opponent: any): Enemy[] {
+    const enemies: Enemy[] = [];
+    
+    // 無効なアセットパスを実在するシャドウ画像に強制フォールバックするヘルパー
+    const getEnforcedImageUrl = (url: string | null | undefined) => {
+        if (!url || url.includes('default.png') || url.includes('spirit_king.png') || url.includes('wise_mage.png') || url.includes('iron_knight.png') || url.includes('wind_ranger.png') || url.includes('shadow_samurai.png') || url.includes('apprentice_warrior.png') || url.includes('wandering_miko.png')) {
+            return '/images/npcs/npc_guest_shadow.png';
+        }
+        return url;
+    };
+
+    // デッキ定義がない場合（ID配列のみの場合）にモックカードを作成してデッキを復元するヘルパー
+    const resolveDeckSnapshot = (snapshot: any[] | null, injectCards: any[] | null) => {
+        if (snapshot && snapshot.length > 0) return snapshot;
+        const mockCardsMaster: Record<string, { name: string, ap_cost: number, type: string }> = {
+        "1": {
+                "name": "強打",
+                "ap_cost": 1,
+                "type": "Skill"
+        },
+        "2": {
+                "name": "斬撃",
+                "ap_cost": 1,
+                "type": "Skill"
+        },
+        "3": {
+                "name": "突き",
+                "ap_cost": 1,
+                "type": "Skill"
+        },
+        "4": {
+                "name": "防御",
+                "ap_cost": 1,
+                "type": "Defense"
+        },
+        "5": {
+                "name": "応急手当",
+                "ap_cost": 1,
+                "type": "Heal"
+        },
+        "6": {
+                "name": "シールドバッシュ",
+                "ap_cost": 2,
+                "type": "Defense"
+        },
+        "7": {
+                "name": "集中",
+                "ap_cost": 2,
+                "type": "Support"
+        },
+        "8": {
+                "name": "クイックステップ",
+                "ap_cost": 2,
+                "type": "Support"
+        },
+        "9": {
+                "name": "挑発",
+                "ap_cost": 1,
+                "type": "Support"
+        },
+        "10": {
+                "name": "石投げ",
+                "ap_cost": 1,
+                "type": "Skill"
+        },
+        "11": {
+                "name": "聖剣",
+                "ap_cost": 3,
+                "type": "Magic"
+        },
+        "12": {
+                "name": "裁き",
+                "ap_cost": 3,
+                "type": "Magic"
+        },
+        "13": {
+                "name": "祈り",
+                "ap_cost": 2,
+                "type": "Heal"
+        },
+        "14": {
+                "name": "治癒",
+                "ap_cost": 2,
+                "type": "Heal"
+        },
+        "15": {
+                "name": "聖壁",
+                "ap_cost": 3,
+                "type": "Defense"
+        },
+        "16": {
+                "name": "砂の罠",
+                "ap_cost": 1,
+                "type": "Support"
+        },
+        "17": {
+                "name": "砂塵の目眩まし",
+                "ap_cost": 3,
+                "type": "Support"
+        },
+        "18": {
+                "name": "毒刃",
+                "ap_cost": 2,
+                "type": "Skill"
+        },
+        "19": {
+                "name": "蜃気楼",
+                "ap_cost": 3,
+                "type": "Support"
+        },
+        "20": {
+                "name": "オアシスの水",
+                "ap_cost": 2,
+                "type": "Heal"
+        },
+        "21": {
+                "name": "ツバメ返し",
+                "ap_cost": 3,
+                "type": "Skill"
+        },
+        "22": {
+                "name": "クナイ投げ",
+                "ap_cost": 1,
+                "type": "Skill"
+        },
+        "23": {
+                "name": "影縫い",
+                "ap_cost": 2,
+                "type": "Support"
+        },
+        "24": {
+                "name": "清め",
+                "ap_cost": 2,
+                "type": "Heal"
+        },
+        "25": {
+                "name": "居合切り",
+                "ap_cost": 4,
+                "type": "Skill"
+        },
+        "26": {
+                "name": "氣の癒やし",
+                "ap_cost": 2,
+                "type": "Heal"
+        },
+        "27": {
+                "name": "龍の咆哮",
+                "ap_cost": 3,
+                "type": "Support"
+        },
+        "28": {
+                "name": "鉄布衫",
+                "ap_cost": 3,
+                "type": "Defense"
+        },
+        "29": {
+                "name": "連撃",
+                "ap_cost": 3,
+                "type": "Skill"
+        },
+        "30": {
+                "name": "飛刀",
+                "ap_cost": 2,
+                "type": "Skill"
+        },
+        "31": {
+                "name": "王の城壁",
+                "ap_cost": 4,
+                "type": "Defense"
+        },
+        "32": {
+                "name": "ドラゴンダイブ",
+                "ap_cost": 5,
+                "type": "Skill"
+        },
+        "33": {
+                "name": "奇跡",
+                "ap_cost": 5,
+                "type": "Heal"
+        },
+        "34": {
+                "name": "皇帝の盾",
+                "ap_cost": 3,
+                "type": "Defense"
+        },
+        "35": {
+                "name": "絶対防御",
+                "ap_cost": 4,
+                "type": "Defense"
+        },
+        "36": {
+                "name": "百裂拳",
+                "ap_cost": 4,
+                "type": "Skill"
+        },
+        "37": {
+                "name": "メテオストライク",
+                "ap_cost": 5,
+                "type": "Magic"
+        },
+        "38": {
+                "name": "完全治癒",
+                "ap_cost": 4,
+                "type": "Heal"
+        },
+        "39": {
+                "name": "ホーリーノヴァ",
+                "ap_cost": 4,
+                "type": "Magic"
+        },
+        "40": {
+                "name": "暗殺",
+                "ap_cost": 3,
+                "type": "Skill"
+        },
+        "41": {
+                "name": "魔刃",
+                "ap_cost": 4,
+                "type": "Skill"
+        },
+        "42": {
+                "name": "血の怒り",
+                "ap_cost": 2,
+                "type": "Support"
+        },
+        "43": {
+                "name": "獅子の心",
+                "ap_cost": 3,
+                "type": "Support"
+        },
+        "44": {
+                "name": "疾風術",
+                "ap_cost": 2,
+                "type": "Support"
+        },
+        "45": {
+                "name": "岩砕き",
+                "ap_cost": 4,
+                "type": "Skill"
+        },
+        "46": {
+                "name": "魂裂き",
+                "ap_cost": 4,
+                "type": "Magic"
+        },
+        "47": {
+                "name": "幻影撃",
+                "ap_cost": 3,
+                "type": "Skill"
+        },
+        "48": {
+                "name": "天翔斬",
+                "ap_cost": 5,
+                "type": "Skill"
+        },
+        "49": {
+                "name": "黒曜球",
+                "ap_cost": 4,
+                "type": "Magic"
+        },
+        "50": {
+                "name": "近衛の盾",
+                "ap_cost": 3,
+                "type": "Defense"
+        },
+        "51": {
+                "name": "竜の鱗",
+                "ap_cost": 4,
+                "type": "Defense"
+        },
+        "52": {
+                "name": "虚空撃",
+                "ap_cost": 4,
+                "type": "Skill"
+        },
+        "53": {
+                "name": "女神の祝福",
+                "ap_cost": 4,
+                "type": "Heal"
+        },
+        "54": {
+                "name": "死の舞踊",
+                "ap_cost": 4,
+                "type": "Skill"
+        },
+        "55": {
+                "name": "時止めの法",
+                "ap_cost": 5,
+                "type": "Support"
+        },
+        "56": {
+                "name": "吸血",
+                "ap_cost": 3,
+                "type": "Magic"
+        },
+        "57": {
+                "name": "闇の代償",
+                "ap_cost": 1,
+                "type": "Support"
+        },
+        "58": {
+                "name": "即死攻撃",
+                "ap_cost": 4,
+                "type": "Skill"
+        },
+        "59": {
+                "name": "狂戦士の薬",
+                "ap_cost": 1,
+                "type": "Support"
+        },
+        "60": {
+                "name": "魂の生贄",
+                "ap_cost": 5,
+                "type": "Magic"
+        },
+        "61": {
+                "name": "市民の支援",
+                "ap_cost": 1,
+                "type": "Heal"
+        },
+        "62": {
+                "name": "調毒",
+                "ap_cost": 2,
+                "type": "Skill"
+        },
+        "63": {
+                "name": "血の契約",
+                "ap_cost": 3,
+                "type": "Support"
+        },
+        "64": {
+                "name": "瞑想",
+                "ap_cost": 1,
+                "type": "Support"
+        },
+        "65": {
+                "name": "火球",
+                "ap_cost": 2,
+                "type": "Magic"
+        },
+        "66": {
+                "name": "氷槍",
+                "ap_cost": 2,
+                "type": "Magic"
+        },
+        "67": {
+                "name": "雷撃",
+                "ap_cost": 3,
+                "type": "Magic"
+        },
+        "71": {
+                "name": "五星の加護",
+                "ap_cost": 2,
+                "type": "Skill"
+        },
+        "72": {
+                "name": "冥食の理",
+                "ap_cost": 2,
+                "type": "Skill"
+        },
+        "73": {
+                "name": "神殺しの光芒",
+                "ap_cost": 3,
+                "type": "Skill"
+        },
+        "74": {
+                "name": "砂塵の支配",
+                "ap_cost": 2,
+                "type": "Skill"
+        },
+        "81": {
+                "name": "獄炎の刻印",
+                "ap_cost": 4,
+                "type": "Magic"
+        },
+        "82": {
+                "name": "天使の恩寵",
+                "ap_cost": 4,
+                "type": "Heal"
+        },
+        "83": {
+                "name": "竜炎のブレス",
+                "ap_cost": 5,
+                "type": "Skill"
+        },
+        "84": {
+                "name": "麒麟の結界",
+                "ap_cost": 4,
+                "type": "Defense"
+        },
+        "85": {
+                "name": "ゴーレムコア",
+                "ap_cost": 3,
+                "type": "Support"
+        },
+        "86": {
+                "name": "海神の怒涛",
+                "ap_cost": 5,
+                "type": "Magic"
+        },
+        "87": {
+                "name": "覇王の大斧",
+                "ap_cost": 5,
+                "type": "Skill"
+        },
+        "101": {
+                "name": "カタルシス",
+                "ap_cost": 3,
+                "type": "Magic"
+        },
+        "102": {
+                "name": "傷口をえぐる",
+                "ap_cost": 2,
+                "type": "Skill"
+        },
+        "103": {
+                "name": "無防備な獲物",
+                "ap_cost": 2,
+                "type": "Skill"
+        },
+        "104": {
+                "name": "伝染病の霧",
+                "ap_cost": 3,
+                "type": "Magic"
+        },
+        "105": {
+                "name": "シールドスラム",
+                "ap_cost": 3,
+                "type": "Skill"
+        },
+        "106": {
+                "name": "スパイクアーマー",
+                "ap_cost": 2,
+                "type": "Defense"
+        },
+        "107": {
+                "name": "不屈の防陣",
+                "ap_cost": 3,
+                "type": "Defense"
+        },
+        "108": {
+                "name": "犠牲の誓約",
+                "ap_cost": 2,
+                "type": "Defense"
+        },
+        "109": {
+                "name": "デスペラード",
+                "ap_cost": 3,
+                "type": "Skill"
+        },
+        "110": {
+                "name": "生贄の儀式",
+                "ap_cost": 1,
+                "type": "Support"
+        },
+        "111": {
+                "name": "捨て身の一撃",
+                "ap_cost": 2,
+                "type": "Skill"
+        },
+        "112": {
+                "name": "デトネーション",
+                "ap_cost": 4,
+                "type": "Magic"
+        },
+        "113": {
+                "name": "マナチャージ",
+                "ap_cost": 2,
+                "type": "Support"
+        },
+        "114": {
+                "name": "フリーズランサー",
+                "ap_cost": 2,
+                "type": "Magic"
+        },
+        "115": {
+                "name": "雷電の連鎖",
+                "ap_cost": 3,
+                "type": "Magic"
+        },
+        "116": {
+                "name": "プロミネンス",
+                "ap_cost": 4,
+                "type": "Magic"
+        },
+        "117": {
+                "name": "ブレインスピン",
+                "ap_cost": 1,
+                "type": "Support"
+        },
+        "118": {
+                "name": "サーチライト",
+                "ap_cost": 1,
+                "type": "Support"
+        },
+        "119": {
+                "name": "ダブルキャスト",
+                "ap_cost": 2,
+                "type": "Support"
+        },
+        "120": {
+                "name": "リサイクル",
+                "ap_cost": 1,
+                "type": "Support"
+        },
+        "121": {
+                "name": "死神の宣告",
+                "ap_cost": 4,
+                "type": "Support"
+        },
+        "122": {
+                "name": "血の追撃",
+                "ap_cost": 1,
+                "type": "Skill"
+        },
+        "123": {
+                "name": "フレイムバースト",
+                "ap_cost": 2,
+                "type": "Magic"
+        },
+        "124": {
+                "name": "凍てつく波動",
+                "ap_cost": 3,
+                "type": "Magic"
+        },
+        "125": {
+                "name": "アイアンバスティオン",
+                "ap_cost": 3,
+                "type": "Defense"
+        },
+        "126": {
+                "name": "リベンジシールド",
+                "ap_cost": 2,
+                "type": "Defense"
+        },
+        "127": {
+                "name": "巨人の肉体",
+                "ap_cost": 1,
+                "type": "Support"
+        },
+        "128": {
+                "name": "グラウンディング",
+                "ap_cost": 2,
+                "type": "Defense"
+        },
+        "129": {
+                "name": "成金の一撃",
+                "ap_cost": 2,
+                "type": "Skill"
+        },
+        "130": {
+                "name": "ギャンブラーダイス",
+                "ap_cost": 1,
+                "type": "Skill"
+        },
+        "131": {
+                "name": "ソウルブースト",
+                "ap_cost": 2,
+                "type": "Support"
+        },
+        "132": {
+                "name": "破滅の契約",
+                "ap_cost": 3,
+                "type": "Magic"
+        },
+        "133": {
+                "name": "属性の共鳴",
+                "ap_cost": 1,
+                "type": "Support"
+        },
+        "134": {
+                "name": "プラズマシャワー",
+                "ap_cost": 3,
+                "type": "Magic"
+        },
+        "135": {
+                "name": "アブソリュートゼロ",
+                "ap_cost": 3,
+                "type": "Magic"
+        },
+        "136": {
+                "name": "ファイアウェーブ",
+                "ap_cost": 2,
+                "type": "Magic"
+        },
+        "137": {
+                "name": "クイックドロー",
+                "ap_cost": 1,
+                "type": "Support"
+        },
+        "138": {
+                "name": "タクティカルプラン",
+                "ap_cost": 1,
+                "type": "Support"
+        },
+        "139": {
+                "name": "タイムリバース",
+                "ap_cost": 2,
+                "type": "Support"
+        },
+        "140": {
+                "name": "マナフィルター",
+                "ap_cost": 1,
+                "type": "Support"
+        },
+        "141": {
+                "name": "魔界の黒炎",
+                "ap_cost": 2,
+                "type": "Magic"
+        },
+        "142": {
+                "name": "シャドークロウ",
+                "ap_cost": 1,
+                "type": "Skill"
+        },
+        "314": {
+                "name": "手裏剣投擲",
+                "ap_cost": 1,
+                "type": "Skill"
+        }
+};
+
+        return (injectCards || []).map((cardId: any) => {
+            const cardIdStr = String(cardId);
+            const mock = mockCardsMaster[cardIdStr];
+            if (mock) {
+                return {
+                    id: cardIdStr,
+                    name: mock.name,
+                    ap_cost: mock.ap_cost,
+                    type: mock.type,
+                };
+            }
+            return {
+                id: cardIdStr,
+                name: 'スキル',
+                ap_cost: 1,
+                type: 'Skill',
+            };
+        });
+    };
+
+    // 1. 防衛プレイヤー自身 (ボス扱い)
+    const playerSnapshot = typeof opponent.player_snapshot === 'string'
+        ? JSON.parse(opponent.player_snapshot)
+        : (opponent.player_snapshot || {});
+    const baseHp = playerSnapshot.hp || 100;
+    const finalHp = baseHp * 6; // 6倍補正
+    
+    const parsedSkillDeck = typeof opponent.skill_deck_snapshot === 'string'
+        ? JSON.parse(opponent.skill_deck_snapshot)
+        : (opponent.skill_deck_snapshot || null);
+    
+    // 敵プレイヤーの装備パッシブバフを status_effects に解決
+    let initialEnemyEffects: any[] = [];
+    const equippedGears = typeof opponent.equipped_items_snapshot === 'string'
+        ? JSON.parse(opponent.equipped_items_snapshot)
+        : (opponent.equipped_items_snapshot || []);
+
+    equippedGears.forEach((gear: any) => {
+        const ed = gear.effect_data;
+        if (ed && ed.battle_start_buff) {
+            const buffs = Array.isArray(ed.battle_start_buff) 
+                ? ed.battle_start_buff 
+                : [ed.battle_start_buff];
+
+            buffs.forEach((buff: any) => {
+                const id = buff.buff_type || buff.id;
+                const duration = buff.duration;
+                const val = buff.value;
+                if (id && duration) {
+                    // 敵側リーダーの装備初期バフは、敵ターンの最初の行動直前クリンナップ（tickEffects）で減少するため、
+                    // 1Tのバフがプレイヤー手番中に消えて無駄になるのを防ぐべく無条件で duration + 1 補正を行う！
+                    const finalDuration = duration + 1;
+
+                    const existing = initialEnemyEffects.find(eff => eff.id === id);
+                    if (existing) {
+                        existing.duration = Math.max(existing.duration, finalDuration);
+                        existing.value = (existing.value || 0) + val;
+                    } else {
+                        initialEnemyEffects.push({
+                            id,
+                            duration: finalDuration,
+                            value: val
+                        });
+                    }
+                }
+            });
+        }
+    });
+
+    const playerEnemy: any = {
+        id: `pvp_enemy_${String(opponent.user_id)}`,
+        name: opponent.user_name,
+        level: playerSnapshot.level || 1,
+        hp: finalHp,
+        maxHp: finalHp,
+        atk: playerSnapshot.atk || 10,
+        def: playerSnapshot.def || 10,
+        image_url: getEnforcedImageUrl(playerSnapshot.avatar_url || opponent.avatar_url),
+        origin_type: 'shadow_heroic', // smart AIを適用
+        ai_role: 'striker',
+        signature_deck: resolveDeckSnapshot(parsedSkillDeck, opponent.inject_cards || null),
+        status_effects: initialEnemyEffects,
+        current_ap: 6, // 初期APは6
+        is_pvp_player: true,
+        base_hp: baseHp,
+        hp_multiplier: 6
+    };
+    enemies.push(playerEnemy);
+    
+    // 2. 防衛メンバーたち (お供エネミー扱い)
+    const members = typeof opponent.party_members_snapshot === 'string'
+        ? JSON.parse(opponent.party_members_snapshot)
+        : (opponent.party_members_snapshot || []);
+    members.forEach((m: any) => {
+        const mBaseHp = m.hp || 100;
+        const mFinalHp = mBaseHp * 6;
+        
+        const parsedMemberDeck = typeof m.signature_deck_snapshot === 'string'
+            ? JSON.parse(m.signature_deck_snapshot)
+            : (m.signature_deck_snapshot || null);
+            
+        let initialMemberEffects: any[] = [];
+        const mSnapshot = typeof m.snapshot_data === 'string'
+            ? JSON.parse(m.snapshot_data)
+            : (m.snapshot_data || {});
+            
+        if (mSnapshot && mSnapshot.battle_start_buffs && Array.isArray(mSnapshot.battle_start_buffs)) {
+            mSnapshot.battle_start_buffs.forEach((buff: any) => {
+                const id = buff.buff_type || buff.id;
+                const duration = buff.duration;
+                const val = buff.value;
+                if (id && duration) {
+                    // 敵側メンバーの初期バフは、敵ターンの最初の行動直前クリンナップ（tickEffects）で減少するため、
+                    // 1Tのバフがプレイヤー手番中に消えて無駄になるのを防ぐべく無条件で duration + 1 補正を行う！
+                    const finalDuration = duration + 1;
+
+                    const existing = initialMemberEffects.find(eff => eff.id === id);
+                    if (existing) {
+                        existing.duration = Math.max(existing.duration, finalDuration);
+                        existing.value = (existing.value || 0) + val;
+                    } else {
+                        initialMemberEffects.push({
+                            id,
+                            duration: finalDuration,
+                            value: val
+                        });
+                    }
+                }
+            });
+        }
+        
+        const memberEnemy: any = {
+            id: `pvp_enemy_${String(m.id)}`,
+            name: m.name,
+            level: m.level || 1,
+            hp: mFinalHp,
+            maxHp: mFinalHp,
+            atk: m.atk || 10,
+            def: m.def || 10,
+            image_url: getEnforcedImageUrl(m.icon_url || m.image_url || m.avatar_url),
+            origin_type: 'shadow_heroic', // smart AIを適用
+            ai_role: m.job_class?.toLowerCase().includes('cleric') || m.job_class?.toLowerCase().includes('priest') ? 'medic' : 'striker',
+            signature_deck: resolveDeckSnapshot(parsedMemberDeck, m.inject_cards || null),
+            status_effects: initialMemberEffects,
+            current_ap: 6,
+            is_pvp_member: true,
+            base_hp: mBaseHp,
+            hp_multiplier: 6
+        };
+        enemies.push(memberEnemy);
+    });
+    
+    return enemies;
+}
+
 export default function QuestPage() {
     const params = useParams();
     const router = useRouter();
     const id = params.id as string;
     const [scenario, setScenario] = useState<Scenario | null>(null);
-    const { userProfile, fetchUserProfile } = useGameStore();
+    const { userProfile, fetchUserProfile, battleState } = useGameStore();
     const [loading, setLoading] = useState(true);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
     const [isGivingUp, setIsGivingUp] = useState(false);
@@ -106,6 +884,53 @@ export default function QuestPage() {
 
     useAuthGuard(); // タイトル画面経由チェック
 
+    // PvP アリーナ用戦闘自動開始処理
+    useEffect(() => {
+        if (id && id.startsWith('pvp_arena_')) {
+            const store = useGameStore.getState();
+            const opponent = (store as any).pvpOpponent;
+            if (opponent) {
+                // 防衛データを Enemy 形式に変換
+                const enemies = adaptDefensePartyToEnemies(opponent);
+                
+                // questStateの初期化 (戦闘終了時のHP同期やレジュームのため)
+                const equipHpBonus = store.equipBonus?.hp || 0;
+                const playerMaxHp = (store.userProfile?.max_hp || 100) + equipHpBonus;
+                const playerHp = store.userProfile?.hp || playerMaxHp;
+                
+                const partyHp: Record<string, number> = {};
+                if (Array.isArray(store.partyMembers)) {
+                    store.partyMembers.forEach((pm: any) => {
+                        partyHp[String(pm.id)] = pm.hp || pm.max_hp || 100;
+                    });
+                }
+
+                useQuestState.getState().startQuest({
+                    questId: id,
+                    questType: 'special',
+                    playerHp,
+                    playerMaxHp,
+                    partyHp,
+                    currentLocationId: store.userProfile?.current_location_id || undefined
+                });
+
+                // バトルの起動 (非同期完了を待つことで BattleView の null クラッシュを防止)
+                store.startBattle(enemies).then(() => {
+                    setViewMode('battle');
+                    setBattleBgUrl('/images/quests/bg_colosseum.png');
+                    setBattleBgm('bgm_battle_boss');
+                    if (soundManager) {
+                        soundManager.playBgm('bgm_battle_boss');
+                    }
+                });
+            } else {
+                console.warn('[QuestPage] pvpOpponent data not found in store, returning to inn');
+                useQuestState.getState().resetQuest();
+                router.push('/inn');
+            }
+        }
+    }, [id, router]);
+
     const [prefetchedResult, setPrefetchedResult] = useState<{
         result: 'success' | 'failure' | 'success_retreat';
         data: any;
@@ -147,42 +972,23 @@ export default function QuestPage() {
 
 
 
-    // Battle Return Logic
+    // レジューム対策: 戦闘中のリロード・再アクセス時、Zustandの戦闘ステートがアクティブなら自動で戦闘画面に復旧遷移させる
     useEffect(() => {
-        const pending = localStorage.getItem('pending_quest_resume');
-        let restored = false;
-        if (pending) {
-            try {
-                const { questId, nextNodeId } = JSON.parse(pending);
-                // Verify we are in the right quest
-                if (questId === id) {
-                    const urlParams = new URLSearchParams(window.location.search);
-                    const result = urlParams.get('battle_result');
-
-                    if (result === 'win') {
-                        setInitialNodeId(nextNodeId);
-                        localStorage.removeItem('pending_quest_resume');
-                        window.history.replaceState({}, '', `/quest/${id}`); // Clean URL
-                        restored = true;
-                    } else if (result === 'lose' || result === 'escape') {
-                        localStorage.removeItem('pending_quest_resume');
-                    }
-                }
-            } catch (e) {
-                localStorage.removeItem('pending_quest_resume');
+        if (battleState && battleState.status === 'active') {
+            setViewMode('battle');
+            const hasBoss = (battleState.enemies || []).some((e: any) => e.isBoss || e.is_boss);
+            const targetBgm = hasBoss ? 'bgm_battle_boss' : 'bgm_battle';
+            setBattleBgm(targetBgm);
+            if (soundManager) {
+                soundManager.playBgm(targetBgm);
             }
         }
+    }, [battleState?.status]);
 
-        // If not restored via battle transition check, try restoring from Zustand's current node state
-        if (!restored) {
-            const qs = useQuestState.getState();
-            if (qs.questId === id) {
-                const savedNodeId = qs.currentNodeId;
-                if (savedNodeId && savedNodeId !== 'start') {
-                    setInitialNodeId(savedNodeId);
-                }
-            }
-        }
+    // Battle Return Logic (Disabled - User Request)
+    useEffect(() => {
+        localStorage.removeItem('pending_quest_resume');
+        setInitialNodeId('start');
     }, [id]);
 
     const handlePrepareResult = useCallback(async (result: 'success' | 'failure' | 'success_retreat', history: string[], nodeRewards?: any) => {
@@ -423,6 +1229,16 @@ export default function QuestPage() {
             setLoading(false);
             return;
         }
+
+        console.log('[QuestPage] Initializing with id:', id);
+
+        // PvPアリーナの場合はシナリオ・UGCのロードをバイパス
+        if (id && id.startsWith('pvp_arena_')) {
+            console.log('[QuestPage] PvP Arena detected. Bypassing scenario load.');
+            setLoading(false);
+            return;
+        }
+
         async function loadScenario() {
             try {
                 // 最新のユーザー情報を読み込む (コロシアムの場合は最新のロック状態を強制取得するため常にフェッチ)
@@ -693,7 +1509,7 @@ export default function QuestPage() {
         );
     }
 
-    if (!scenario) {
+    if (!scenario && (!id || !id.startsWith('pvp_arena_'))) {
         return (
             <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center text-slate-300 gap-4 px-6 text-center">
                 <h1 className="text-2xl font-serif text-red-500">{!id ? "Invalid Quest ID" : (errorMsg || "Quest Not Found")}</h1>
@@ -709,10 +1525,10 @@ export default function QuestPage() {
 
     // script_data が null またはノードが空のクエストは「準備中」表示
     // UGCクエストは flow_nodes にノードを保存するため、そちらもチェック
-    const hasScriptNodes = scenario.script_data?.nodes && Object.keys(scenario.script_data.nodes).length > 0;
-    const hasFlowNodes = Array.isArray(scenario.flow_nodes) && scenario.flow_nodes.length > 0;
+    const hasScriptNodes = scenario?.script_data?.nodes && Object.keys(scenario.script_data.nodes).length > 0;
+    const hasFlowNodes = Array.isArray(scenario?.flow_nodes) && scenario.flow_nodes.length > 0;
     const hasScenarioNodes = hasScriptNodes || hasFlowNodes;
-    if (!hasScenarioNodes) {
+    if (!hasScenarioNodes && (!id || !id.startsWith('pvp_arena_'))) {
         return (
             <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center text-slate-300 gap-6 px-6">
                 <div className="w-16 h-16 rounded-full bg-amber-900/30 border-2 border-amber-700 flex items-center justify-center">
@@ -921,11 +1737,7 @@ export default function QuestPage() {
 
         await useGameStore.getState().startBattle(enemies);
 
-        // Save state for resume
-        localStorage.setItem('pending_quest_resume', JSON.stringify({
-            questId: id,
-            nextNodeId: successNodeId
-        }));
+
 
         // 背景画像のプリロード完了を待機
         await preloadBgPromise;
@@ -946,6 +1758,45 @@ export default function QuestPage() {
     const handleBattleEnd = async (result: 'win' | 'lose' | 'escape') => {
         if (isProcessingEndRef.current) return;
         isProcessingEndRef.current = true;
+
+        // 非同期PvP（アリーナ戦）の終了処理
+        if (id && id.startsWith('pvp_arena_')) {
+            const opponentId = id.replace('pvp_arena_', '');
+            const storeState = useGameStore.getState();
+            const opponentName = storeState.battleState?.enemies?.[0]?.name || '対戦相手';
+            const isVictory = result === 'win';
+
+            try {
+                const authToken = await getAuthToken();
+                const headers = {
+                    'Content-Type': 'application/json',
+                    ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {})
+                };
+
+                const completeRes = await fetch('/api/pvp/complete', {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify({
+                        is_victory: isVictory,
+                        opponent_id: opponentId,
+                        opponent_name: opponentName,
+                        battle_logs: storeState.battleState?.messages || []
+                    })
+                });
+
+                if (completeRes.ok) {
+                    const pvpResult = await completeRes.json();
+                    alert(`戦闘終了！ ${isVictory ? '勝利しました！' : '敗北しました。'}\nレート変動: ${pvpResult.rating_change >= 0 ? '+' : ''}${pvpResult.rating_change} (現在: ${pvpResult.rating})`);
+                }
+            } catch (e) {
+                console.error('[PvP Complete] Failed to send pvp completion:', e);
+            }
+
+            // クエスト状態をクリアして宿屋に戻る
+            useQuestState.getState().resetQuest();
+            router.push('/inn');
+            return;
+        }
 
         try {
             localStorage.removeItem('pending_quest_resume');
@@ -1177,8 +2028,8 @@ export default function QuestPage() {
                     <QuestSettingsModal
                         onClose={() => setIsSettingsOpen(false)}
                         onGiveUp={handleGiveUp}
-                        title={scenario.title}
-                        description={scenario.full_description || scenario.description}
+                        title={scenario?.title || '対人戦アリーナ'}
+                        description={scenario?.full_description || scenario?.description || '闘技場アリーナ戦'}
                     />
                 )}
 
@@ -1195,15 +2046,17 @@ export default function QuestPage() {
 
                 <main className="flex-1 overflow-hidden relative flex flex-col">
                     <div className={`flex-1 relative w-full h-full flex flex-col ${viewMode !== 'scenario' ? 'hidden' : ''}`}>
-                        <ScenarioEngine
-                            scenario={scenario}
-                            initialNodeId={initialNodeId}
-                            onBattleStart={startBattle}
-                            onPrepareResult={handlePrepareResult}
-                            isResultReady={!!prefetchedResult}
-                            isPreparingResult={isPrefetching}
-                            onComplete={handleComplete}
-                        />
+                        {scenario && (
+                            <ScenarioEngine
+                                scenario={scenario}
+                                initialNodeId={initialNodeId}
+                                onBattleStart={startBattle}
+                                onPrepareResult={handlePrepareResult}
+                                isResultReady={!!prefetchedResult}
+                                isPreparingResult={isPrefetching}
+                                onComplete={handleComplete}
+                            />
+                        )}
                     </div>
                     <div className={`flex-1 relative w-full h-full ${viewMode !== 'battle' ? 'hidden' : ''}`}>
                         <BattleView onBattleEnd={handleBattleEnd} bgImageUrl={battleBgUrl} disableRedirect={true} />
