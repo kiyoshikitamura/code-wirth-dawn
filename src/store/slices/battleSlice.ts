@@ -2383,7 +2383,8 @@ export const createBattleSlice = (
                         break;
                     }
                     case 'multi_attack': {
-                        const hitsCount = 2;
+                        const baseId = card.id.match(/^(\d+)/)?.[1] || card.id;
+                        const hitsCount = baseId === '115' ? 3 : 2;
                         let hitLogs: string[] = [];
                         let totalDmg = 0;
                         const basePower = ((card.power ?? 0) / hitsCount) * damageMultiplier;
@@ -2432,7 +2433,8 @@ export const createBattleSlice = (
                                 }
                             }
                             damage = 0;
-                            logMsg = `${loopTargetEnemy.name}に${card.name}を使用！ 怒涛の2連撃！\n` + hitLogs.join('\n');
+                            const comboLabel = hitsCount === 3 ? '怒涛の3連撃！' : '怒涛の2連撃！';
+                            logMsg = `${loopTargetEnemy.name}に${card.name}を使用！ ${comboLabel}\n` + hitLogs.join('\n');
                         } else {
                             logMsg = `${card.name}を使用！`;
                         }
