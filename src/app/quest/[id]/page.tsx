@@ -973,9 +973,11 @@ export default function QuestPage() {
     useEffect(() => {
         if (battleState && battleState.status === 'active') {
             setViewMode('battle');
-            if (battleState.enemies && battleState.enemies.length > 0) {
-                const hasBoss = battleState.enemies.some((e: any) => e.isBoss || e.is_boss);
-                setBattleBgm(hasBoss ? 'bgm_battle_boss' : 'bgm_battle');
+            const hasBoss = (battleState.enemies || []).some((e: any) => e.isBoss || e.is_boss);
+            const targetBgm = hasBoss ? 'bgm_battle_boss' : 'bgm_battle';
+            setBattleBgm(targetBgm);
+            if (soundManager) {
+                soundManager.playBgm(targetBgm);
             }
         }
     }, [battleState?.status]);
