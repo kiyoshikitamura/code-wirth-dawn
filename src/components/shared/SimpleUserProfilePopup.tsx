@@ -258,6 +258,15 @@ export default function SimpleUserProfilePopup({
                                 <span className="text-[10px] font-bold text-slate-400">{age}歳</span>
                             )}
                         </div>
+
+                        {shadow && (
+                            <div className="flex items-center gap-2 mt-1.5 text-[9px] text-slate-400 font-mono">
+                                <span>被雇用:</span>
+                                <span>影: <strong className="text-amber-500 font-bold">{shadow.hired_shadow_count ?? 0}</strong>回</span>
+                                <span className="text-slate-800">|</span>
+                                <span>英霊: <strong className="text-amber-500 font-bold">{shadow.hired_heroic_count ?? 0}</strong>回</span>
+                            </div>
+                        )}
                     </div>
                 </div>
 
