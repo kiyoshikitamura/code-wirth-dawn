@@ -170,10 +170,10 @@ export function resolveNpcTurn(
 
     // NPCが使用できない・不具合を引き起こす特殊効果付きのカードを除外
     const EXCLUDED_NPC_CARDS = [
-        // 既存カード (手札・デッキ操作や自滅防止のため除外維持: 9種)
-        '20', '24', '56', '57', '58', '59', '60', '73', '85',
-        // 新カードパック「魔術学院」追加カード (ドロー・手札操作・複雑な起爆処理等のため除外維持: 10種)
-        '101', '105', '110', '111', '112', '118', '120', '132', '133', '139', '140'
+        // 既存カード (手札・デッキ操作や自滅防止のため除外維持: 7種)
+        '56', '57', '58', '59', '60', '73', '85',
+        // 新カードパック「魔術学院」追加カード (ドロー・手札操作等のため除外維持: 9種)
+        '110', '111', '112', '118', '120', '132', '133', '139', '140'
     ];
     const deck = (npc.signature_deck || []).filter(c => !EXCLUDED_NPC_CARDS.includes(c.id));
     if (deck.length === 0) {
@@ -266,6 +266,19 @@ export function resolveNpcTurn(
         if ((cardIdStr === '20' || cardIdStr === '24') && teamHasDebuff) {
             return 90; // デバフ治療コンボ
         }
+
+        // 5. カタルシス (101) ➔ 敵が毒または炎上状態なら最優先！
+        const hasDoT = enemyEffects.some(e => e.id === 'poison' || e.id === 'burn');
+        if (cardIdStr === '101' && hasDoT) {
+            return 100;
+        }
+
+        // 6. シールドスラム (105) ➔ 自身に防御力上昇バフがあるなら最優先！
+        const hasDefUp = selfEffects.some(e => e.id === 'def_up');
+        if (cardIdStr === '105' && hasDefUp) {
+            return 100;
+        }
+
         return 0;
     };
 

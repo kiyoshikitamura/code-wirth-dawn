@@ -33,6 +33,14 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
     const [isStrongEnemyActive, setIsStrongEnemyActive] = useState(false);
     const [isStrongActive, setIsStrongActive] = useState(false);
     const [floatingDamages, setFloatingDamages] = useState<{ id: number; amount: number; isPlayer: boolean; targetEnemyId?: string; targetMemberId?: string }[]>([]);
+    const nextPopupIdRef = useRef(1);
+    const addPopup = (amount: number, isPlayer: boolean, targetEnemyId?: string, targetMemberId?: string) => {
+        const id = nextPopupIdRef.current++;
+        setFloatingDamages(prev => [...prev, { id, amount, isPlayer, targetEnemyId, targetMemberId }]);
+        setTimeout(() => {
+            setFloatingDamages(prev => prev.filter(d => d.id !== id));
+        }, 1500);
+    };
     const [apErrorActive, setApErrorActive] = useState(false);
     const [selectedEnemyDetail, setSelectedEnemyDetail] = useState<any | null>(null);
     const [playerActiveSkill, setPlayerActiveSkill] = useState<string | null>(null);
@@ -88,22 +96,16 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
         completeActiveMessage,
         enqueuedUpToRef,
     } = useBattleTypewriter(userProfile?.hp, (msg) => {
-        // 敵への被ダメージログ検知とポップアップ ＆ 個別揺れ追加
-        const enemyDmgMatch = msg.match(/^([^\s]+?)に(?:.+?)?(\d+)\s*のダメージ！/) 
-            || msg.match(/各敵に\s*(\d+)\s*のダメージ！/);
-        if (enemyDmgMatch) {
-            const isAoe = msg.includes('各敵に');
-            const amount = parseInt(isAoe ? enemyDmgMatch[1] : enemyDmgMatch[2], 10);
-            
-            if (isAoe) {
-                // 全ての生存エネミーにダメージポップアップを表示
+        // 敵・味方・プレイヤーへのダメージログ検知とポップアップ ＆ 個別揺れ追加
+        let matched = false;
+        
+        // A. 敵全体 / 味方全員へのダメージ
+        if (msg.includes('敵全体') || msg.includes('味方全員') || msg.includes('各敵に')) {
+            const match = msg.match(/(?:敵全体|味方全員|各敵)に\s*(\d+)\s*(?:の)?ダメージ/);
+            if (match) {
+                const amount = parseInt(match[1], 10);
                 (battleState?.enemies || []).filter((e: any) => e.hp > 0).forEach((targetEnemy: any) => {
-                    const id = Date.now() + Math.random();
-                    setFloatingDamages(prev => [...prev, { id, amount, isPlayer: false, targetEnemyId: targetEnemy.id }]);
-                    setTimeout(() => {
-                        setFloatingDamages(prev => prev.filter(d => d.id !== id));
-                    }, 1500);
-
+                    addPopup(amount, false, targetEnemy.id);
                     setShakingEnemyIds(prev => {
                         const next = new Set(prev);
                         next.add(targetEnemy.id);
@@ -119,16 +121,33 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                 });
                 setShouldShake(true);
                 setTimeout(() => setShouldShake(false), 200);
-            } else {
-                const enemyName = enemyDmgMatch[1];
-                const targetEnemy = (battleState?.enemies || []).find((e: any) => e.name === enemyName);
+                matched = true;
+            }
+        }
+        
+        // B. あなた（プレイヤー）へのダメージ
+        if (!matched && msg.includes('あなたに')) {
+            const match = msg.match(/あなたに\s*(\d+)\s*ダメージ/);
+            if (match) {
+                const amount = parseInt(match[1], 10);
+                addPopup(amount, true);
+                setShouldShake(true);
+                setTimeout(() => setShouldShake(false), 300);
+                matched = true;
+            }
+        }
+        
+        // C. 個別の敵や味方お供への被ダメージ
+        if (!matched) {
+            const match = msg.match(/([^\s]+?)に\s*(\d+)\s*(?:の)?ダメージ/);
+            if (match) {
+                const targetName = match[1];
+                const amount = parseInt(match[2], 10);
+                
+                // 敵の検索
+                const targetEnemy = (battleState?.enemies || []).find((e: any) => e.name === targetName);
                 if (targetEnemy) {
-                    const id = Date.now() + Math.random();
-                    setFloatingDamages(prev => [...prev, { id, amount, isPlayer: false, targetEnemyId: targetEnemy.id }]);
-                    setTimeout(() => {
-                        setFloatingDamages(prev => prev.filter(d => d.id !== id));
-                    }, 1500);
-
+                    addPopup(amount, false, targetEnemy.id);
                     setShakingEnemyIds(prev => {
                         const next = new Set(prev);
                         next.add(targetEnemy.id);
@@ -141,9 +160,24 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                             return next;
                         });
                     }, 300);
-
+                    
                     setShouldShake(true);
                     setTimeout(() => setShouldShake(false), 200);
+                    
+                    if (targetEnemy.id === battleState.enemy?.id) {
+                        setShouldEnemyShake(true);
+                        setTimeout(() => setShouldEnemyShake(false), 300);
+                    }
+                    matched = true;
+                } else {
+                    // 味方お供の検索
+                    const targetMember = (battleState?.party || []).find((m: any) => m.name === targetName);
+                    if (targetMember) {
+                        addPopup(amount, false, undefined, String(targetMember.id));
+                        setShouldShake(true);
+                        setTimeout(() => setShouldShake(false), 200);
+                        matched = true;
+                    }
                 }
             }
         }
@@ -286,12 +320,6 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
             if (diff > 0) {
                 setShouldShake(true);
                 setTimeout(() => setShouldShake(false), 300);
-
-                const id = Date.now() + Math.random();
-                setFloatingDamages(prev => [...prev, { id, amount: diff, isPlayer: true }]);
-                setTimeout(() => {
-                    setFloatingDamages(prev => prev.filter(d => d.id !== id));
-                }, 2200);
             }
         }
         prevLiveHpRef.current = liveHp;
@@ -305,9 +333,6 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
             if (prevHp !== undefined && enemy.hp !== null) {
                 const diff = prevHp - enemy.hp;
                 if (diff > 0) {
-                    const id = Date.now() + Math.random();
-                    setFloatingDamages(prev => [...prev, { id, amount: diff, isPlayer: false, targetEnemyId: enemy.id }]);
-                    
                     // 味方の攻撃（いずれかの敵へのダメージ）があったため、画面全体を常に揺らす
                     setShouldShake(true);
                     setTimeout(() => setShouldShake(false), 300);
@@ -331,10 +356,6 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                         setShouldEnemyShake(true);
                         setTimeout(() => setShouldEnemyShake(false), 300);
                     }
-                    
-                    setTimeout(() => {
-                        setFloatingDamages(prev => prev.filter(d => d.id !== id));
-                    }, 2200);
                 }
             }
             if (enemy.hp !== null) {
@@ -352,12 +373,8 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
             if (prevHp !== undefined && currentHp !== null) {
                 const diff = prevHp - currentHp;
                 if (diff > 0) {
-                    const id = Date.now() + Math.random();
-                    setFloatingDamages(prev => [...prev, { id, amount: diff, isPlayer: false, targetMemberId: String(member.id) }]);
-                    
-                    setTimeout(() => {
-                        setFloatingDamages(prev => prev.filter(d => d.id !== id));
-                    }, 2200);
+                    setShouldShake(true);
+                    setTimeout(() => setShouldShake(false), 200);
                 }
             }
             prevPartyHpRef.current[member.id] = currentHp;

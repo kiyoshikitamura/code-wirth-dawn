@@ -3465,6 +3465,99 @@ export const createBattleSlice = (
                 // PvP敵お供が特殊なカードを使用した場合の個別解決ロジック
                 if (isPvPEnemy && chosenCard) {
                     const cardIdStr = String(chosenCard.id);
+
+                    // A. カタルシス (101) ➔ プレイヤーの毒・炎上の残りDoTダメージを一挙に発生させて状態異常を消去
+                    if (cardIdStr === '101') {
+                        const dotEffects = currentPlayerEffects.filter(e => e.id === 'poison' || e.id === 'burn');
+                        let totalDmg = 25; // 基本ダメージ
+                        if (dotEffects.length > 0) {
+                            totalDmg = 0;
+                            dotEffects.forEach(e => {
+                                const duration = e.duration || 1;
+                                totalDmg += duration * 100;
+                            });
+                            currentPlayerEffects = currentPlayerEffects.filter(e => e.id !== 'poison' && e.id !== 'burn');
+                            newMessages.push(`${enemy.name}の『カタルシス』！ あなたの毒・炎上状態を大爆発させた！`);
+                        } else {
+                            newMessages.push(`${enemy.name}の『カタルシス』！`);
+                        }
+                        
+                        const def = getEffectiveDef(newUserProfile, get().battleState);
+                        const defBonus = getDefBonus(currentPlayerEffects);
+                        const defDownMod = getDefDownMod(currentPlayerEffects);
+                        const effectiveDef = Math.floor((def + defBonus) * defDownMod);
+                        const finalDmg = Math.max(1, totalDmg - effectiveDef);
+                        
+                        if (newUserProfile) {
+                            const prevHp = newUserProfile.hp || 0;
+                            const newHp = Math.max(0, prevHp - finalDmg);
+                            newUserProfile.hp = newHp;
+                            newMessages.push(`起爆の衝撃！ あなたに ${finalDmg} ダメージ (HP: ${prevHp} → ${newHp})`);
+                            newMessages.push(`__hp_sync:${newHp}`);
+                        }
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, lastUsedSkill: selectedSkillSlug } as any : e);
+                        continue;
+                    }
+
+                    // B. シールドスラム (105) ➔ 自身の防御増加バフをすべて消費して大ダメージを与える
+                    if (cardIdStr === '105') {
+                        const defUpEffects = (currentEnemyStatus.status_effects || []).filter(e => e.id === 'def_up');
+                        let extraDmg = 0;
+                        defUpEffects.forEach(e => {
+                            extraDmg += Number(e.val) || 30;
+                        });
+                        
+                        const nextEffects = (currentEnemyStatus.status_effects || []).filter(e => e.id !== 'def_up');
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, status_effects: nextEffects } : e);
+                        
+                        const totalPower = 10 + extraDmg;
+                        const baseAtk = (enemy as any).atk || ((enemy.level || 1) * 3 + 5);
+                        const atkDownMod = getAtkDownMod(enemyStatusEffects);
+                        const enemyAtkValue = Math.floor(baseAtk * (totalPower / 20) * atkDownMod);
+                        
+                        const def = getEffectiveDef(newUserProfile, get().battleState);
+                        const defBonus = getDefBonus(currentPlayerEffects);
+                        const defDownMod = getDefDownMod(currentPlayerEffects);
+                        const effectiveDef = Math.floor((def + defBonus) * defDownMod);
+                        const finalDmg = Math.max(1, enemyAtkValue - effectiveDef);
+                        
+                        newMessages.push(`${enemy.name}の『シールドスラム』！ 自身の防御バフを全て威力に上乗せして叩きつけた！`);
+                        if (newUserProfile) {
+                            const prevHp = newUserProfile.hp || 0;
+                            const newHp = Math.max(0, prevHp - finalDmg);
+                            newUserProfile.hp = newHp;
+                            newMessages.push(`あなたに ${finalDmg} ダメージ (HP: ${prevHp} → ${newHp})`);
+                            newMessages.push(`__hp_sync:${newHp}`);
+                        }
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, lastUsedSkill: selectedSkillSlug } as any : e);
+                        continue;
+                    }
+
+                    // C. オアシスの水 (20) ➔ 敵全員の状態異常を治療しHPを 60 回復
+                    if (cardIdStr === '20') {
+                        updatedEnemies = updatedEnemies.map(e => {
+                            if (e.hp <= 0) return e;
+                            const cleanEffects = (e.status_effects || []).filter(eff => !['poison', 'bleed', 'bleed_minor', 'burn', 'stun', 'bind', 'freeze', 'blind'].includes(eff.id));
+                            const nextHp = Math.min(e.maxHp || 100, e.hp + 60);
+                            return { ...e, status_effects: cleanEffects, hp: nextHp };
+                        });
+                        newMessages.push(`${enemy.name}の『オアシスの水』！ 敵全員の状態異常を解除し、HPを 60 回復した。`);
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, lastUsedSkill: selectedSkillSlug } as any : e);
+                        continue;
+                    }
+
+                    // D. 清め (24) ➔ 敵全員のデバフを払い除けHPを 50 回復
+                    if (cardIdStr === '24') {
+                        updatedEnemies = updatedEnemies.map(e => {
+                            if (e.hp <= 0) return e;
+                            const cleanEffects = (e.status_effects || []).filter(eff => !['atk_down', 'def_down', 'spd_down'].includes(eff.id));
+                            const nextHp = Math.min(e.maxHp || 100, e.hp + 50);
+                            return { ...e, status_effects: cleanEffects, hp: nextHp };
+                        });
+                        newMessages.push(`${enemy.name}の『清め』！ 敵全員のデバフを解除し、HPを 50 回復した。`);
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, lastUsedSkill: selectedSkillSlug } as any : e);
+                        continue;
+                    }
                     
                     // 1. ダブルキャスト (116)
                     if (cardIdStr === '116') {
