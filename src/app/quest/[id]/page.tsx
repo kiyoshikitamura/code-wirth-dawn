@@ -801,7 +801,7 @@ export default function QuestPage() {
     const router = useRouter();
     const id = params.id as string;
     const [scenario, setScenario] = useState<Scenario | null>(null);
-    const { userProfile, fetchUserProfile } = useGameStore();
+    const { userProfile, fetchUserProfile, battleState } = useGameStore();
     const [loading, setLoading] = useState(true);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
     const [isGivingUp, setIsGivingUp] = useState(false);
