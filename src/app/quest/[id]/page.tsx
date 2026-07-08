@@ -985,42 +985,10 @@ export default function QuestPage() {
         }
     }, [battleState?.status]);
 
-    // Battle Return Logic
+    // Battle Return Logic (Disabled - User Request)
     useEffect(() => {
-        const pending = localStorage.getItem('pending_quest_resume');
-        let restored = false;
-        if (pending) {
-            try {
-                const { questId, nextNodeId } = JSON.parse(pending);
-                // Verify we are in the right quest
-                if (questId === id) {
-                    const urlParams = new URLSearchParams(window.location.search);
-                    const result = urlParams.get('battle_result');
-
-                    if (result === 'win') {
-                        setInitialNodeId(nextNodeId);
-                        localStorage.removeItem('pending_quest_resume');
-                        window.history.replaceState({}, '', `/quest/${id}`); // Clean URL
-                        restored = true;
-                    } else if (result === 'lose' || result === 'escape') {
-                        localStorage.removeItem('pending_quest_resume');
-                    }
-                }
-            } catch (e) {
-                localStorage.removeItem('pending_quest_resume');
-            }
-        }
-
-        // If not restored via battle transition check, try restoring from Zustand's current node state
-        if (!restored) {
-            const qs = useQuestState.getState();
-            if (qs.questId === id) {
-                const savedNodeId = qs.currentNodeId;
-                if (savedNodeId && savedNodeId !== 'start') {
-                    setInitialNodeId(savedNodeId);
-                }
-            }
-        }
+        localStorage.removeItem('pending_quest_resume');
+        setInitialNodeId('start');
     }, [id]);
 
     const handlePrepareResult = useCallback(async (result: 'success' | 'failure' | 'success_retreat', history: string[], nodeRewards?: any) => {
@@ -1769,11 +1737,7 @@ export default function QuestPage() {
 
         await useGameStore.getState().startBattle(enemies);
 
-        // Save state for resume
-        localStorage.setItem('pending_quest_resume', JSON.stringify({
-            questId: id,
-            nextNodeId: successNodeId
-        }));
+
 
         // 背景画像のプリロード完了を待機
         await preloadBgPromise;
