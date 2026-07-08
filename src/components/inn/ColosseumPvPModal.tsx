@@ -34,6 +34,12 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
     const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
+    const [hasDefenseParty, setHasDefenseParty] = useState<boolean>(true);
+    const [showDefenseHistory, setShowDefenseHistory] = useState<boolean>(false);
+    const [defenseLogs, setDefenseLogs] = useState<any[]>([]);
+    const [selectedLog, setSelectedLog] = useState<any | null>(null);
+    const [loadingLogs, setLoadingLogs] = useState<boolean>(false);
+
     const fetchOpponents = async () => {
         setLoading(true);
         setErrorMsg(null);
@@ -51,6 +57,7 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                 setOpponents(data.opponents || []);
                 setChallengerScore(data.challenger_score || 0);
                 setChallengerRank(data.challenger_rank || 'C');
+                setHasDefenseParty(!!data.has_defense_party);
                 if (data.challenger_stats) {
                     setChallengerStats(data.challenger_stats);
                 }
@@ -142,6 +149,85 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
             setErrorMsg('通信エラーが発生しました。');
         } finally {
             setLoading(false);
+        }
+    };
+
+    // 自分の防衛パーティをGETして詳細表示用にマウントする
+    const handleViewMyDefense = async () => {
+        setLoading(true);
+        setErrorMsg(null);
+        soundManager?.playSE('se_item_get');
+        try {
+            const authHeaders = await getAuthHeaders();
+            const res = await fetch('/api/pvp/defense', {
+                method: 'GET',
+                headers: {
+                    ...authHeaders
+                }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                if (data.party) {
+                    const dummyOpponent = {
+                        user_id: userProfile?.id || 'me',
+                        user_name: `${userProfile?.name}（登録中の防衛パーティ）`,
+                        avatar_url: userProfile?.avatar_url,
+                        battle_score: challengerScore,
+                        defense_rank: challengerRank,
+                        is_my_defense: true,
+                        player_snapshot: {
+                            level: userProfile?.level || 20,
+                            job_class: userProfile?.job_class || 'Adventurer',
+                            hp: data.party.player_snapshot?.hp || 300,
+                            atk: data.party.player_snapshot?.atk || 50,
+                            def: data.party.player_snapshot?.def || 50,
+                        },
+                        party_members_snapshot: data.party.party_members_snapshot || [],
+                        equipped_items_snapshot: data.party.equipped_items_snapshot || [],
+                        skill_deck_snapshot: data.party.skill_deck_snapshot || []
+                    };
+                    setSelectedOpponent(dummyOpponent);
+                } else {
+                    setErrorMsg('防衛パーティが登録されていません。');
+                }
+            } else {
+                const data = await res.json();
+                setErrorMsg(data.error || '防衛データの取得に失敗しました。');
+            }
+        } catch (err) {
+            console.error('[PvP View My Defense] Error:', err);
+            setErrorMsg('通信エラーが発生しました。');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // 防衛履歴（ログ一覧）を取得する
+    const fetchDefenseLogs = async () => {
+        setLoadingLogs(true);
+        setErrorMsg(null);
+        soundManager?.playSE('se_item_get');
+        try {
+            const authHeaders = await getAuthHeaders();
+            const res = await fetch('/api/pvp/defense-logs', {
+                method: 'GET',
+                headers: {
+                    ...authHeaders
+                }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setDefenseLogs(data.logs || []);
+                setShowDefenseHistory(true);
+            } else {
+                const data = await res.json();
+                setErrorMsg(data.error || '防衛履歴の取得に失敗しました。');
+            }
+        } catch (err) {
+            console.error('[PvP Defense Logs] Error:', err);
+            setErrorMsg('通信エラーが発生しました。');
+        } finally {
+            setLoadingLogs(false);
         }
     };
 
