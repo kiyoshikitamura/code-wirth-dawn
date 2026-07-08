@@ -216,7 +216,7 @@ export async function POST(req: Request) {
 
         const { error: upsertError } = await supabaseServer
             .from('pvp_defense_parties')
-            .upsert(defenseData);
+            .upsert(defenseData, { onConflict: 'user_id' });
 
         if (upsertError) {
             console.error('[PvP Defense] Upsert error:', upsertError);
