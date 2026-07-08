@@ -8,7 +8,7 @@ import { buildShareData } from '@/lib/shareUtils';
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        const { user_id, shadow } = body; // Hirer ID and Shadow Object
+        const { user_id, shadow, is_profile_hire } = body; // Hirer ID, Shadow Object and Profile Hire Flag
 
         if (!user_id || !shadow) {
             return NextResponse.json({ error: 'Missing required params' }, { status: 400 });
@@ -50,7 +50,7 @@ export async function POST(req: Request) {
         const shadowService = new ShadowService(supabaseAdmin);
 
 
-        const result = await shadowService.hireShadow(user_id, shadow);
+        const result = await shadowService.hireShadow(user_id, shadow, { isProfileHire: !!is_profile_hire });
 
         if (!result.success) {
             return NextResponse.json({ error: result.error }, { status: 400 });

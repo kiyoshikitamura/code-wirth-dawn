@@ -335,6 +335,7 @@ export default function GossipModal({ onClose }: Props) {
             if (res.ok) {
                 const profileData = await res.json();
                 setSimpleProfileUser({
+                    id: post.user_id,
                     name: profileData.name || '名もなき旅人',
                     avatar_url: profileData.avatar_url,
                     epithet: profileData.title_name,
@@ -651,6 +652,8 @@ export default function GossipModal({ onClose }: Props) {
                     level={simpleProfileUser.level}
                     age={simpleProfileUser.age}
                     subscriptionTier={simpleProfileUser.subscriptionTier}
+                    userId={simpleProfileUser.id}
+                    callerUserId={userProfile?.id}
                 />
             )}
         </div>,

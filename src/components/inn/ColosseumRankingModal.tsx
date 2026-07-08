@@ -52,6 +52,7 @@ export default function ColosseumRankingModal({ onClose }: ColosseumRankingModal
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
     const [countdown, setCountdown] = useState<string>('');
     const [selectedUser, setSelectedUser] = useState<{
+        id?: string;
         name: string;
         avatarUrl?: string;
         epithet?: string;
@@ -70,6 +71,7 @@ export default function ColosseumRankingModal({ onClose }: ColosseumRankingModal
             if (res.ok) {
                 const profileData = await res.json();
                 setSelectedUser({
+                    id: userId,
                     name: profileData.name || '名もなき旅人',
                     avatarUrl: profileData.avatar_url,
                     epithet: profileData.title_name,
@@ -399,6 +401,8 @@ export default function ColosseumRankingModal({ onClose }: ColosseumRankingModal
                     introduction={selectedUser.introduction}
                     level={selectedUser.level}
                     age={selectedUser.age}
+                    userId={selectedUser.id}
+                    callerUserId={userProfile?.id}
                 />
             )}
         </div>,

@@ -21,6 +21,9 @@ async function performUpdate(isForceUgcReset: boolean) {
     }
     logs.push(...result.logs);
 
+    // 1.5. 被雇用累積数の6時間バッチ集計
+    await aggregateHiredCounts(supabaseServer, logs);
+
     // 2. 世界アライメントスコアの6時間リセット (world-reset と同等の処理)
     // 6時間以上経過しているものをリセット
     try {
@@ -630,5 +633,76 @@ export async function GET(req: Request) {
         return NextResponse.json(result);
     } catch (e: any) {
         return NextResponse.json({ success: false, error: e.message }, { status: 500 });
+    }
+}
+
+async function aggregateHiredCounts(supabase: any, logs: string[]) {
+    try {
+        logs.push('[HiredCountsBatch] Starting hired counts aggregation...');
+
+        const { data: events, error: fetchErr } = await supabase
+            .from('user_hire_events')
+            .select('id, source_user_id, origin_type');
+
+        if (fetchErr) {
+            logs.push(`[HiredCountsBatch] Error fetching events: ${fetchErr.message}`);
+            return;
+        }
+
+        if (!events || events.length === 0) {
+            logs.push('[HiredCountsBatch] No new hire events to aggregate.');
+            return;
+        }
+
+        const shadowCounts: Record<string, number> = {};
+        const heroicCounts: Record<string, number> = {};
+
+        for (const ev of events) {
+            const userId = ev.source_user_id;
+            if (ev.origin_type === 'shadow_active') {
+                shadowCounts[userId] = (shadowCounts[userId] || 0) + 1;
+            } else if (ev.origin_type === 'shadow_heroic') {
+                heroicCounts[userId] = (heroicCounts[userId] || 0) + 1;
+            }
+        }
+
+        const uniqueUserIds = Array.from(new Set(events.map((ev: any) => ev.source_user_id)));
+        let successCount = 0;
+
+        for (const userId of uniqueUserIds as string[]) {
+            const sc = shadowCounts[userId] || 0;
+            const hc = heroicCounts[userId] || 0;
+
+            if (sc > 0 || hc > 0) {
+                const { error: rpcErr } = await supabase.rpc('increment_hired_counts', {
+                    p_user_id: userId,
+                    p_shadow_inc: sc,
+                    p_heroic_inc: hc
+                });
+
+                if (rpcErr) {
+                    logs.push(`[HiredCountsBatch] Failed to increment counts for ${userId}: ${rpcErr.message}`);
+                } else {
+                    successCount++;
+                }
+            }
+        }
+
+        // 正常に加算完了したイベントレコードを一括削除
+        const eventIds = events.map((ev: any) => ev.id);
+        const { error: deleteErr } = await supabase
+            .from('user_hire_events')
+            .delete()
+            .in('id', eventIds);
+
+        if (deleteErr) {
+            logs.push(`[HiredCountsBatch] Error cleaning up events: ${deleteErr.message}`);
+        } else {
+            logs.push(`[HiredCountsBatch] Successfully aggregated ${events.length} events for ${successCount} users.`);
+        }
+
+    } catch (e: any) {
+        logs.push(`[HiredCountsBatch] Fatal error: ${e.message}`);
+        console.error('[HiredCountsBatch] Fatal error:', e);
     }
 }

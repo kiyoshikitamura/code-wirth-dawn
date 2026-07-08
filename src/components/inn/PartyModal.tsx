@@ -236,6 +236,23 @@ export default function PartyModal({ onClose, userProfile, isCampMode }: PartyMo
                             </div>
                         )}
 
+                        {/* Snapshot Equipped Items */}
+                        {selectedDetail.snapshot_data?.equipped_items && selectedDetail.snapshot_data.equipped_items.length > 0 && (
+                            <div className="bg-black/20 rounded-lg p-2.5 border border-slate-800">
+                                <div className="text-[10px] text-amber-500 mb-1.5 font-bold">装備品</div>
+                                <div className="grid grid-cols-2 gap-1.5 text-[10px]">
+                                    {selectedDetail.snapshot_data.equipped_items.map((eq: any, i: number) => (
+                                        <div key={i} className="flex justify-between items-center bg-slate-950/50 px-2 py-1 rounded border border-slate-800/40">
+                                            <span className="font-bold text-[8px] uppercase tracking-wider text-purple-400 bg-purple-950/20 border border-purple-500/10 px-1 py-0.5 rounded">
+                                                {toJpSlotName(eq.slot)}
+                                            </span>
+                                            <span className="truncate ml-2 font-bold text-slate-200 text-right flex-1">{eq.name}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
                         {/* Flavor text */}
                         {selectedDetail.flavor_text && (
                             <div className="bg-purple-950/10 rounded-lg p-2.5 border border-purple-900/20">
