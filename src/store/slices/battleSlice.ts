@@ -3270,6 +3270,7 @@ export const createBattleSlice = (
         let vitDamageTaken = battleState.vitDamageTakenThisTurn;
 
         for (const enemy of activeEnemies) {
+            if ((newUserProfile?.hp || 0) <= 0) break;
             let currentEnemyStatus = updatedEnemies.find(e => e.id === enemy.id);
             if (!currentEnemyStatus || currentEnemyStatus.hp <= 0) continue;
 
