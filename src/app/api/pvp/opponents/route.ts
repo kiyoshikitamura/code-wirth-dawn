@@ -8094,23 +8094,52 @@ export async function GET(req: Request) {
         // リスト全体をランダムシャッフルする
         opponentsList = [...opponentsList].sort(() => Math.random() - 0.5);
 
+        // 4. データ不整合防衛策: skill_deck_snapshot が空になっている対戦相手について、
+        // DB の inventory から本物の装備スキルカードをリアルタイムに直接クエリして同期する
+        const emptySkillOpponentIds = opponentsList
+            .filter(opp => !opp.is_ghost && (!opp.skill_deck_snapshot || opp.skill_deck_snapshot.length === 0))
+            .map(opp => opp.user_id);
+            
+        if (emptySkillOpponentIds.length > 0) {
+            const { data: dbRealSkills } = await supabaseServer
+                .from('inventory')
+                .select('user_id, item_id, is_equipped, is_skill, items!inner(id, name, type, effect_data, linked_card_id)')
+                .in('user_id', emptySkillOpponentIds)
+                .eq('is_equipped', true);
+                
+            if (dbRealSkills) {
+                const userSkillsMap: Record<string, any[]> = {};
+                dbRealSkills.forEach((i: any) => {
+                    const itemType = String(i.items?.type || '').toLowerCase();
+                    if (i.is_skill || itemType === 'skill' || itemType === 'skill_card') {
+                        if (!userSkillsMap[i.user_id]) {
+                            userSkillsMap[i.user_id] = [];
+                        }
+                        userSkillsMap[i.user_id].push({
+                            id: String(i.items.linked_card_id || i.item_id),
+                            name: i.items.name,
+                            type: 'Skill',
+                            effect_data: i.items.effect_data,
+                        });
+                    }
+                });
+                
+                opponentsList = opponentsList.map(opp => {
+                    if (emptySkillOpponentIds.includes(opp.user_id) && userSkillsMap[opp.user_id]) {
+                        return {
+                            ...opp,
+                            skill_deck_snapshot: userSkillsMap[opp.user_id]
+                        };
+                    }
+                    return opp;
+                });
+            }
+        }
+
         // 「きたむ（調整テスト用）」を検出して先頭（1番上）に移動する
         const testTargetIdx = opponentsList.findIndex(opp => String(opp.user_name) === 'きたむ（調整テスト用）');
         if (testTargetIdx !== -1) {
             const [testTarget] = opponentsList.splice(testTargetIdx, 1);
-            
-            // フェールセーフ: skill_deck_snapshot が空の場合はデフォルトスキルを割り当てる
-            if (!testTarget.skill_deck_snapshot || testTarget.skill_deck_snapshot.length === 0) {
-                testTarget.skill_deck_snapshot = [
-                    { id: "26", name: "氣の癒やし", type: "Heal", ap_cost: 2, power: 70 },
-                    { id: "101", name: "カタルシス", type: "Magic", ap_cost: 3, power: 30 },
-                    { id: "102", name: "傷口をえぐる", type: "Skill", ap_cost: 2, power: 25 },
-                    { id: "105", name: "シールドスラム", type: "Skill", ap_cost: 2, power: 10 },
-                    { id: "106", name: "スパイクアーマー", type: "Support", ap_cost: 2, power: 0 },
-                    { id: "136", name: "ファイアウェーブ", type: "Magic", ap_cost: 2, power: 20 }
-                ];
-            }
-            
             opponentsList.unshift(testTarget);
         }
 
