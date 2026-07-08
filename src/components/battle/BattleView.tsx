@@ -193,8 +193,23 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
             if (skillName) {
                 const partyNames = (battleState?.party || []).map((m: any) => m.name).filter(Boolean);
                 const isPartyMemberAction = partyNames.includes(charName);
+                const isPlayerAction = charName === 'あなた' || charName === 'プレイヤー' || (userProfile?.user_name && charName === userProfile.user_name);
 
-                if (isPartyMemberAction) {
+                if (isPlayerAction) {
+                    // プレイヤー本人のスキルカットイン (画面下部・青色系)
+                    setPlayerActiveSkill(skillName);
+                    const isStrong = /終焉|暗黒|雷撃|魂|石化|咆哮|神罰|極|超|真|神|絶|暴君/g.test(skillName);
+                    if (isStrong) {
+                        setIsStrongPlayerActive(true);
+                        setShouldShake(true);
+                        setTimeout(() => setShouldShake(false), 300);
+                    }
+                    const displayTime = isStrong ? 2500 : 2000;
+                    setTimeout(() => {
+                        setPlayerActiveSkill(null);
+                        setIsStrongPlayerActive(false);
+                    }, displayTime);
+                } else if (isPartyMemberAction) {
                     // 味方お供NPCのスキルカットイン (画面下部・緑色系)
                     setPartyActiveSkill(skillName);
                     const isStrong = /終焉|暗黒|雷撃|魂|石化|咆哮|神罰|極|超|真|神|絶|暴君/g.test(skillName);

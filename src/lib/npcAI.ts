@@ -654,7 +654,7 @@ function executeCard(
             totalDmg += hitDmg;
 
             const critLabel = isHitCritical ? ' クリティカル！' : '';
-            hitLogs.push(`${hit + 1}撃目: ${hitDmg} ダメージ${critLabel}`);
+            hitLogs.push(`${hit + 1}撃目: ${context.enemyName}に ${hitDmg} ダメージ${critLabel}`);
         }
 
         const isAoe = card.target_type === 'all_enemies';
