@@ -28,7 +28,7 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
     const [challengerScore, setChallengerScore] = useState<number>(0);
     const [challengerRank, setChallengerRank] = useState<string>('C');
     const [challengerStats, setChallengerStats] = useState<any>({ wins: 0, losses: 0, current_streak: 0, max_streak: 0, rating: 1500 });
-    
+    const [initialFetchDone, setInitialFetchDone] = useState(false);
     const [loading, setLoading] = useState(false);
     const [updatingDefense, setUpdatingDefense] = useState(false);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -71,6 +71,7 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
             setErrorMsg('通信エラーが発生しました。');
         } finally {
             setLoading(false);
+            setInitialFetchDone(true);
         }
     };
 
@@ -254,6 +255,12 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                     
                     {/* Challenger Stats Card */}
                     <div className="bg-gradient-to-b from-[#1c1d24] to-[#121318] border border-slate-700/60 rounded-xl p-4 shadow-inner relative overflow-hidden">
+                        {/* Loading Overlay */}
+                        {!initialFetchDone && (
+                            <div className="absolute inset-0 bg-[#0d1117]/85 backdrop-blur-[2px] flex items-center justify-center z-10 transition-all">
+                                <RefreshCw className="animate-spin text-amber-500" size={24} />
+                            </div>
+                        )}
                         {/* Glow effect */}
                         <div className="absolute -top-10 -right-10 w-24 h-24 bg-amber-500/10 rounded-full blur-xl pointer-events-none" />
                         
