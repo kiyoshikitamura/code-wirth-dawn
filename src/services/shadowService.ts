@@ -501,7 +501,7 @@ export class ShadowService {
             // v25: 装備中スキルID取得 → inject_cards に
             const { data: equippedSkills } = await this.supabase
                 .from('user_skills')
-                .select('skill_id, cards!inner(id, name)')
+                .select('skill_id, skills!inner(cards!inner(id, name))')
                 .eq('user_id', shadow.profile_id)
                 .eq('is_equipped', true)
                 .limit(6);
@@ -509,9 +509,9 @@ export class ShadowService {
             let resolvedCardIds: number[] = [];
             if (equippedSkills && equippedSkills.length > 0) {
                 // signature_deck_preview をカード名で埋める
-                shadow.signature_deck_preview = equippedSkills.map((s: any) => s.cards?.name).filter(Boolean);
+                shadow.signature_deck_preview = equippedSkills.map((s: any) => s.skills?.cards?.name).filter(Boolean);
                 // inject_cards 用 cardIds を直接セット
-                resolvedCardIds = equippedSkills.map((s: any) => s.cards?.id).filter(Boolean);
+                resolvedCardIds = equippedSkills.map((s: any) => s.skills?.cards?.id).filter(Boolean);
                 (shadow as any)._resolved_card_ids = resolvedCardIds;
             }
 
@@ -830,7 +830,7 @@ export class ShadowService {
             // 3. 装備中スキルID・カード名取得
             const { data: equippedSkills } = await this.supabase
                 .from('user_skills')
-                .select('skill_id, cards!inner(id, name)')
+                .select('skill_id, skills!inner(cards!inner(id, name))')
                 .eq('user_id', profileId)
                 .eq('is_equipped', true)
                 .limit(6);
@@ -838,8 +838,8 @@ export class ShadowService {
             let signatureDeckPreview: string[] = [];
             let resolvedCardIds: number[] = [];
             if (equippedSkills && equippedSkills.length > 0) {
-                signatureDeckPreview = equippedSkills.map((s: any) => s.cards?.name).filter(Boolean);
-                resolvedCardIds = equippedSkills.map((s: any) => s.cards?.id).filter(Boolean);
+                signatureDeckPreview = equippedSkills.map((s: any) => s.skills?.cards?.name).filter(Boolean);
+                resolvedCardIds = equippedSkills.map((s: any) => s.skills?.cards?.id).filter(Boolean);
             }
 
             const fee = (u.level || 1) * ECONOMY_RULES.HIRE_ACTIVE_PER_LEVEL;
