@@ -54,7 +54,20 @@ export type StatusEffectId =
     | 'crit_up'            // クリティカル率UP
     | 'absolute_barrier'   // 絶対被ダメージ軽減
     | 'stun_infuse'        // 攻撃時スタン付与
-    | 'evasion_down';      // 回避率低下
+    | 'evasion_down'      // 回避率低下
+    | 'freeze_exploit'     // 氷撃特効
+    | 'dispel_freeze'      // 解氷魔力
+    | 'blood_pursuit'      // 血の追撃
+    | 'random_dice'        // 勝負のダイス
+    | 'pierce'             // 防御貫通
+    | 'double_cast'        // ダブルキャスト
+    | 'morale_up'          // 士気向上
+    | 'atk_up_fatal'       // 致死攻撃UP
+    | 'invulnerable'       // 無敵状態
+    | 'absolute_def'       // 絶対防御
+    | 'counter'            // 反撃の構え
+    | 'spd_down'           // 速度低下
+    | 'spd_up';            // 速度上昇
 
 // ─── v2.9.3k: デバフ成功率テーブル ─────────────────────────────
 // 各デバフeffect_idごとの付与成功率（0.0〜1.0）
@@ -136,6 +149,19 @@ const EFFECT_NAMES: Record<StatusEffectId, string> = {
     absolute_barrier: '絶対障壁',
     stun_infuse:  '雷電の一撃',
     evasion_down: '回避率DOWN',
+    freeze_exploit: '氷撃特効',
+    dispel_freeze: '解氷魔力',
+    blood_pursuit: '血の追撃',
+    random_dice:   '勝負のダイス',
+    pierce:        '防御貫通',
+    double_cast:   'ダブルキャスト',
+    morale_up:     '士気向上',
+    atk_up_fatal:  '致死攻撃UP',
+    invulnerable:  '無敵状態',
+    absolute_def:  '絶対防御',
+    counter:       '反撃の構え',
+    spd_down:      '速度低下',
+    spd_up:        '速度上昇',
 };
 
 export function getEffectName(id: StatusEffectId, value?: number): string {
