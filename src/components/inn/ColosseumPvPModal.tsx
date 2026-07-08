@@ -282,7 +282,7 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                                 </button>
                             </div>
                         ) : (
-                            <>
+                            <div className="space-y-2.5">
                                 <div className="flex items-center justify-between">
                                     <h3 className="text-xs font-bold text-amber-500/80 uppercase tracking-wider flex items-center gap-1.5">
                                         対戦相手マッチング (同ランク帯)
@@ -372,7 +372,7 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                                 )}
                             </div>
                         )}
-                        </>
+                        </div>
                     )}
                     </div>
                 </div>
