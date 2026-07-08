@@ -8105,8 +8105,12 @@ export async function GET(req: Request) {
             const hasEmptySkills = !opp.skill_deck_snapshot || opp.skill_deck_snapshot.length === 0;
             const hasEmptyParty = !opp.party_members_snapshot || opp.party_members_snapshot.length === 0 || 
                 opp.party_members_snapshot.some((m: any) => !m.signature_deck_snapshot || m.signature_deck_snapshot.length === 0);
-            const isTestKitamu = String(opp.user_name) === 'きたむ（調整テスト用）' || opp.user_id === 'af2848d0-40f2-4f75-bd2b-ac633184107c' || opp.user_id === '5ad434ec-763f-473e-939f-14a5e9e1cc93' || opp.user_id === 'c1cf67dd-527a-497e-bf88-ce10c2cb516f';
-            return (hasEmptySkills || hasEmptyParty || isTestKitamu) && !opp.is_ghost;
+            const isTestKitamu = String(opp.user_name) === 'きたむ（調整テスト用）' || opp.user_id === 'af2848d0-40f2-4f75-bd2b-ac633184107c' || opp.user_id === '5ad434ec-763f-473e-939f-14a5e9e1cc93' || opp.user_id === 'c1cf67dd-527a-497e-bf88-ce10c2cb516f' || String(opp.user_name).includes('コピー');
+            
+            if (isTestKitamu) {
+                return true;
+            }
+            return (hasEmptySkills || hasEmptyParty) && !opp.is_ghost;
         });
 
         if (emptyOpponents.length > 0) {
@@ -8114,25 +8118,55 @@ export async function GET(req: Request) {
                 try {
                     // A. プレイヤー自身のスキルデッキを引き直し
                     const { data: dbRealSkills } = await supabaseServer
-                        .from('inventory')
-                        .select('item_id, is_equipped, is_skill, items!inner(id, name, type, effect_data, linked_card_id)')
+                        .from('user_skills')
+                        .select(`
+                            id,
+                            is_equipped,
+                            skills!inner (
+                                id,
+                                slug,
+                                name,
+                                card_id,
+                                cards (
+                                    id,
+                                    slug,
+                                    name,
+                                    type,
+                                    cost_val,
+                                    effect_val,
+                                    ap_cost,
+                                    cost_type,
+                                    effect_id,
+                                    target_type,
+                                    image_url,
+                                    description
+                                )
+                            )
+                        `)
                         .eq('user_id', opp.user_id)
                         .eq('is_equipped', true);
 
-                    const resolvedSkills: any[] = [];
-                    if (dbRealSkills) {
-                        dbRealSkills.forEach((i: any) => {
-                            const itemType = String(i.items?.type || '').toLowerCase();
-                            if (i.is_skill || itemType === 'skill' || itemType === 'skill_card') {
-                                resolvedSkills.push({
-                                    id: String(i.items.linked_card_id || i.item_id),
-                                    name: i.items.name,
-                                    type: 'Skill',
-                                    effect_data: i.items.effect_data,
-                                });
-                            }
-                        });
-                    }
+                    const resolvedSkills = (dbRealSkills || [])
+                        .map((entry: any) => {
+                            const skill = entry.skills;
+                            if (!skill) return null;
+                            const card = skill.cards;
+                            if (!card) return null;
+                            return {
+                                id: String(card.id),
+                                slug: card.slug,
+                                name: card.name,
+                                type: card.type || 'Skill',
+                                effect_val: card.cost_val || card.effect_val || 0,
+                                ap_cost: card.ap_cost ?? 1,
+                                cost_type: card.cost_type || undefined,
+                                effect_id: card.effect_id || undefined,
+                                target_type: card.target_type || undefined,
+                                image_url: card.image_url || undefined,
+                                description: card.description || '',
+                            };
+                        })
+                        .filter(Boolean);
 
                     // B. お供メンバーの最新データ（スキル・装備含む）を引き直し解決
                     const enrichedMembers = await PartyService.getEnrichedPartyMembers(opp.user_id);
@@ -8175,7 +8209,6 @@ export async function GET(req: Request) {
                                     ap_cost: c.ap_cost ?? 1,
                                     cost_type: c.cost_type || undefined,
                                     effect_id: c.effect_id || undefined,
-                                    effect_duration: c.effect_duration || undefined,
                                     target_type: c.target_type || undefined,
                                     image_url: c.image_url || undefined,
                                 };
@@ -8194,6 +8227,7 @@ export async function GET(req: Request) {
                             def: memberDef,
                             inject_cards: m.inject_cards || [],
                             signature_deck_snapshot: resolvedDeck,
+                            equipped_items_snapshot: m.snapshot_data?.equipped_items || m.equipped_items || [],
                             icon_url: m.icon_url || null,
                             image_url: m.image_url || null,
                             sort_order: m.sort_order ?? 0,

@@ -171,7 +171,7 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                 if (data.party) {
                     const dummyOpponent = {
                         user_id: userProfile?.id || 'me',
-                        user_name: `${userProfile?.name}（登録中の防衛パーティ）`,
+                        user_name: userProfile?.name || '名もなき旅人',
                         avatar_url: userProfile?.avatar_url,
                         battle_score: challengerScore,
                         defense_rank: challengerRank,
