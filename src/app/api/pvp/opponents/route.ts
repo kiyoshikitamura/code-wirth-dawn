@@ -8070,7 +8070,7 @@ export async function GET(req: Request) {
             const level = opp.player_snapshot ? parseInt(opp.player_snapshot.level || 0, 10) : 1;
             const name = String(opp.user_name || '');
             const nameLower = name.toLowerCase();
-            const isTargetTest = name === 'きたむ（調整テスト用）';
+            const isTargetTest = name === 'きたむ（調整テスト用）' || name === 'きたむ（調整用テスト）';
             const isDummyName = (nameLower.includes('テスト') || nameLower.includes('てすと') || nameLower.includes('test') || nameLower.includes('null')) && !isTargetTest;
             return level >= 3 && !isDummyName;
         });
@@ -8105,7 +8105,7 @@ export async function GET(req: Request) {
             const hasEmptySkills = !opp.skill_deck_snapshot || opp.skill_deck_snapshot.length === 0;
             const hasEmptyParty = !opp.party_members_snapshot || opp.party_members_snapshot.length === 0 || 
                 opp.party_members_snapshot.some((m: any) => !m.signature_deck_snapshot || m.signature_deck_snapshot.length === 0);
-            const isTestKitamu = String(opp.user_name) === 'きたむ（調整テスト用）' || opp.user_id === 'af2848d0-40f2-4f75-bd2b-ac633184107c' || opp.user_id === '5ad434ec-763f-473e-939f-14a5e9e1cc93' || opp.user_id === 'c1cf67dd-527a-497e-bf88-ce10c2cb516f' || String(opp.user_name).includes('コピー');
+            const isTestKitamu = String(opp.user_name) === 'きたむ（調整テスト用）' || String(opp.user_name) === 'きたむ（調整用テスト）' || opp.user_id === 'af2848d0-40f2-4f75-bd2b-ac633184107c' || opp.user_id === '5ad434ec-763f-473e-939f-14a5e9e1cc93' || opp.user_id === 'c1cf67dd-527a-497e-bf88-ce10c2cb516f' || String(opp.user_name).includes('コピー');
             
             if (isTestKitamu) {
                 return true;
@@ -8285,7 +8285,10 @@ export async function GET(req: Request) {
         }
 
         // 「きたむ（調整テスト用）」を検出して先頭（1番上）に移動する
-        const testTargetIdx = opponentsList.findIndex(opp => String(opp.user_name) === 'きたむ（調整テスト用）');
+        const testTargetIdx = opponentsList.findIndex(opp => {
+            const name = String(opp.user_name || '');
+            return name === 'きたむ（調整テスト用）' || name === 'きたむ（調整用テスト）';
+        });
         if (testTargetIdx !== -1) {
             const [testTarget] = opponentsList.splice(testTargetIdx, 1);
             opponentsList.unshift(testTarget);
