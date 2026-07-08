@@ -8124,11 +8124,25 @@ export async function GET(req: Request) {
                     }
                 });
                 
+                // データ同期（セルフヒーリング）: リアルタイム解決した本物のスキルデッキをDB側の pvp_defense_parties に非同期で書き戻す
+                // これにより、次回以降は inventory テーブルへのクエリ自体が発生しなくなり、サーバー負荷が最小化されます
                 opponentsList = opponentsList.map(opp => {
-                    if (emptySkillOpponentIds.includes(opp.user_id) && userSkillsMap[opp.user_id]) {
+                    if (emptySkillOpponentIds.includes(opp.user_id)) {
+                        const resolvedSkills = userSkillsMap[opp.user_id] || [];
+                        
+                        // 非同期でDBをアップデート（バックグラウンド実行）
+                        supabaseServer
+                            .from('pvp_defense_parties')
+                            .update({ skill_deck_snapshot: resolvedSkills })
+                            .eq('user_id', opp.user_id)
+                            .then(({ error }) => {
+                                if (error) console.error(`[PvP Opponents] Self-healing update failed for user ${opp.user_id}:`, error);
+                                else console.log(`[PvP Opponents] Self-healing successfully restored skill deck for user ${opp.user_id}`);
+                            });
+
                         return {
                             ...opp,
-                            skill_deck_snapshot: userSkillsMap[opp.user_id]
+                            skill_deck_snapshot: resolvedSkills
                         };
                     }
                     return opp;
