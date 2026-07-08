@@ -137,37 +137,15 @@ export const createBattleSlice = (
     },
 
     startBattle: async (enemiesInput: Enemy | Enemy[]) => {
-        // 戦闘開始時の装備バフ・加護効果を1行に集約するヘルパー
-        const getEffectJapaneseName = (id: string): string => {
-            const map: Record<string, string> = {
-                atk_up: '攻撃力上昇',
-                def_up: '防御力上昇',
-                regen: 'リジェネ',
-                absolute_barrier: 'バリア',
-                atk_down: '攻撃力低下',
-                def_down: '防御力低下',
-                poison: '毒',
-                burn: '火傷',
-                bleed: '出血',
-                paralyze: '麻痺',
-                sleep: '睡眠',
-                taunt: '挑発',
-                drain_on_hit: '吸血',
-                ap_bonus: 'APボーナス',
-                prayer_grace: '祈りの加護'
-            };
-            return map[id] || id;
-        };
-
         const buildBuffSummaryLine = (name: string, effects: StatusEffect[]): string | null => {
-            if (!effects || effects.length === 0) return null;
+            if (!effects || !Array.isArray(effects) || effects.length === 0) return null;
             
             const buffLabels: string[] = [];
             const debuffLabels: string[] = [];
             
             effects.forEach(eff => {
                 const isDebuff = ['atk_down', 'def_down', 'poison', 'burn', 'bleed', 'paralyze', 'sleep'].includes(eff.id);
-                const nameLabel = getEffectJapaneseName(eff.id);
+                const nameLabel = getEffectName(eff.id as any, eff.value);
                 const durationStr = eff.duration ? `${eff.duration}T` : '';
                 const valStr = eff.value !== undefined ? `:${eff.value > 0 ? '+' : ''}${eff.value}` : '';
                 const label = `[${nameLabel}${valStr}(${durationStr})]`;
@@ -3342,10 +3320,11 @@ export const createBattleSlice = (
             const sigDeck = enemy.signature_deck || [];
             if (isPvPEnemy && sigDeck.length > 0) {
                 const currentAp = (enemy as any).current_ap ?? 6;
-                // 使用可能なスキルを抽出 (APが足りるもの)
+                // 使用可能なスキルを抽出 (APが足りるもの ＆ 使用禁止カードを除外)
+                const EXCLUDED_NPC_CARDS = ['110', '111', '112', '118', '120', '132', '133', '139', '140'];
                 const playableSkills = sigDeck.filter((c: any) => {
                     const apCost = c.ap_cost ?? 1;
-                    return currentAp >= apCost;
+                    return currentAp >= apCost && !EXCLUDED_NPC_CARDS.includes(String(c.id));
                 });
 
                 if (playableSkills.length > 0) {
@@ -3415,6 +3394,18 @@ export const createBattleSlice = (
                     };
                     
                     const cardIdStr = String(chosenCard.id);
+                    
+                    // 闇の代償 (57)
+                    if (cardIdStr === '57') {
+                        const selfDmg = 40;
+                        const nextSelfHp = Math.max(1, currentEnemyStatus.hp - selfDmg);
+                        const nextAp = Math.min(15, (currentEnemyStatus.current_ap || 0) + 6);
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, hp: nextSelfHp, current_ap: nextAp } : e);
+                        newMessages.push(`${enemy.name}の『闇の代償』！ 自身の生命を削り、APを回復した！`);
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, lastUsedSkill: selectedSkillSlug } as any : e);
+                        continue;
+                    }
+
                     const mappedSlug = cardToEnemySkillMap[cardIdStr];
                     
                     if (mappedSlug) {
@@ -3599,16 +3590,7 @@ export const createBattleSlice = (
                         continue;
                     }
 
-                    // 闇の代償 (55)
-                    if (cardIdStr === '55') {
-                        const selfDmg = 40;
-                        const nextSelfHp = Math.max(1, currentEnemyStatus.hp - selfDmg);
-                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, hp: nextSelfHp } : e);
-                        newMessages.push(`${enemy.name}の『闇の代償』！ 自身の生命を削り、破滅の力を引き出した！`);
-                        selectedSkillSlug = 'skill_heavy_blow';
-                        selectedSkillName = '闇の代償';
-                        // continue はしない（後続の攻撃処理に流す）
-                    }
+
 
                     // 3. スパイクアーマー (106)
                     if (cardIdStr === '106') {

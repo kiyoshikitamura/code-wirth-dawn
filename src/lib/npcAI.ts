@@ -586,7 +586,7 @@ function executeCard(
             effectDuration: getCardEffectInfo(card).effectDuration || card.effect_duration || 3,
             targetName,
             usedCardId: card.id,
-            message: `${npc.name}の${card.name}！ ${targetName}に効果が発動した。`
+            message: `${npc.name}の『${card.name}』！ ${targetName}に効果が発動した。`
         };
     }
 
@@ -598,7 +598,7 @@ function executeCard(
             healAmount,
             targetName: 'あなた',
             usedCardId: card.id,
-            message: `${npc.name}の${card.name}！ HPが ${healAmount} 回復した。`
+            message: `${npc.name}の『${card.name}』！ HPが ${healAmount} 回復した。`
         };
     }
 
@@ -621,6 +621,59 @@ function executeCard(
 
     // v4.0: ダメージ計算フロー (base → 揺らぎ → クリティカル → DEF)
     const npcAtk = npc.atk || 0;
+    const baseId = card.id.match(/^(\d+)/)?.[1] || card.id;
+    const isMultiAttack = baseId === '115' || card.effect_id === 'multi_hit';
+    const hitsCount = baseId === '115' ? 3 : (isMultiAttack ? 2 : 1);
+
+    if (hitsCount > 1) {
+        let hitLogs: string[] = [];
+        let totalDmg = 0;
+        const basePower = (power / hitsCount);
+
+        for (let hit = 0; hit < hitsCount; hit++) {
+            let dmg = (basePower + npcAtk) || (4 + Math.floor(Math.random() * 3) + npcAtk);
+            const variance = BATTLE_RULES.DAMAGE_VARIANCE_MIN
+                + Math.random() * (BATTLE_RULES.DAMAGE_VARIANCE_MAX - BATTLE_RULES.DAMAGE_VARIANCE_MIN);
+            dmg = dmg * variance;
+
+            const isHitCritical = Math.random() < critRate;
+            if (isHitCritical) {
+                dmg = dmg * BATTLE_RULES.CRIT_MULTIPLIER;
+            }
+
+            const targetDef = hit > 0 ? 0 : context.enemyDef;
+            const isMagic = card.name.includes('魔法') ||
+                card.name.toLowerCase().includes('magic') ||
+                card.name.toLowerCase().includes('fire') ||
+                card.name.toLowerCase().includes('ice');
+            if (!isMagic) {
+                dmg = dmg - targetDef;
+            }
+
+            const hitDmg = Math.max(1, Math.floor(dmg));
+            totalDmg += hitDmg;
+
+            const critLabel = isHitCritical ? ' クリティカル！' : '';
+            hitLogs.push(`${hit + 1}撃目: ${hitDmg} ダメージ${critLabel}`);
+        }
+
+        const isAoe = card.target_type === 'all_enemies';
+        const targetMsg = isAoe ? '敵全体' : context.enemyName;
+        const comboLabel = hitsCount === 3 ? '怒涛の3連撃！' : '怒涛の2連撃！';
+
+        return {
+            type: 'attack',
+            card,
+            damage: totalDmg,
+            isCritical: false,
+            effectId: card.effect_id,
+            effectDuration: card.effect_duration || 3,
+            targetEnemyName: targetMsg,
+            usedCardId: card.id,
+            message: `${npc.name}の『${card.name}』！ ${comboLabel}\n` + hitLogs.join('\n')
+        };
+    }
+
     let dmg = (power + npcAtk) || (8 + Math.floor(Math.random() * 5) + npcAtk);
 
     // 揺らぎ
@@ -658,7 +711,7 @@ function executeCard(
         effectDuration: card.effect_duration || 3,
         targetEnemyName: targetMsg,
         usedCardId: card.id,
-        message: `${npc.name}の${card.name}！${critLabel} ${targetMsg}に ${finalDmg} のダメージ！`
+        message: `${npc.name}の『${card.name}』！${critLabel} ${targetMsg}に ${finalDmg} のダメージ！`
     };
 }
 
