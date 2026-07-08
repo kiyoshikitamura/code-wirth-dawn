@@ -186,13 +186,15 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
 
         // 1. スキル警告カットインの検知 (の『スキル名』形式)
         if (msg.includes('の『')) {
-            const charMatch = msg.match(/^([^\sの]+?)の『(.+?)』/);
+            const hasStealthMarker = msg.startsWith('\u200B');
+            const cleanMsg = hasStealthMarker ? msg.replace(/^\u200B/, '') : msg;
+
+            const charMatch = cleanMsg.match(/^([^\sの]+?)の『(.+?)』/);
             const charName = charMatch ? charMatch[1] : '';
             const skillName = charMatch ? charMatch[2] : '';
             
             if (skillName) {
-                const partyNames = (battleState?.party || []).map((m: any) => m.name).filter(Boolean);
-                const isPartyMemberAction = partyNames.includes(charName);
+                const isPartyMemberAction = hasStealthMarker;
                 const pvpOpponent = (useGameStore.getState() as any).pvpOpponent;
                 const isOpponentPlayer = pvpOpponent?.user_name && charName === pvpOpponent.user_name;
                 const isPlayerAction = (charName === 'あなた' || charName === 'プレイヤー' || (userProfile?.user_name && charName === userProfile.user_name)) && !isOpponentPlayer;

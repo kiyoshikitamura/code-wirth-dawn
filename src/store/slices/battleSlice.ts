@@ -2928,7 +2928,11 @@ export const createBattleSlice = (
             const lastUsedCardId = (member as any).lastUsedCardId;
 
             for (const action of actions) {
-                newMessages.push(action.message);
+                // 味方お供NPCのアクションログの先頭にゼロ幅スペース（\u200B）をステルスマーカーとして付与
+                const markedMessage = (action.message && action.message.includes('の『')) 
+                    ? `\u200B${action.message}` 
+                    : action.message;
+                newMessages.push(markedMessage);
 
                 if ((action.type === 'attack' || action.type === 'debuff') && action.damage) {
                     const isAoe = action.card?.target_type === 'all_enemies';
