@@ -925,7 +925,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
     };
 
     return (
-        <div className={`h-full w-full font-sans relative flex flex-col overflow-y-auto no-scrollbar text-slate-200 transition-colors duration-1000 ${
+        <div className={`h-full w-full font-sans relative flex flex-col overflow-y-auto custom-scrollbar-vertical text-slate-200 transition-colors duration-1000 ${
             isBossEncounter ? 'bg-red-950/20 shadow-[inset_0_0_100px_rgba(153,27,27,0.5)]' : 'bg-slate-900'
         } ${shouldShake ? 'shake-active' : ''}`}>
 
@@ -2003,6 +2003,20 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                             border: 1px solid rgba(251, 191, 36, 0.2);
                         }
                         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+                            background: rgba(245, 158, 11, 0.75);
+                        }
+                        .custom-scrollbar-vertical::-webkit-scrollbar {
+                            width: 6px;
+                        }
+                        .custom-scrollbar-vertical::-webkit-scrollbar-track {
+                            background: rgba(15, 23, 42, 0.4);
+                        }
+                        .custom-scrollbar-vertical::-webkit-scrollbar-thumb {
+                            background: rgba(245, 158, 11, 0.4);
+                            border-radius: 999px;
+                            border: 1px solid rgba(251, 191, 36, 0.2);
+                        }
+                        .custom-scrollbar-vertical::-webkit-scrollbar-thumb:hover {
                             background: rgba(245, 158, 11, 0.75);
                         }
                     `}} />
