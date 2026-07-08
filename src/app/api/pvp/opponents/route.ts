@@ -8116,6 +8116,59 @@ export async function GET(req: Request) {
         if (emptyOpponents.length > 0) {
             for (const opp of emptyOpponents) {
                 try {
+                    // きたむ（調整テスト用）またはきたむ（調整用テスト）の場合は、きたむ（プレビュー）のデータをそのままコピーする
+                    if (opp.user_id === 'e0cd1537-b790-471c-bd08-370e57786756' || String(opp.user_name) === 'きたむ（調整テスト用）' || String(opp.user_name) === 'きたむ（調整用テスト）') {
+                        const { data: previewParty } = await supabaseServer
+                            .from('pvp_defense_parties')
+                            .select('*')
+                            .eq('user_id', 'af2848d0-40f2-4f75-bd2b-ac633184107c')
+                            .maybeSingle();
+
+                        if (previewParty) {
+                            opponentsList = opponentsList.map(item => {
+                                if (item.user_id === opp.user_id) {
+                                    return {
+                                        ...item,
+                                        player_snapshot: {
+                                            ...item.player_snapshot,
+                                            hp: previewParty.player_snapshot?.hp || item.player_snapshot?.hp,
+                                            max_hp: previewParty.player_snapshot?.max_hp || item.player_snapshot?.max_hp,
+                                            atk: previewParty.player_snapshot?.atk || item.player_snapshot?.atk,
+                                            def: previewParty.player_snapshot?.def || item.player_snapshot?.def,
+                                        },
+                                        skill_deck_snapshot: previewParty.skill_deck_snapshot || [],
+                                        party_members_snapshot: previewParty.party_members_snapshot || [],
+                                        equipped_items_snapshot: previewParty.equipped_items_snapshot || []
+                                    };
+                                }
+                                return item;
+                            });
+
+                            await supabaseServer
+                                .from('pvp_defense_parties')
+                                .update({
+                                    battle_score: previewParty.battle_score,
+                                    defense_rank: previewParty.defense_rank,
+                                    player_snapshot: {
+                                        level: opp.player_snapshot?.level || 20,
+                                        job_class: opp.player_snapshot?.job_class || 'Adventurer',
+                                        hp: previewParty.player_snapshot?.hp,
+                                        max_hp: previewParty.player_snapshot?.max_hp,
+                                        atk: previewParty.player_snapshot?.atk,
+                                        def: previewParty.player_snapshot?.def,
+                                        image_url: opp.player_snapshot?.image_url || previewParty.player_snapshot?.image_url
+                                    },
+                                    skill_deck_snapshot: previewParty.skill_deck_snapshot || [],
+                                    party_members_snapshot: previewParty.party_members_snapshot || [],
+                                    equipped_items_snapshot: previewParty.equipped_items_snapshot || []
+                                })
+                                .eq('user_id', opp.user_id);
+
+                            console.log(`[PvP Opponents] Copied preview party to test target: ${opp.user_name}`);
+                            continue;
+                        }
+                    }
+
                     // A. プレイヤー自身のスキルデッキを引き直し
                     const { data: dbRealSkills } = await supabaseServer
                         .from('user_skills')
