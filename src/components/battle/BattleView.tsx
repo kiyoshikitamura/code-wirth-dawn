@@ -193,7 +193,9 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
             if (skillName) {
                 const partyNames = (battleState?.party || []).map((m: any) => m.name).filter(Boolean);
                 const isPartyMemberAction = partyNames.includes(charName);
-                const isPlayerAction = charName === 'あなた' || charName === 'プレイヤー' || (userProfile?.user_name && charName === userProfile.user_name);
+                const pvpOpponent = (useGameStore.getState() as any).pvpOpponent;
+                const isOpponentPlayer = pvpOpponent?.user_name && charName === pvpOpponent.user_name;
+                const isPlayerAction = (charName === 'あなた' || charName === 'プレイヤー' || (userProfile?.user_name && charName === userProfile.user_name)) && !isOpponentPlayer;
 
                 if (isPlayerAction) {
                     // プレイヤー本人のスキルカットイン (画面下部・青色系)
