@@ -382,7 +382,7 @@ export class ShadowService {
      * shadow_active の場合（既存ロジック維持）:
      *   - Free=10%, Sub=30% のロイヤリティを source_user_id へ付与
      */
-    async hireShadow(hirerId: string, shadow: ShadowSummary): Promise<{ success: boolean; error?: string }> {
+    async hireShadow(hirerId: string, shadow: ShadowSummary, options?: { isProfileHire?: boolean }): Promise<{ success: boolean; error?: string }> {
         // 1. 雇用者のプロフィールを取得
         const { data: hirer } = await this.supabase
             .from('user_profiles')
@@ -450,7 +450,7 @@ export class ShadowService {
             if (userProfile.level && userProfile.level <= 1) {
                 return { success: false, error: 'レベル1のプレイヤーは雇用できません。' };
             }
-            if (userProfile.current_location_id !== hirer.current_location_id) {
+            if (!options?.isProfileHire && userProfile.current_location_id !== hirer.current_location_id) {
                 return { success: false, error: '対象のプレイヤーは既に別の地点に移動しました。' };
             }
 
@@ -782,6 +782,92 @@ export class ShadowService {
         if (insertError) return { success: false, error: insertError.message };
 
         return { success: true };
+    }
+
+    async getShadowByUserId(profileId: string): Promise<ShadowSummary | null> {
+        try {
+            // 1. ユーザープロフィール取得
+            const { data: u } = await this.supabase
+                .from('user_profiles')
+                .select('id, name, level, title_name, attack, defense, max_hp, vitality, subscription_tier, avatar_url, introduction')
+                .eq('id', profileId)
+                .single();
+
+            if (!u) return null;
+
+            // 2. 装備取得とステータスボーナス集計
+            const { data: equipped } = await this.supabase
+                .from('equipped_items')
+                .select(`
+                    slot,
+                    items (
+                        id, name, effect_data
+                    )
+                `)
+                .eq('user_id', profileId);
+
+            const bonus = { atk: 0, def: 0, hp: 0 };
+            const equippedItemsList: { name: string; slot: string }[] = [];
+
+            if (equipped) {
+                for (const eq of equipped) {
+                    const item = (eq as any).items;
+                    if (item) {
+                        equippedItemsList.push({
+                            name: item.name,
+                            slot: eq.slot
+                        });
+                        const eff = item.effect_data;
+                        if (eff) {
+                            bonus.atk += eff.atk_bonus || 0;
+                            bonus.def += eff.def_bonus || 0;
+                            bonus.hp += eff.hp_bonus || 0;
+                        }
+                    }
+                }
+            }
+
+            // 3. 装備中スキルID・カード名取得
+            const { data: equippedSkills } = await this.supabase
+                .from('user_skills')
+                .select('skill_id, cards!inner(id, name)')
+                .eq('user_id', profileId)
+                .eq('is_equipped', true)
+                .limit(6);
+
+            let signatureDeckPreview: string[] = [];
+            let resolvedCardIds: number[] = [];
+            if (equippedSkills && equippedSkills.length > 0) {
+                signatureDeckPreview = equippedSkills.map((s: any) => s.cards?.name).filter(Boolean);
+                resolvedCardIds = equippedSkills.map((s: any) => s.cards?.id).filter(Boolean);
+            }
+
+            const fee = (u.level || 1) * 200; // ECONOMY_RULES.HIRE_ACTIVE_PER_LEVEL = 200 (TavernModal/ShadowService内定数)
+
+            return {
+                profile_id: u.id,
+                name: u.name || 'Unknown Adventurer',
+                level: u.level || 1,
+                job_class: u.title_name || 'Adventurer',
+                origin_type: 'shadow_active',
+                contract_fee: fee,
+                stats: {
+                    atk: (u.attack || 0) + bonus.atk,
+                    def: (u.defense || 0) + bonus.def,
+                    hp: (u.max_hp || 100) + bonus.hp,
+                },
+                vitality: u.vitality || 100,
+                signature_deck_preview: signatureDeckPreview,
+                subscription_tier: (u.subscription_tier ?? 'free') as 'free' | 'basic' | 'premium',
+                icon_url: u.avatar_url || undefined,
+                introduction: u.introduction || undefined,
+                equipped_items: equippedItemsList,
+                _resolved_card_ids: resolvedCardIds, // キャッシュ
+            } as any;
+        } catch (e) {
+            console.error(`[ShadowService] getShadowByUserId failed for ${profileId}:`, e);
+            return null;
+        }
     }
 }
 

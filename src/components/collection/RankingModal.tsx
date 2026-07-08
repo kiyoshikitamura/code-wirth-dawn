@@ -6,6 +6,7 @@ import { Trophy, Star, Flame, X, ArrowUpDown, Clock, Loader2 } from 'lucide-reac
 import { getAuthToken } from '@/lib/authToken';
 import XShareButton from '../shared/XShareButton';
 import SimpleUserProfilePopup from '@/components/shared/SimpleUserProfilePopup';
+import { useGameStore } from '@/store/gameStore';
 
 type TabKey = 'reputation' | 'alignment';
 type RepSort = 'desc' | 'asc';
@@ -45,12 +46,14 @@ interface Props {
 }
 
 export default function RankingModal({ onClose }: Props) {
+    const { userProfile } = useGameStore();
     const [data, setData] = useState<RankingData | null>(null);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<TabKey>('reputation');
     const [repSort, setRepSort] = useState<RepSort>('desc');
     const [countdown, setCountdown] = useState('');
     const [selectedUser, setSelectedUser] = useState<{
+        id?: string;
         name: string;
         avatarUrl?: string;
         epithet?: string;
@@ -70,6 +73,7 @@ export default function RankingModal({ onClose }: Props) {
             if (res.ok) {
                 const profileData = await res.json();
                 setSelectedUser({
+                    id: userId,
                     name: profileData.name || '名もなき旅人',
                     avatarUrl: profileData.avatar_url,
                     epithet: profileData.title_name,
@@ -382,6 +386,8 @@ export default function RankingModal({ onClose }: Props) {
                     introduction={selectedUser.introduction}
                     level={selectedUser.level}
                     age={selectedUser.age}
+                    userId={selectedUser.id}
+                    callerUserId={userProfile?.id}
                 />
             )}
         </div>,
