@@ -3376,11 +3376,38 @@ export const createBattleSlice = (
                         '45': 'skill_ares_strike',     // 岩砕き
                         '48': 'skill_michael_blade',   // 天翔斬
                         '71': 'skill_zeus_aegis',      // 五星の加護
-                        '102': 'skill_claw_rend',      // 傷口をえぐる (出血物理)
-                        '114': 'skill_thunder_strike', // フリーズランサー (魔法/スタン)
-                        '115': 'skill_thunder_strike', // 雷電の連鎖 (魔法/スタン)
+                        '101': 'skill_katana_slash',   // カタルシス (単体物理)
+                        '102': 'skill_claw_rend',      // 傷口をえぐる (単体出血)
+                        '103': 'skill_heavy_blow',     // 無防備な獲物 (単体スタン追撃)
+                        '104': 'skill_poison_breath',  // 伝染病の霧 (全体毒)
+                        '105': 'skill_shield_bash',    // シールドスラム (単体物理/スタン)
+                        '109': 'skill_assassinate',    // デスペラード (単体高威力)
+                        '111': 'skill_heavy_blow',     // 捨て身の一撃 (単体物理)
+                        '112': 'skill_aoe_blast',      // デトネーション (全体攻撃)
+                        '114': 'skill_thunder_strike', // フリーズランサー (単体スタン)
+                        '115': 'skill_thunder_strike', // 雷電の連鎖 (3連撃)
+                        '116': 'skill_uriel_flame',    // プロミネンス (全体火炎)
+                        '121': 'skill_death_sentence', // 死神の宣告 (防御DOWNデバフ)
+                        '122': 'skill_katana_slash',   // 血の追撃 (単体物理)
+                        '123': 'skill_uriel_flame',    // フレイムバースト (全体火炎)
                         '124': 'skill_gabriel_horn',   // 凍てつく波動 (全体デバフ)
-                        '136': 'skill_uriel_flame',    // ファイアウェーブ (火炎攻撃)
+                        '129': 'skill_heavy_blow',     // 成金の一撃 (単体物理)
+                        '130': 'skill_katana_slash',   // ギャンブラーダイス (単体物理)
+                        '134': 'skill_god_purge',      // プラズマシャワー (全体スタン物理)
+                        '135': 'skill_aoe_blast',      // アブソリュートゼロ (全体魔法/スタン)
+                        '136': 'skill_uriel_flame',    // ファイアウェーブ (全体火炎)
+                        '1': 'skill_attack',           // 攻撃
+                        '3': 'skill_katana_slash',     // 突き
+                        '4': 'skill_heavy_blow',       // 強打
+                        '5': 'skill_heavy_blow',       // 岩砕き
+                        '6': 'skill_shield_bash',      // シールドバッシュ
+                        '7': 'skill_arrow',            // 火の矢
+                        '8': 'skill_thunder_strike',   // アイスパイク
+                        '9': 'skill_boss_heal',        // ヒーリング
+                        '10': 'skill_heal_minor',      // 瞑想
+                        '11': 'skill_heal_minor',      // 応急処置
+                        '29': 'skill_poison_attack',   // 毒牙
+                        '30': 'skill_shield_bash',     // 砂の罠 (スタン物理)
                     };
                     
                     const cardIdStr = String(chosenCard.id);
@@ -3451,8 +3478,6 @@ export const createBattleSlice = (
                         const updatedEffects = [...(currentEnemyStatus.status_effects || []), doubleCastEffect];
                         updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, status_effects: updatedEffects } : e);
                         newMessages.push(`${enemy.name}の『ダブルキャスト』！ 自身にダブルキャスト状態を付与した。`);
-                        
-                        // lastUsedSkill 更新
                         updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, lastUsedSkill: selectedSkillSlug } as any : e);
                         continue; // ダメージ処理を行わずにターン終了！
                     }
@@ -3463,10 +3488,138 @@ export const createBattleSlice = (
                         const nextHp = Math.min(enemy.maxHp, currentEnemyStatus.hp + 30);
                         updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, current_ap: nextAp, hp: nextHp } : e);
                         newMessages.push(`${enemy.name}の『瞑想』！ 自身のAPとHPが回復した。`);
-                        
-                        // lastUsedSkill 更新
                         updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, lastUsedSkill: selectedSkillSlug } as any : e);
                         continue; // ダメージ処理を行わずにターン終了！
+                    }
+
+                    // 3. スパイクアーマー (106)
+                    if (cardIdStr === '106') {
+                        const effect: StatusEffect = { id: 'counter_spike', name: '棘の鎧', duration: 3, val: 1, type: 'buff' };
+                        const updatedEffects = [...(currentEnemyStatus.status_effects || []), effect];
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, status_effects: updatedEffects } : e);
+                        newMessages.push(`${enemy.name}の『スパイクアーマー』！ 自身にダメージ反射の茨を纏った。`);
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, lastUsedSkill: selectedSkillSlug } as any : e);
+                        continue;
+                    }
+
+                    // 4. 不屈の防陣 (107)
+                    if (cardIdStr === '107') {
+                        updatedEnemies = updatedEnemies.map(e => {
+                            if (e.hp <= 0) return e;
+                            const effect: StatusEffect = { id: 'unyielding_barrier', name: '不屈の防陣', duration: 3, val: 30, type: 'buff' };
+                            const updatedEffects = [...(e.status_effects || []), effect];
+                            return { ...e, status_effects: updatedEffects };
+                        });
+                        newMessages.push(`${enemy.name}の『不屈の防陣』！ 敵パーティ全体の受けるダメージが減少した。`);
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, lastUsedSkill: selectedSkillSlug } as any : e);
+                        continue;
+                    }
+
+                    // 5. 犠牲の誓約 (108)
+                    if (cardIdStr === '108') {
+                        const selfDmg = 20;
+                        const nextSelfHp = Math.max(1, currentEnemyStatus.hp - selfDmg);
+                        const otherAllies = updatedEnemies.filter(e => e.id !== enemy.id && e.hp > 0);
+                        if (otherAllies.length > 0) {
+                            const targetAlly = otherAllies.reduce((a, b) => a.hp < b.hp ? a : b);
+                            updatedEnemies = updatedEnemies.map(e => {
+                                if (e.id === enemy.id) return { ...e, hp: nextSelfHp };
+                                if (e.id === targetAlly.id) {
+                                    const effect: StatusEffect = { id: 'unyielding_barrier', name: '犠牲の誓約', duration: 3, val: 30, type: 'buff' };
+                                    const updatedEffects = [...(e.status_effects || []), effect];
+                                    return { ...e, status_effects: updatedEffects };
+                                }
+                                return e;
+                            });
+                            newMessages.push(`${enemy.name}の『犠牲の誓約』！ 自身のHPを削り、${targetAlly.name}の受けるダメージを減少した。`);
+                        } else {
+                            updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, hp: nextSelfHp } : e);
+                            newMessages.push(`${enemy.name}の『犠牲の誓約』！ 自身のHPを削った。`);
+                        }
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, lastUsedSkill: selectedSkillSlug } as any : e);
+                        continue;
+                    }
+
+                    // 6. 生贄の儀式 (110)
+                    if (cardIdStr === '110') {
+                        const selfDmg = 15;
+                        const nextSelfHp = Math.max(1, currentEnemyStatus.hp - selfDmg);
+                        const nextAp = Math.min(10, (currentEnemyStatus.current_ap || 0) + 3);
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, hp: nextSelfHp, current_ap: nextAp } : e);
+                        newMessages.push(`${enemy.name}の『生贄の儀式』！ 自身のHPを削り、APを回復した。`);
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, lastUsedSkill: selectedSkillSlug } as any : e);
+                        continue;
+                    }
+
+                    // 7. マナチャージ (113)
+                    if (cardIdStr === '113') {
+                        const nextAp = Math.min(10, (currentEnemyStatus.current_ap || 0) + 3);
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, current_ap: nextAp } : e);
+                        newMessages.push(`${enemy.name}の『マナチャージ』！ 自身のAPを回復した。`);
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, lastUsedSkill: selectedSkillSlug } as any : e);
+                        continue;
+                    }
+
+                    // 8. サーチライト (118)
+                    if (cardIdStr === '118') {
+                        const effect: StatusEffect = { id: 'precision', name: 'サーチライト', duration: 3, val: 1, type: 'buff' };
+                        const updatedEffects = [...(currentEnemyStatus.status_effects || []), effect];
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, status_effects: updatedEffects } : e);
+                        newMessages.push(`${enemy.name}の『サーチライト』！ 攻撃が必中になった。`);
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, lastUsedSkill: selectedSkillSlug } as any : e);
+                        continue;
+                    }
+
+                    // 9. アイアンバスティオン (125)
+                    if (cardIdStr === '125') {
+                        const effect: StatusEffect = { id: 'cover_all', name: 'かばう', duration: 3, val: 1, type: 'buff' };
+                        const updatedEffects = [...(currentEnemyStatus.status_effects || []), effect];
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, status_effects: updatedEffects } : e);
+                        newMessages.push(`${enemy.name}の『アイアンバスティオン』！ 自身がかばう状態になった。`);
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, lastUsedSkill: selectedSkillSlug } as any : e);
+                        continue;
+                    }
+
+                    // 10. リベンジシールド (126)
+                    if (cardIdStr === '126') {
+                        const effect: StatusEffect = { id: 'revenge_shield', name: '報復の盾', duration: 3, val: 1, type: 'buff' };
+                        const updatedEffects = [...(currentEnemyStatus.status_effects || []), effect];
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, status_effects: updatedEffects } : e);
+                        newMessages.push(`${enemy.name}の『リベンジシールド』！ ダメージをそのまま反射するシールドを展開した。`);
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, lastUsedSkill: selectedSkillSlug } as any : e);
+                        continue;
+                    }
+
+                    // 11. グラウンディング (128)
+                    if (cardIdStr === '128') {
+                        const effect: StatusEffect = { id: 'stun_immune', name: '気絶無効', duration: 3, val: 1, type: 'buff' };
+                        const updatedEffects = [...(currentEnemyStatus.status_effects || []), effect];
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, status_effects: updatedEffects } : e);
+                        newMessages.push(`${enemy.name}の『グラウンディング』！ 気絶免疫を獲得した。`);
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, lastUsedSkill: selectedSkillSlug } as any : e);
+                        continue;
+                    }
+
+                    // 12. ソウルブースト (131)
+                    if (cardIdStr === '131') {
+                        const nextAp = Math.min(10, (currentEnemyStatus.current_ap || 0) + 4);
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, current_ap: nextAp } : e);
+                        newMessages.push(`${enemy.name}の『ソウルブースト』！ 魂を高めてAPを回復した。`);
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, lastUsedSkill: selectedSkillSlug } as any : e);
+                        continue;
+                    }
+
+                    // 13. 属性の共鳴 (133)
+                    if (cardIdStr === '133') {
+                        updatedEnemies = updatedEnemies.map(e => {
+                            if (e.hp <= 0) return e;
+                            const effect: StatusEffect = { id: 'atk_up', name: '属性の共鳴', duration: 3, val: 0.1, type: 'buff' };
+                            const updatedEffects = [...(e.status_effects || []), effect];
+                            return { ...e, status_effects: updatedEffects };
+                        });
+                        newMessages.push(`${enemy.name}の『属性の共鳴』！ 敵パーティ全体の攻撃力が上がった。`);
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, lastUsedSkill: selectedSkillSlug } as any : e);
+                        continue;
                     }
                 }
 

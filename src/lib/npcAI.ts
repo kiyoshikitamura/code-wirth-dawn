@@ -321,21 +321,9 @@ export function resolveNpcTurn(
             break; // これ以上使えるカードなし
         }
     }
-
-    // カード攻撃が0回だった場合は基本攻撃フォールバック
-    if (attacksUsed === 0 && !actions.some(a => a.type === 'attack') && actions.length < MAX_ACTIONS_PER_TURN) {
-        actions.push(createBasicAttack(npc, effectiveContext));
-        (npc as any).lastUsedCardId = undefined;
-    }
-
-    // 攻撃アクションが1件もない場合は基本攻撃フォールバック
-    const hasAttackAction = actions.some(a => a.type === 'attack');
-    if (!hasAttackAction && actions.length < MAX_ACTIONS_PER_TURN) {
-        actions.push(createBasicAttack(npc, context));
-    }
-
-    return actions;
-}
+ 
+     return actions;
+ }
 
 // ─── Sub-routines ────────────────────────────────────────
 
