@@ -6,6 +6,24 @@ import path from 'path';
 
 export const dynamic = 'force-dynamic';
 
+async function tryConnect(dbUrl: string) {
+    const pool = new Pool({
+        connectionString: dbUrl,
+        ssl: { rejectUnauthorized: false },
+        connectionTimeoutMillis: 3000,
+    });
+    try {
+        const client = await pool.connect();
+        client.release();
+        await pool.end();
+        return true;
+    } catch (e: any) {
+        await pool.end();
+        console.log(`[RunProductionMigration] Failed connecting via: ${dbUrl.split('@')[1]} - Error: ${e.message}`);
+        return false;
+    }
+}
+
 export async function GET(request: Request) {
     const url = new URL(request.url);
     const secret = url.searchParams.get('secret');
@@ -14,34 +32,55 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // デバッグ用: 環境変数のキー名一覧を出力
-    const envKeys = Object.keys(process.env);
-    console.log('[RunProductionMigration] Available env keys:', envKeys);
-    
-    // DB関係の可能性がある環境変数を探す
-    const dbKeys = envKeys.filter(k => k.includes('DB') || k.includes('DATABASE') || k.includes('POSTGRES') || k.includes('URL'));
-    console.log('[RunProductionMigration] Potential DB env keys:', dbKeys);
+    const projectRef = 'zvoroixjuypnintkpmux';
+    const password = 'izasama5723';
 
-    // 有効な接続URLの探索
-    let dbUrl = null;
-    for (const key of ['DATABASE_URL', 'SUPABASE_DB_URL', 'DATABASE_URL_UNPOOLED', 'DIRECT_URL', 'POSTGRES_URL']) {
-        if (process.env[key]) {
-            dbUrl = process.env[key];
-            console.log(`[RunProductionMigration] Using env key: ${key}`);
-            break;
+    // 接続候補の一覧（新プーラー、旧プーラー、直接接続の全組み合わせ）
+    const connectionCandidates = [
+        // 1. 旧プーラー経由 (Transaction Mode - ポート 6543)
+        `postgresql://postgres.${projectRef}:${password}@db.${projectRef}.supabase.co:6543/postgres`,
+        `postgresql://postgres.${projectRef}:${password}@${projectRef}.supabase.co:6543/postgres`,
+        
+        // 2. 直接接続経由 (ポート 5432)
+        `postgresql://postgres:${password}@db.${projectRef}.supabase.co:5432/postgres`,
+        `postgresql://postgres:${password}@${projectRef}.supabase.co:5432/postgres`,
+
+        // 3. 新プーラー経由 (東京/シンガポール、ポート 5432)
+        `postgresql://postgres.${projectRef}:${password}@aws-0-ap-northeast-1.pooler.supabase.com:5432/postgres`,
+        `postgresql://postgres.${projectRef}:${password}@aws-1-ap-northeast-1.pooler.supabase.com:5432/postgres`,
+        `postgresql://postgres.${projectRef}:${password}@aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres`,
+        `postgresql://postgres.${projectRef}:${password}@aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres`,
+    ];
+
+    // 環境変数に直接定義されている場合を最優先にする
+    let dbUrl = process.env.DATABASE_URL || process.env.SUPABASE_DB_URL;
+    
+    if (dbUrl) {
+        console.log('[RunProductionMigration] Testing primary env DB connection...');
+        const ok = await tryConnect(dbUrl);
+        if (!ok) {
+            dbUrl = null;
         }
     }
 
     if (!dbUrl) {
-        // フォールバック（zvoroixjuypnintkpmux @ シンガポールのpooler）
-        const projectRef = 'zvoroixjuypnintkpmux';
-        const password = 'izasama5723';
-        // プレビューが aws-1-ap-southeast-1 で動いているため、本番もシンガポールの可能性が非常に高い
-        dbUrl = `postgresql://postgres.${projectRef}:${password}@aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres`;
-        console.log('[RunProductionMigration] Fallback to Singapore pooler:', dbUrl.split('@')[1]);
+        console.log('[RunProductionMigration] Environmental DB URL unavailable or failed. Scanning candidates...');
+        for (const candidate of connectionCandidates) {
+            console.log(`[RunProductionMigration] Testing connection candidate: ${candidate.split('@')[1]}`);
+            const ok = await tryConnect(candidate);
+            if (ok) {
+                dbUrl = candidate;
+                console.log(`[RunProductionMigration] SUCCESS! Connected via candidate: ${candidate.split('@')[1]}`);
+                break;
+            }
+        }
     }
 
-    console.log('[RunProductionMigration] Connecting to database...');
+    if (!dbUrl) {
+        return NextResponse.json({ error: 'Could not connect to PRODUCTION database through any candidates.' }, { status: 500 });
+    }
+
+    console.log('[RunProductionMigration] Executing migration...');
     const pool = new Pool({
         connectionString: dbUrl,
         ssl: { rejectUnauthorized: false },
