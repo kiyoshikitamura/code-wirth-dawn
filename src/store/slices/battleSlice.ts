@@ -3370,7 +3370,7 @@ export const createBattleSlice = (
                         '114': 'skill_thunder_strike', // フリーズランサー (単体スタン)
                         '115': 'skill_thunder_strike', // 雷電の連鎖 (3連撃)
                         '116': 'skill_uriel_flame',    // プロミネンス (全体火炎)
-                        '121': 'skill_death_sentence', // 死神の宣告 (防御DOWNデバフ)
+                        '121': 'skill_death_sentence', // 死神 of 宣告 (防御DOWNデバフ)
                         '122': 'skill_katana_slash',   // 血の追撃 (単体物理)
                         '123': 'skill_uriel_flame',    // フレイムバースト (全体火炎)
                         '124': 'skill_gabriel_horn',   // 凍てつく波動 (全体デバフ)
@@ -3418,6 +3418,20 @@ export const createBattleSlice = (
                     
                     // 戦闘ログ表示に元のスキルカード名を使用する
                     selectedSkillName = chosenCard.name;
+                } else {
+                    // APが1以上あれば通常攻撃
+                    if (currentAp >= 1) {
+                        chosenCard = { id: '1', name: '攻撃', power: 15, ap_cost: 1 };
+                        const nextAp = Math.max(0, currentAp - 1);
+                        (enemy as any).current_ap = nextAp;
+                        if (currentEnemyStatus) {
+                            (currentEnemyStatus as any).current_ap = nextAp;
+                        }
+                        selectedSkillSlug = 'skill_attack';
+                        selectedSkillName = '攻撃';
+                    } else {
+                        newMessages.push(`${enemy.name}はAPが足りず、行動できない！`);
+                    }
                 }
             } else if (actions.length > 0) {
                 const validActions = actions.filter((a: any) => {

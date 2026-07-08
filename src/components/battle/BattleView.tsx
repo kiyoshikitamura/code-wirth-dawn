@@ -45,6 +45,8 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
     const [selectedEnemyDetail, setSelectedEnemyDetail] = useState<any | null>(null);
     const [playerActiveSkill, setPlayerActiveSkill] = useState<string | null>(null);
     const [isStrongPlayerActive, setIsStrongPlayerActive] = useState(false);
+    const [partyActiveSkill, setPartyActiveSkill] = useState<string | null>(null);
+    const [isStrongPartyActive, setIsStrongPartyActive] = useState(false);
 
     const prevLiveHpRef = useRef<number | null>(null);
     const prevEnemiesHpRef = useRef<Record<string, number>>({});
@@ -182,33 +184,54 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
             }
         }
 
-        // 1. 敵エネミースキルの検知 (の『スキル名』形式)
+        // 1. スキル警告カットインの検知 (の『スキル名』形式)
         if (msg.includes('の『')) {
-            const match = msg.match(/の『(.+?)』/);
-            const skillName = match ? match[1] : '';
+            const charMatch = msg.match(/^([^\sの]+?)の『(.+?)』/);
+            const charName = charMatch ? charMatch[1] : '';
+            const skillName = charMatch ? charMatch[2] : '';
+            
             if (skillName) {
-                setEnemyActiveSkill(skillName);
-                const isStrong = /終焉|暗黒|雷撃|魂|石化|咆哮|神罰|極|超|真|神|絶|暴君/g.test(skillName);
-                if (isStrong) {
-                    setIsStrongEnemyActive(true);
-                    setShouldShake(true);
-                    setTimeout(() => setShouldShake(false), 300);
-                    setTimeout(() => {
+                const partyNames = (battleState?.party || []).map((m: any) => m.name).filter(Boolean);
+                const isPartyMemberAction = partyNames.includes(charName);
+
+                if (isPartyMemberAction) {
+                    // 味方お供NPCのスキルカットイン (画面下部・緑色系)
+                    setPartyActiveSkill(skillName);
+                    const isStrong = /終焉|暗黒|雷撃|魂|石化|咆哮|神罰|極|超|真|神|絶|暴君/g.test(skillName);
+                    if (isStrong) {
+                        setIsStrongPartyActive(true);
                         setShouldShake(true);
                         setTimeout(() => setShouldShake(false), 300);
-                    }, 150);
+                    }
+                    const displayTime = isStrong ? 2500 : 2000;
+                    setTimeout(() => {
+                        setPartyActiveSkill(null);
+                        setIsStrongPartyActive(false);
+                    }, displayTime);
                 } else {
-                    // 弱・通常攻撃時も軽く揺らして臨場感を出す
-                    setShouldShake(true);
-                    setTimeout(() => setShouldShake(false), 200);
+                    // 敵エネミースキル警告カットイン (画面中央・赤系)
+                    setEnemyActiveSkill(skillName);
+                    const isStrong = /終焉|暗黒|雷撃|魂|石化|咆哮|神罰|極|超|真|神|絶|暴君/g.test(skillName);
+                    if (isStrong) {
+                        setIsStrongEnemyActive(true);
+                        setShouldShake(true);
+                        setTimeout(() => setShouldShake(false), 300);
+                        setTimeout(() => {
+                            setShouldShake(true);
+                            setTimeout(() => setShouldShake(false), 300);
+                        }, 150);
+                    } else {
+                        setShouldShake(true);
+                        setTimeout(() => setShouldShake(false), 200);
+                    }
+                    const displayTime = isStrong ? 2500 : 2000;
+                    setTimeout(() => {
+                        setEnemyActiveSkill(null);
+                        setIsStrongEnemyActive(false);
+                    }, displayTime);
                 }
-                const displayTime = isStrong ? 2500 : 2000;
-                setTimeout(() => {
-                    setEnemyActiveSkill(null);
-                    setIsStrongEnemyActive(false);
-                }, displayTime);
             }
-        } 
+        }
         // 2. 味方（プレイヤー ＆ 味方NPC）スキルの検知
         else {
             let skillName = '';
@@ -911,6 +934,32 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                                         : 'text-2xl md:text-3xl'
                             }`}>
                                 『{playerActiveSkill}』
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* 味方お供NPCスキルカットイン (画面下部 ＆ 緑系) */}
+            {partyActiveSkill && (
+                <div className="absolute inset-0 z-50 pointer-events-none flex flex-col items-center justify-center overflow-hidden">
+                    <div className="absolute inset-0 bg-emerald-950/10 animate-pulse" />
+                    
+                    <div className="absolute inset-x-0 bottom-1/4 flex flex-col items-center justify-center z-50">
+                        <div className={`w-full py-3 border-y flex flex-col items-center justify-center shadow-2xl backdrop-blur-sm ${
+                            isStrongPartyActive
+                                ? 'bg-emerald-950/95 text-emerald-300 border-emerald-400/60 shadow-[0_0_40px_rgba(52,211,153,0.9)]'
+                                : 'bg-slate-900/90 text-emerald-400 border-emerald-500/40 shadow-[0_0_25px_rgba(52,211,153,0.5)]'
+                        }`}>
+                            <span className="text-[10px] uppercase tracking-[0.3em] opacity-80 font-bold mb-1">PARTY MEMBER SKILL</span>
+                            <span className={`font-serif font-extrabold tracking-widest animate-pulse whitespace-nowrap px-4 ${
+                                (partyActiveSkill?.length || 0) > 8 
+                                    ? 'text-lg md:text-xl' 
+                                    : (partyActiveSkill?.length || 0) > 5 
+                                        ? 'text-xl md:text-2xl' 
+                                        : 'text-2xl md:text-3xl'
+                            }`}>
+                                『{partyActiveSkill}』
                             </span>
                         </div>
                     </div>

@@ -67,7 +67,8 @@ export type StatusEffectId =
     | 'absolute_def'       // 絶対防御
     | 'counter'            // 反撃の構え
     | 'spd_down'           // 速度低下
-    | 'spd_up';            // 速度上昇
+    | 'spd_up'            // 速度上昇
+    | 'chain_lightning';  // 雷電の連鎖
 
 // ─── v2.9.3k: デバフ成功率テーブル ─────────────────────────────
 // 各デバフeffect_idごとの付与成功率（0.0〜1.0）
@@ -162,6 +163,7 @@ const EFFECT_NAMES: Record<StatusEffectId, string> = {
     counter:       '反撃の構え',
     spd_down:      '速度低下',
     spd_up:        '速度上昇',
+    chain_lightning: '雷電の連鎖',
 };
 
 export function getEffectName(id: StatusEffectId, value?: number): string {
