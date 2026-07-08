@@ -3334,6 +3334,7 @@ export const createBattleSlice = (
             let selectedSkillName: string = '攻撃'; // v2.7: スキル名保持
             let applyStun = false;
             let isDrainVit = false;
+            let chosenCard: any = null;
 
             const sigDeck = enemy.signature_deck || [];
             if (isPvPEnemy && sigDeck.length > 0) {
@@ -3345,7 +3346,7 @@ export const createBattleSlice = (
                 });
 
                 if (playableSkills.length > 0) {
-                    const chosenCard = playableSkills[Math.floor(Math.random() * playableSkills.length)];
+                    chosenCard = playableSkills[Math.floor(Math.random() * playableSkills.length)];
                     const apCost = chosenCard.ap_cost ?? 1;
                     const nextAp = Math.max(0, currentAp - apCost);
                     (enemy as any).current_ap = nextAp;

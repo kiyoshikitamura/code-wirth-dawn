@@ -919,6 +919,9 @@ export default function QuestPage() {
                     setViewMode('battle');
                     setBattleBgUrl('/images/quests/bg_colosseum.png');
                     setBattleBgm('bgm_battle_boss');
+                    if (soundManager) {
+                        soundManager.playBgm('bgm_battle_boss');
+                    }
                 });
             } else {
                 console.warn('[QuestPage] pvpOpponent data not found in store, returning to inn');
