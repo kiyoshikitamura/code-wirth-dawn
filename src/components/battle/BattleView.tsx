@@ -32,11 +32,13 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
     const [enemyActiveSkill, setEnemyActiveSkill] = useState<string | null>(null);
     const [isStrongEnemyActive, setIsStrongEnemyActive] = useState(false);
     const [isStrongActive, setIsStrongActive] = useState(false);
-    const [floatingDamages, setFloatingDamages] = useState<{ id: number; amount: number; isPlayer: boolean; targetEnemyId?: string; targetMemberId?: string }[]>([]);
+    const [floatingDamages, setFloatingDamages] = useState<{ id: number; amount: number; isPlayer: boolean; targetEnemyId?: string; targetMemberId?: string; offsetX?: number; offsetY?: number }[]>([]);
     const nextPopupIdRef = useRef(1);
     const addPopup = (amount: number, isPlayer: boolean, targetEnemyId?: string, targetMemberId?: string) => {
         const id = nextPopupIdRef.current++;
-        setFloatingDamages(prev => [...prev, { id, amount, isPlayer, targetEnemyId, targetMemberId }]);
+        const offsetX = Math.floor(Math.random() * 40) - 20; // -20px 〜 20px
+        const offsetY = Math.floor(Math.random() * 20) - 10; // -10px 〜 10px
+        setFloatingDamages(prev => [...prev, { id, amount, isPlayer, targetEnemyId, targetMemberId, offsetX, offsetY }]);
         setTimeout(() => {
             setFloatingDamages(prev => prev.filter(d => d.id !== id));
         }, 1500);
@@ -1343,7 +1345,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
 
                                         {/* Floating Damage Numbers for Enemy */}
                                         {floatingDamages.filter(d => !d.isPlayer && d.targetEnemyId === enemy.id).map(d => (
-                                            <div key={d.id} className="absolute z-50 pointer-events-none font-serif text-2xl font-black tracking-wider damage-pop-enemy">
+                                            <div key={d.id} className="absolute z-50 pointer-events-none font-serif text-2xl font-black tracking-wider damage-pop-enemy" style={{ transform: `translate(${d.offsetX || 0}px, ${d.offsetY || 0}px)` }}>
                                                 -{d.amount}
                                             </div>
                                         ))}
@@ -1406,7 +1408,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
 
                                 {/* Floating Damage Numbers for Enemy */}
                                 {floatingDamages.filter(d => !d.isPlayer && d.targetEnemyId === target.id).map(d => (
-                                    <div key={d.id} className="absolute z-50 pointer-events-none font-serif text-3xl font-black tracking-wider damage-pop-enemy">
+                                    <div key={d.id} className="absolute z-50 pointer-events-none font-serif text-3xl font-black tracking-wider damage-pop-enemy" style={{ transform: `translate(${d.offsetX || 0}px, ${d.offsetY || 0}px)` }}>
                                         -{d.amount}
                                     </div>
                                 ))}
@@ -1579,7 +1581,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                             >
                                 {/* Floating Damage Numbers for Player */}
                                 {floatingDamages.filter(d => d.isPlayer).map(d => (
-                                    <div key={d.id} className="absolute z-50 pointer-events-none font-serif text-2xl font-black tracking-wider damage-pop-player">
+                                    <div key={d.id} className="absolute z-50 pointer-events-none font-serif text-2xl font-black tracking-wider damage-pop-player" style={{ transform: `translate(${d.offsetX || 0}px, ${d.offsetY || 0}px)` }}>
                                         -{d.amount}
                                     </div>
                                 ))}
@@ -1621,7 +1623,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
 
                                         {/* Floating Damage Numbers for Party Member */}
                                         {floatingDamages.filter(d => d.targetMemberId === String(member.id)).map(d => (
-                                            <div key={d.id} className="absolute z-50 pointer-events-none font-serif text-sm font-black tracking-wider text-red-500 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] animate-bounce" style={{ top: '25%', left: '25%' }}>
+                                            <div key={d.id} className="absolute z-50 pointer-events-none font-serif text-sm font-black tracking-wider text-red-500 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] animate-bounce" style={{ top: '25%', left: '25%', transform: `translate(${d.offsetX || 0}px, ${d.offsetY || 0}px)` }}>
                                                 -{d.amount}
                                             </div>
                                         ))}
