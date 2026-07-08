@@ -83,7 +83,7 @@ export function determineRole(member: PartyMember): AIRole {
  * - everything else → random
  */
 export function determineGrade(member: PartyMember): AIGrade {
-    return member.origin_type === 'shadow_heroic' ? 'smart' : 'random';
+    return 'smart';
 }
 
 // v2.8: Max actions per NPC per turn to prevent action spam

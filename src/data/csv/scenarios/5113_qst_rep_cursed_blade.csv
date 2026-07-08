@@ -51,5 +51,5 @@ NODE,fate_order_02,"町奉行に事件の顛末を報告した。「見事な差
 NODE,end_success_order,"依頼達成。誘惑に負けず正しき行いをしたことで、名声と秩序が高まった。","{""bg"":""bg_guild"",""type"":""end_success"",""rewards"":""Gold:1500|Exp:200|Rep:15|Order:5""}",
 NODE,fate_chaos_01,"布で刀身を厳重に包み、背中に背負った。使い方次第で、これは強力な武器になる。","{""bg"":""bg_yato_shrine"",""bgm"":""bgm_quest_mystery"",""type"":""text""}",fate_chaos_02
 NODE,fate_chaos_02,"町奉行には「妖刀は完全に破壊した」と報告した。偽りの報告で報酬を受け取る。背中の刀が、微かに喜ぶように震えた気がした。","{""bg"":""bg_guild"",""bgm"":""bgm_quest_mystery"",""type"":""text""}",end_success_chaos
-NODE,end_success_chaos,"依頼達成。嘘をつき妖刀を手に入れた。禁忌の力は、いつか我が身を助ける（滅ぼす）かもしれない。","{""bg"":""bg_guild"",""type"":""end_success"",""rewards"":""Gold:1500|Exp:200|Rep:10|Chaos:5""}",
+NODE,end_success_chaos,"依頼達成。嘘をつき妖刀を手に入れた。禁忌の力は、いつか我が身を助ける（滅ぼす）かもしれない。","{""bg"":""bg_guild"",""type"":""end_success"",""rewards"":""Gold:1500|Exp:200|Rep:10|Chaos:5|Item:315""}",
 NODE,end_failure,"妖刀が首筋を捉えた。冷たい刃が肉を断つ感触。最後に見たのは、刀が自分の血を啜る恐ろしい光景だった。","{""bg"":""bg_yato_shrine"",""type"":""end_failure""}",
