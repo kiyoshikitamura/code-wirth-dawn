@@ -8094,59 +8094,154 @@ export async function GET(req: Request) {
         // リスト全体をランダムシャッフルする
         opponentsList = [...opponentsList].sort(() => Math.random() - 0.5);
 
-        // 4. データ不整合防衛策: skill_deck_snapshot が空になっている対戦相手について、
-        // DB の inventory から本物の装備スキルカードをリアルタイムに直接クエリして同期する
-        const emptySkillOpponentIds = opponentsList
-            .filter(opp => !opp.is_ghost && (!opp.skill_deck_snapshot || opp.skill_deck_snapshot.length === 0))
-            .map(opp => opp.user_id);
-            
-        if (emptySkillOpponentIds.length > 0) {
-            const { data: dbRealSkills } = await supabaseServer
-                .from('inventory')
-                .select('user_id, item_id, is_equipped, is_skill, items!inner(id, name, type, effect_data, linked_card_id)')
-                .in('user_id', emptySkillOpponentIds)
-                .eq('is_equipped', true);
-                
-            if (dbRealSkills) {
-                const userSkillsMap: Record<string, any[]> = {};
-                dbRealSkills.forEach((i: any) => {
-                    const itemType = String(i.items?.type || '').toLowerCase();
-                    if (i.is_skill || itemType === 'skill' || itemType === 'skill_card') {
-                        if (!userSkillsMap[i.user_id]) {
-                            userSkillsMap[i.user_id] = [];
-                        }
-                        userSkillsMap[i.user_id].push({
-                            id: String(i.items.linked_card_id || i.item_id),
-                            name: i.items.name,
-                            type: 'Skill',
-                            effect_data: i.items.effect_data,
+        // 4. データ不整合防衛策: skill_deck_snapshot や party_members_snapshot が空、または不完全な対戦相手について、
+        // DB の inventory や party_members から本物の最新データをリアルタイムに直接クエリして同期（セルフヒーリング）する
+        const emptyOpponents = opponentsList.filter(opp => {
+            const hasEmptySkills = !opp.skill_deck_snapshot || opp.skill_deck_snapshot.length === 0;
+            const hasEmptyParty = !opp.party_members_snapshot || opp.party_members_snapshot.length === 0 || 
+                opp.party_members_snapshot.some((m: any) => !m.signature_deck_snapshot || m.signature_deck_snapshot.length === 0);
+            const isTestKitamu = String(opp.user_name) === 'きたむ（調整テスト用）' || opp.user_id === 'af2848d0-40f2-4f75-bd2b-ac633184107c' || opp.user_id === '5ad434ec-763f-473e-939f-14a5e9e1cc93' || opp.user_id === 'c1cf67dd-527a-497e-bf88-ce10c2cb516f';
+            return (hasEmptySkills || hasEmptyParty || isTestKitamu) && !opp.is_ghost;
+        });
+
+        if (emptyOpponents.length > 0) {
+            for (const opp of emptyOpponents) {
+                try {
+                    // A. プレイヤー自身のスキルデッキを引き直し
+                    const { data: dbRealSkills } = await supabaseServer
+                        .from('inventory')
+                        .select('item_id, is_equipped, is_skill, items!inner(id, name, type, effect_data, linked_card_id)')
+                        .eq('user_id', opp.user_id)
+                        .eq('is_equipped', true);
+
+                    const resolvedSkills: any[] = [];
+                    if (dbRealSkills) {
+                        dbRealSkills.forEach((i: any) => {
+                            const itemType = String(i.items?.type || '').toLowerCase();
+                            if (i.is_skill || itemType === 'skill' || itemType === 'skill_card') {
+                                resolvedSkills.push({
+                                    id: String(i.items.linked_card_id || i.item_id),
+                                    name: i.items.name,
+                                    type: 'Skill',
+                                    effect_data: i.items.effect_data,
+                                });
+                            }
                         });
                     }
-                });
-                
-                // データ同期（セルフヒーリング）: リアルタイム解決した本物のスキルデッキをDB側の pvp_defense_parties に非同期で書き戻す
-                // これにより、次回以降は inventory テーブルへのクエリ自体が発生しなくなり、サーバー負荷が最小化されます
-                opponentsList = opponentsList.map(opp => {
-                    if (emptySkillOpponentIds.includes(opp.user_id)) {
-                        const resolvedSkills = userSkillsMap[opp.user_id] || [];
-                        
-                        // 非同期でDBをアップデート（バックグラウンド実行）
-                        supabaseServer
-                            .from('pvp_defense_parties')
-                            .update({ skill_deck_snapshot: resolvedSkills })
-                            .eq('user_id', opp.user_id)
-                            .then(({ error }) => {
-                                if (error) console.error(`[PvP Opponents] Self-healing update failed for user ${opp.user_id}:`, error);
-                                else console.log(`[PvP Opponents] Self-healing successfully restored skill deck for user ${opp.user_id}`);
-                            });
+
+                    // B. お供メンバーの最新データ（スキル・装備含む）を引き直し解決
+                    const enrichedMembers = await PartyService.getEnrichedPartyMembers(opp.user_id);
+                    
+                    // カードマスタの解決用ID集計
+                    const memberCardIds = new Set<number>();
+                    for (const m of enrichedMembers) {
+                        if (m.inject_cards && Array.isArray(m.inject_cards)) {
+                            m.inject_cards.forEach((id: any) => memberCardIds.add(Number(id)));
+                        }
+                    }
+
+                    const cardMap = new Map<number, any>();
+                    if (memberCardIds.size > 0) {
+                        const { data: dbCards } = await supabaseServer
+                            .from('cards')
+                            .select('*')
+                            .in('id', Array.from(memberCardIds));
+                        if (dbCards) {
+                            dbCards.forEach(c => cardMap.set(c.id, c));
+                        }
+                    }
+
+                    const resolvedMembers = enrichedMembers.map((m: any) => {
+                        const memberHp = m.max_durability || m.max_hp || m.hp || m.durability || 100;
+                        const memberAtk = m.atk ?? 10;
+                        const memberDef = m.def ?? 10;
+                        const resolvedDeck = (m.inject_cards || [])
+                            .map((id: any) => {
+                                const c = cardMap.get(Number(id));
+                                if (!c) return null;
+                                return {
+                                    id: String(c.id),
+                                    slug: c.slug,
+                                    name: c.name,
+                                    type: c.type,
+                                    description: c.description || '',
+                                    cost: 0,
+                                    power: c.effect_val || 0,
+                                    ap_cost: c.ap_cost ?? 1,
+                                    cost_type: c.cost_type || undefined,
+                                    effect_id: c.effect_id || undefined,
+                                    effect_duration: c.effect_duration || undefined,
+                                    target_type: c.target_type || undefined,
+                                    image_url: c.image_url || undefined,
+                                };
+                            })
+                            .filter(Boolean);
 
                         return {
-                            ...opp,
-                            skill_deck_snapshot: resolvedSkills
+                            id: String(m.id),
+                            name: m.name,
+                            slug: m.slug || null,
+                            job_class: m.job_class,
+                            level: m.level ?? 1,
+                            hp: memberHp,
+                            max_hp: memberHp,
+                            atk: memberAtk,
+                            def: memberDef,
+                            inject_cards: m.inject_cards || [],
+                            signature_deck_snapshot: resolvedDeck,
+                            icon_url: m.icon_url || null,
+                            image_url: m.image_url || null,
+                            sort_order: m.sort_order ?? 0,
+                            snapshot_data: m.snapshot_data || null
                         };
-                    }
-                    return opp;
-                });
+                    });
+
+                    // C. プレイヤー自身の装備品引き直し
+                    const { data: dbRealEquips } = await supabaseServer
+                        .from('inventory')
+                        .select('item_id, is_equipped, items!inner(id, name, type, effect_data)')
+                        .eq('user_id', opp.user_id)
+                        .eq('is_equipped', true);
+
+                    const resolvedEquips = (dbRealEquips || [])
+                        .filter(i => (i as any).items?.type === 'equipment')
+                        .map(i => ({
+                            id: String(i.item_id),
+                            name: (i as any).items.name,
+                            type: (i as any).items.type,
+                            effect_data: (i as any).items.effect_data,
+                        }));
+
+                    // D. opponentsList の上書きマージ
+                    opponentsList = opponentsList.map(item => {
+                        if (item.user_id === opp.user_id) {
+                            return {
+                                ...item,
+                                skill_deck_snapshot: resolvedSkills,
+                                party_members_snapshot: resolvedMembers,
+                                equipped_items_snapshot: resolvedEquips
+                            };
+                        }
+                        return item;
+                    });
+
+                    // E. DBへの書き戻し（セルフヒーリングキャッシュ）
+                    supabaseServer
+                        .from('pvp_defense_parties')
+                        .update({
+                            skill_deck_snapshot: resolvedSkills,
+                            party_members_snapshot: resolvedMembers,
+                            equipped_items_snapshot: resolvedEquips
+                        })
+                        .eq('user_id', opp.user_id)
+                        .then(({ error }) => {
+                            if (error) console.error(`[PvP Opponents] Self-healing write-back failed for user ${opp.user_id}:`, error);
+                            else console.log(`[PvP Opponents] Self-healing successfully synchronized skills and party snapshot for user ${opp.user_id}`);
+                        });
+
+                } catch (err) {
+                    console.error(`[PvP Opponents] Failed to resolve strict pvp data for user ${opp.user_id}:`, err);
+                }
             }
         }
 
