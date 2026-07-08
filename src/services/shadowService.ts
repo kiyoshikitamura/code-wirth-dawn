@@ -804,7 +804,7 @@ export class ShadowService {
             // 1. ユーザープロフィール取得
             const { data: u } = await this.supabase
                 .from('user_profiles')
-                .select('id, name, level, title_name, attack, defense, max_hp, vitality, subscription_tier, avatar_url, introduction')
+                .select('id, name, level, title_name, attack, defense, max_hp, vitality, subscription_tier, avatar_url, introduction, hired_shadow_count, hired_heroic_count')
                 .eq('id', profileId)
                 .single();
 
@@ -877,6 +877,8 @@ export class ShadowService {
                 icon_url: u.avatar_url || undefined,
                 introduction: u.introduction || undefined,
                 equipped_items: equippedItemsList,
+                hired_shadow_count: u.hired_shadow_count || 0,
+                hired_heroic_count: u.hired_heroic_count || 0,
                 _resolved_card_ids: resolvedCardIds, // キャッシュ
             } as any;
         } catch (e) {
