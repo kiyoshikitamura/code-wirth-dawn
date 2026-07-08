@@ -842,7 +842,7 @@ export class ShadowService {
                 resolvedCardIds = equippedSkills.map((s: any) => s.cards?.id).filter(Boolean);
             }
 
-            const fee = (u.level || 1) * 200; // ECONOMY_RULES.HIRE_ACTIVE_PER_LEVEL = 200 (TavernModal/ShadowService内定数)
+            const fee = (u.level || 1) * ECONOMY_RULES.HIRE_ACTIVE_PER_LEVEL;
 
             return {
                 profile_id: u.id,
