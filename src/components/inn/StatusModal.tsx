@@ -136,6 +136,13 @@ export default function StatusModal({ onClose, isCampMode, questLocked, onRetire
                         </span>
                     </div>
 
+                    {/* 被雇用累積数（実績） */}
+                    <div className="flex justify-around items-center text-[10px] text-gray-400 bg-gray-950/40 py-2 px-3 rounded-lg border border-gray-800/80 mt-1 mb-2 font-mono shrink-0">
+                        <div>雇われた残影: <span className="text-amber-500 font-bold">{userProfile?.hired_shadow_count ?? 0} 回</span></div>
+                        <span className="text-gray-800">|</span>
+                        <div>雇われた英霊: <span className="text-amber-500 font-bold">{userProfile?.hired_heroic_count ?? 0} 回</span></div>
+                    </div>
+
                     {/* 2x2 ナビゲーションボタン */}
                     <div className="grid grid-cols-2 gap-3 pt-2">
                         <button

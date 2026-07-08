@@ -781,6 +781,21 @@ export class ShadowService {
 
         if (insertError) return { success: false, error: insertError.message };
 
+        // 被雇用累積数集計のためのイベントログの追加（shadow_active, shadow_heroic のみ）
+        const sourceUserId = shadow.origin_type === 'shadow_heroic' ? heroicOwnerId : (shadow.origin_type === 'shadow_active' ? shadow.profile_id : null);
+        if (sourceUserId && (shadow.origin_type === 'shadow_active' || shadow.origin_type === 'shadow_heroic')) {
+            try {
+                await this.supabase
+                    .from('user_hire_events')
+                    .insert({
+                        source_user_id: sourceUserId,
+                        origin_type: shadow.origin_type
+                    });
+            } catch (logErr) {
+                console.warn('[ShadowService] Failed to insert user_hire_events:', logErr);
+            }
+        }
+
         return { success: true };
     }
 
