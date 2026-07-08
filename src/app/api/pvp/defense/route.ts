@@ -6,6 +6,39 @@ import { PartyService } from '@/services/partyService';
 
 export const dynamic = 'force-dynamic';
 
+export async function GET(req: Request) {
+    try {
+        const client = createAuthClient(req);
+        const { data: { user } } = await client.auth.getUser();
+
+        if (!user) {
+            return NextResponse.json({ error: '認証が必要です。' }, { status: 401 });
+        }
+
+        const userId = user.id;
+
+        const { data: defenseParty, error } = await supabaseServer
+            .from('pvp_defense_parties')
+            .select('*')
+            .eq('user_id', userId)
+            .maybeSingle();
+
+        if (error) {
+            console.error('[PvP Defense GET] Fetch error:', error);
+            return NextResponse.json({ error: '防衛情報の取得に失敗しました。' }, { status: 500 });
+        }
+
+        return NextResponse.json({
+            success: true,
+            party: defenseParty || null
+        });
+
+    } catch (err: any) {
+        console.error('[PvP Defense GET] API Error:', err);
+        return NextResponse.json({ error: err.message || '内部エラーが発生しました。' }, { status: 500 });
+    }
+}
+
 export async function POST(req: Request) {
     try {
         const client = createAuthClient(req);

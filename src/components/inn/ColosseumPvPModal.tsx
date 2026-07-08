@@ -204,21 +204,46 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                             </div>
                         </div>
 
-                        {/* Defense Status */}
-                        <div className="flex items-center justify-between mt-4 pt-3 border-t border-slate-800/80">
-                            <div className="flex items-center gap-1.5">
-                                <Shield size={14} className="text-amber-500/80" />
-                                <span className="text-[10px] text-slate-300 font-bold">現在の戦闘評価:</span>
-                                <span className="text-[11px] font-mono font-bold text-slate-100">{challengerScore} CS</span>
+                        {/* Defense Status & Operations */}
+                        <div className="mt-4 pt-3 border-t border-slate-800/80 space-y-2">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-1.5">
+                                    <Shield size={14} className="text-amber-500/80" />
+                                    <span className="text-[10px] text-slate-300 font-bold">現在の戦闘評価:</span>
+                                    <span className="text-[11px] font-mono font-bold text-slate-100">{challengerScore} CS</span>
+                                </div>
+                                <span className={`text-[9px] font-black px-1.5 py-0.5 rounded ${hasDefenseParty ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}`}>
+                                    {hasDefenseParty ? '防衛登録済' : '防衛未登録'}
+                                </span>
                             </div>
-                            <button
-                                disabled={updatingDefense}
-                                onClick={handleUpdateDefense}
-                                className="flex items-center gap-1 px-3 py-1.5 bg-[#1f2937]/80 hover:bg-[#374151] border border-slate-700/60 rounded-lg text-[10px] font-bold text-slate-300 hover:text-white transition-all active:scale-95 disabled:opacity-50"
-                            >
-                                <RefreshCw size={10} className={updatingDefense ? 'animate-spin' : ''} />
-                                防衛登録を手動更新
-                            </button>
+
+                            <div className="grid grid-cols-3 gap-1.5">
+                                <button
+                                    disabled={updatingDefense}
+                                    onClick={handleUpdateDefense}
+                                    className="flex items-center justify-center gap-1 py-1.5 bg-[#1f2937]/80 hover:bg-[#374151] border border-slate-700/60 rounded-lg text-[9px] font-bold text-slate-300 hover:text-white transition-all active:scale-95 disabled:opacity-50"
+                                    title="現在のあなたの装備・スキル・お供編成を防衛デッキとして登録・更新します"
+                                >
+                                    <RefreshCw size={10} className={updatingDefense ? 'animate-spin' : ''} />
+                                    防衛登録を更新
+                                </button>
+                                <button
+                                    disabled={loading || !hasDefenseParty}
+                                    onClick={handleViewMyDefense}
+                                    className="flex items-center justify-center gap-1 py-1.5 bg-[#1f2937]/80 hover:bg-[#374151] border border-slate-700/60 rounded-lg text-[9px] font-bold text-slate-300 hover:text-white transition-all active:scale-95 disabled:opacity-50"
+                                >
+                                    <Shield size={10} />
+                                    防衛構成を確認
+                                </button>
+                                <button
+                                    disabled={loadingLogs || !hasDefenseParty}
+                                    onClick={fetchDefenseLogs}
+                                    className="flex items-center justify-center gap-1 py-1.5 bg-[#1f2937]/80 hover:bg-[#374151] border border-slate-700/60 rounded-lg text-[9px] font-bold text-slate-300 hover:text-white transition-all active:scale-95 disabled:opacity-50"
+                                >
+                                    <Swords size={10} />
+                                    防衛履歴(勝敗)
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -236,20 +261,42 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
 
                     {/* Opponents List Section */}
                     <div className="space-y-2.5">
-                        <div className="flex items-center justify-between">
-                            <h3 className="text-xs font-bold text-amber-500/80 uppercase tracking-wider flex items-center gap-1.5">
-                                対戦相手マッチング (同ランク帯)
-                            </h3>
-                            <button
-                                disabled={loading}
-                                onClick={fetchOpponents}
-                                className="flex items-center gap-1 px-2.5 py-1 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 hover:border-amber-500/50 rounded-lg text-[10px] font-bold text-amber-400 hover:text-amber-300 transition-all active:scale-95 disabled:opacity-50"
-                                title="対戦相手を再読み込み"
-                            >
-                                <RefreshCw size={10} className={loading ? 'animate-spin' : ''} />
-                                リロード
-                            </button>
-                        </div>
+                        {!hasDefenseParty ? (
+                            <div className="bg-[#161a22] border border-amber-500/30 rounded-xl p-6 text-center space-y-4 shadow-[0_0_25px_rgba(245,158,11,0.08)] animate-in fade-in zoom-in-95 duration-200">
+                                <div className="w-12 h-12 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mx-auto text-amber-500">
+                                    <Shield size={24} className="animate-pulse" />
+                                </div>
+                                <div className="space-y-1">
+                                    <h4 className="text-sm font-black text-amber-400">防衛パーティが未登録です</h4>
+                                    <p className="text-[10px] text-slate-400 leading-relaxed max-w-[280px] mx-auto">
+                                        闘技場で他の冒険者に挑戦するには、まず現在のパーティ編成（リーダーの装備/スキル・同行英霊）を「あなたの防衛パーティ」として登録する必要があります。
+                                    </p>
+                                </div>
+                                <button
+                                    disabled={updatingDefense}
+                                    onClick={handleUpdateDefense}
+                                    className="w-full py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs rounded-xl active:scale-95 transition-all shadow-lg shadow-amber-500/15 flex items-center justify-center gap-1.5 disabled:opacity-50"
+                                >
+                                    <Shield size={14} />
+                                    {updatingDefense ? '登録処理中...' : '現在のパーティを登録する'}
+                                </button>
+                            </div>
+                        ) : (
+                            <>
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-xs font-bold text-amber-500/80 uppercase tracking-wider flex items-center gap-1.5">
+                                        対戦相手マッチング (同ランク帯)
+                                    </h3>
+                                    <button
+                                        disabled={loading}
+                                        onClick={fetchOpponents}
+                                        className="flex items-center gap-1 px-2.5 py-1 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 hover:border-amber-500/50 rounded-lg text-[10px] font-bold text-amber-400 hover:text-amber-300 transition-all active:scale-95 disabled:opacity-50"
+                                        title="対戦相手を再読み込み"
+                                    >
+                                        <RefreshCw size={10} className={loading ? 'animate-spin' : ''} />
+                                        リロード
+                                    </button>
+                                </div>
 
                         {loading && opponents.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-10 space-y-2">
@@ -325,6 +372,8 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                                 )}
                             </div>
                         )}
+                        </>
+                    )}
                     </div>
                 </div>
 
@@ -544,31 +593,192 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
 
                         {/* Confirmation Footer */}
                         <div className="px-6 py-4 bg-[#0a0d14] border-t border-slate-800/80 space-y-3">
-                            <p className="text-[10px] font-bold text-amber-500/95 text-center flex items-center justify-center gap-1">
-                                <Zap size={10} className="animate-bounce text-amber-400" />
-                                本当にこの防衛パーティに挑戦しますか？
-                            </p>
-                            <div className="flex gap-2">
-                                <button
-                                    onClick={() => {
-                                        soundManager?.playSE('se_item_get');
-                                        setSelectedOpponent(null);
-                                    }}
-                                    className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 font-bold text-xs rounded-xl active:scale-95 transition-all text-center"
-                                >
-                                    戻る
-                                </button>
-                                <button
-                                    disabled={loading}
-                                    onClick={() => {
-                                        handleChallenge(selectedOpponent);
-                                    }}
-                                    className="flex-1 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs rounded-xl active:scale-95 transition-all shadow-md shadow-amber-500/20 flex items-center justify-center gap-1"
-                                >
-                                    {loading ? <RefreshCw className="animate-spin" size={12} /> : <Swords size={12} />}
-                                    本当に挑戦する
-                                </button>
+                            {selectedOpponent.is_my_defense ? (
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => {
+                                            soundManager?.playSE('se_item_get');
+                                            setSelectedOpponent(null);
+                                        }}
+                                        className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 font-bold text-xs rounded-xl active:scale-95 transition-all text-center"
+                                    >
+                                        閉じる
+                                    </button>
+                                </div>
+                            ) : (
+                                <>
+                                    <p className="text-[10px] font-bold text-amber-500/95 text-center flex items-center justify-center gap-1">
+                                        <Zap size={10} className="animate-bounce text-amber-400" />
+                                        本当にこの防衛パーティに挑戦しますか？
+                                    </p>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => {
+                                                soundManager?.playSE('se_item_get');
+                                                setSelectedOpponent(null);
+                                            }}
+                                            className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 font-bold text-xs rounded-xl active:scale-95 transition-all text-center"
+                                        >
+                                            戻る
+                                        </button>
+                                        <button
+                                            disabled={loading}
+                                            onClick={() => {
+                                                handleChallenge(selectedOpponent);
+                                            }}
+                                            className="flex-1 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs rounded-xl active:scale-95 transition-all shadow-md shadow-amber-500/20 flex items-center justify-center gap-1"
+                                        >
+                                            {loading ? <RefreshCw className="animate-spin" size={12} /> : <Swords size={12} />}
+                                            本当に挑戦する
+                                        </button>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Defense History Modal */}
+            {showDefenseHistory && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-150">
+                    <div className="relative w-full max-w-md bg-[#0e121a] border border-slate-700/60 rounded-2xl overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col max-h-[80vh]">
+                        {/* Title */}
+                        <div className="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-amber-950/40 to-slate-900 border-b border-slate-805">
+                            <h3 className="font-black text-amber-400 tracking-wider flex items-center gap-2 text-sm">
+                                <Swords size={18} />
+                                防衛戦の履歴
+                            </h3>
+                            <button
+                                onClick={() => {
+                                    soundManager?.playSE('se_item_get');
+                                    setShowDefenseHistory(false);
+                                }}
+                                className="text-slate-400 hover:text-white p-1 hover:bg-white/5 rounded-lg"
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        {/* Logs List */}
+                        <div className="flex-1 overflow-y-auto p-4 space-y-2.5 custom-scrollbar">
+                            {defenseLogs.length === 0 ? (
+                                <div className="text-center py-12 text-xs text-slate-500 italic">
+                                    防衛戦の記録はありません。
+                                </div>
+                            ) : (
+                                defenseLogs.map((log: any, idx: number) => {
+                                    const dateStr = log.created_at
+                                        ? new Date(log.created_at).toLocaleString('ja-JP', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+                                        : '不明な日時';
+                                    
+                                    return (
+                                        <div key={log.id || idx} className="bg-[#141720] border border-slate-800/80 rounded-xl p-3.5 flex items-center justify-between">
+                                            <div className="space-y-1">
+                                                <div className="flex items-center gap-1.5 text-left">
+                                                    <span className={`text-[9px] font-black px-1.5 py-0.5 rounded ${log.is_defense_win ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}`}>
+                                                        {log.is_defense_win ? '防衛成功' : '防衛失敗'}
+                                                    </span>
+                                                    <span className="text-xs font-bold text-slate-200">{log.challenger_name}</span>
+                                                </div>
+                                                <div className="text-[10px] text-slate-400 font-mono flex items-center gap-2">
+                                                    <span>{dateStr}</span>
+                                                    <span>|</span>
+                                                    <span className={log.rating_change >= 0 ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold'}>
+                                                        {log.rating_change >= 0 ? `+${log.rating_change}` : log.rating_change} pts
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={() => {
+                                                    soundManager?.playSE('se_item_get');
+                                                    setSelectedLog(log);
+                                                }}
+                                                className="px-3 py-1.5 bg-[#252f3f] hover:bg-[#313e54] text-slate-200 border border-slate-700/60 font-bold text-[10px] rounded-lg active:scale-95 transition-all"
+                                            >
+                                                ログ確認
+                                            </button>
+                                        </div>
+                                    );
+                                })
+                            )}
+                        </div>
+
+                        {/* Footer */}
+                        <div className="px-6 py-4 bg-[#0a0d14] border-t border-slate-850 flex justify-end">
+                            <button
+                                onClick={() => {
+                                    soundManager?.playSE('se_item_get');
+                                    setShowDefenseHistory(false);
+                                }}
+                                className="px-5 py-2 bg-[#1f2937] hover:bg-[#374151] border border-slate-700/60 rounded-xl hover:text-amber-400 transition-all text-xs font-bold text-slate-300 active:scale-95"
+                            >
+                                閉じる
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Defense Battle Logs Replay Popup */}
+            {selectedLog && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in duration-150">
+                    <div className="relative w-full max-w-lg bg-[#070b12] border-2 border-slate-700/80 rounded-2xl overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.8)] flex flex-col max-h-[85vh]">
+                        {/* Title */}
+                        <div className="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-slate-900 to-slate-950 border-b border-slate-800">
+                            <div className="text-left">
+                                <h3 className="font-black text-slate-200 tracking-wider text-xs">
+                                    戦闘ログ詳細
+                                </h3>
+                                <p className="text-[10px] text-slate-500 font-mono mt-0.5">
+                                    挑戦者: {selectedLog.challenger_name} | {selectedLog.is_defense_win ? '防衛成功' : '防衛失敗'}
+                                </p>
                             </div>
+                            <button
+                                onClick={() => {
+                                    soundManager?.playSE('se_item_get');
+                                    setSelectedLog(null);
+                                }}
+                                className="text-slate-400 hover:text-white p-1 hover:bg-white/5 rounded-lg"
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        {/* Logs Content */}
+                        <div className="flex-1 overflow-y-auto p-5 bg-black/40 space-y-1.5 custom-scrollbar font-mono text-[10px] text-slate-300 text-left">
+                            {selectedLog.battle_logs && selectedLog.battle_logs.length > 0 ? (
+                                selectedLog.battle_logs.map((line: string, lineIdx: number) => {
+                                    let textColor = 'text-slate-300';
+                                    if (line.includes('ダメージ') || line.includes('大打撃')) textColor = 'text-rose-400 font-medium';
+                                    else if (line.includes('回復') || line.includes('得た')) textColor = 'text-emerald-400 font-medium';
+                                    else if (line.includes('ターン') || line.includes('バトル開始')) textColor = 'text-amber-400/90 font-bold';
+                                    else if (line.includes('戦闘不能') || line.includes('倒れた')) textColor = 'text-red-500 font-black';
+                                    
+                                    return (
+                                        <div key={lineIdx} className={`${textColor} py-0.5 border-b border-slate-900/60 leading-relaxed`}>
+                                            {line}
+                                        </div>
+                                    );
+                                })
+                            ) : (
+                                <div className="text-center py-10 text-slate-500 italic">
+                                    戦闘メッセージの記録はありません。
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Footer */}
+                        <div className="px-6 py-4 bg-[#070b12] border-t border-slate-850 flex justify-end">
+                            <button
+                                onClick={() => {
+                                    soundManager?.playSE('se_item_get');
+                                    setSelectedLog(null);
+                                }}
+                                className="px-5 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 font-bold text-xs rounded-xl active:scale-95 transition-all"
+                            >
+                                戻る
+                            </button>
                         </div>
                     </div>
                 </div>

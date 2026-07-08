@@ -7986,7 +7986,7 @@ export async function GET(req: Request) {
         const userId = user.id;
 
         // 1. 挑戦者プレイヤーの現在戦闘スコアとランクの算出
-        const [profileResult, enrichedMembers, inventoryResult, statsResult] = await Promise.all([
+        const [profileResult, enrichedMembers, inventoryResult, statsResult, defensePartyCheck] = await Promise.all([
             supabaseServer
                 .from('user_profiles')
                 .select('*')
@@ -8001,6 +8001,11 @@ export async function GET(req: Request) {
             supabaseServer
                 .from('pvp_user_stats')
                 .select('*')
+                .eq('user_id', userId)
+                .maybeSingle(),
+            supabaseServer
+                .from('pvp_defense_parties')
+                .select('user_id')
                 .eq('user_id', userId)
                 .maybeSingle()
         ]);
@@ -8259,6 +8264,7 @@ export async function GET(req: Request) {
             challenger_score: totalScore,
             challenger_rank: rankClass,
             challenger_stats: statsResult.data || { wins: 0, losses: 0, current_streak: 0, max_streak: 0, rating: 1500 },
+            has_defense_party: !!defensePartyCheck,
             opponents: opponentsList
         });
 

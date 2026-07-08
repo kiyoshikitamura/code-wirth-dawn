@@ -111,6 +111,61 @@ export async function POST(req: Request) {
             console.warn('[PvP Complete] Chronicle insert failed (ignored):', chronicleErr);
         }
 
+        // 5.5 防衛側（対戦相手）の戦績更新 ＆ 防衛ログの登録
+        if (opponent_id && opponent_id !== 'ghost' && !opponent_id.startsWith('ghost_')) {
+            try {
+                const { data: oppStats } = await supabaseServer
+                    .from('pvp_user_stats')
+                    .select('*')
+                    .eq('user_id', opponent_id)
+                    .maybeSingle();
+
+                let oppWins = oppStats?.wins ?? 0;
+                let oppLosses = oppStats?.losses ?? 0;
+                let oppRating = oppStats?.rating ?? 1500;
+                const oppRatingChange = is_victory ? -12 : 16;
+                
+                if (is_victory) {
+                    oppLosses += 1;
+                } else {
+                    oppWins += 1;
+                }
+                const nextOppRating = Math.max(1000, oppRating + oppRatingChange);
+
+                await supabaseServer
+                    .from('pvp_user_stats')
+                    .upsert({
+                        user_id: opponent_id,
+                        wins: oppWins,
+                        losses: oppLosses,
+                        rating: nextOppRating,
+                        updated_at: new Date().toISOString()
+                    });
+
+                const { data: challengerProfile } = await supabaseServer
+                    .from('user_profiles')
+                    .select('name')
+                    .eq('id', userId)
+                    .maybeSingle();
+                const challengerName = challengerProfile?.name || '名もなき冒険者';
+
+                await supabaseServer
+                    .from('pvp_defense_logs')
+                    .insert({
+                        user_id: opponent_id,
+                        challenger_id: userId,
+                        challenger_name: challengerName,
+                        is_defense_win: !is_victory,
+                        rating_change: oppRatingChange,
+                        battle_logs: battle_logs || []
+                    });
+                
+                console.log(`[PvP Complete] Successfully updated defense stats/logs for user ${opponent_id}`);
+            } catch (defenseErr) {
+                console.error('[PvP Complete] Failed to update defense stats/logs:', defenseErr);
+            }
+        }
+
         return NextResponse.json({
             success: true,
             wins: currentWins,
