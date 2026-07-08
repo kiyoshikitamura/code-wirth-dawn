@@ -77,7 +77,7 @@ export async function POST(req: Request) {
         }
 
         const equippedItems = (inventoryData || [])
-            .filter(i => (i as any).items?.type === 'equipment')
+            .filter(i => (i as any).items && (i as any).items.type === 'equipment')
             .map(i => ({
                 id: String(i.item_id),
                 name: (i as any).items.name,
@@ -87,6 +87,7 @@ export async function POST(req: Request) {
 
         const skillDeck = (inventoryData || [])
             .filter(i => {
+                if (!(i as any).items) return false;
                 const itemType = String((i as any).items?.type || '').toLowerCase();
                 return i.is_skill || itemType === 'skill' || itemType === 'skill_card';
             })
