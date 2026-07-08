@@ -125,6 +125,7 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                 
                 // 対戦相手データを Zustand store に一時保持して遷移
                 useGameStore.setState({ pvpOpponent: opponent } as any);
+                setSelectedOpponent(null);
                 
                 // PvPバトル用仮想クエストページに遷移
                 router.push(`/quest/${data.quest_id}`);
@@ -310,7 +311,7 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                                                 soundManager?.playSE('se_item_get');
                                                 setSelectedOpponent(opponent);
                                             }}
-                                            className="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs rounded-xl active:scale-95 transition-all shadow-md shadow-amber-500/10 shrink-0"
+                                            className="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs rounded-xl active:scale-95 transition-all shadow-md shadow-amber-500/10 shrink-0 disabled:opacity-40 disabled:pointer-events-none"
                                         >
                                             挑戦する
                                         </button>
@@ -560,7 +561,6 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                                 <button
                                     disabled={loading}
                                     onClick={() => {
-                                        setSelectedOpponent(null);
                                         handleChallenge(selectedOpponent);
                                     }}
                                     className="flex-1 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs rounded-xl active:scale-95 transition-all shadow-md shadow-amber-500/20 flex items-center justify-center gap-1"

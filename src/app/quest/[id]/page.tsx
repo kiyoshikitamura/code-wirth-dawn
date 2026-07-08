@@ -969,6 +969,17 @@ export default function QuestPage() {
 
 
 
+    // レジューム対策: 戦闘中のリロード・再アクセス時、Zustandの戦闘ステートがアクティブなら自動で戦闘画面に復旧遷移させる
+    useEffect(() => {
+        if (battleState && battleState.status === 'active') {
+            setViewMode('battle');
+            if (battleState.enemies && battleState.enemies.length > 0) {
+                const hasBoss = battleState.enemies.some((e: any) => e.isBoss || e.is_boss);
+                setBattleBgm(hasBoss ? 'bgm_battle_boss' : 'bgm_battle');
+            }
+        }
+    }, [battleState?.status]);
+
     // Battle Return Logic
     useEffect(() => {
         const pending = localStorage.getItem('pending_quest_resume');
