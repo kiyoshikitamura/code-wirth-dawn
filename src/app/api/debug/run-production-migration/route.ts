@@ -19,14 +19,16 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // 本番用のプロジェクトIDと東京リージョンのプーラー接続先をデフォルトに設定
+    // 本番用の直接接続ホスト (db.zvoroixjuypnintkpmux.supabase.co)。
+    // 直接接続時のユーザー名は 'postgres.ref' ではなく単純に 'postgres' になります。
+    // VercelサーバーはIPv6に対応しているため、直接接続ドメインへ問題なく接続可能です。
     const projectRef = 'zvoroixjuypnintkpmux';
     const password = 'izasama5723';
     const dbUrl = process.env.DATABASE_URL 
         || process.env.SUPABASE_DB_URL
-        || `postgresql://postgres.${projectRef}:${password}@aws-0-ap-northeast-1.pooler.supabase.com:5432/postgres`;
+        || `postgresql://postgres:${password}@db.${projectRef}.supabase.co:5432/postgres`;
 
-    console.log('[RunProductionMigration] Connecting to PRODUCTION database via:', dbUrl.split('@')[1]);
+    console.log('[RunProductionMigration] Connecting to PRODUCTION database via direct IPv6 host:', `db.${projectRef}.supabase.co`);
     const pool = new Pool({
         connectionString: dbUrl,
         ssl: { rejectUnauthorized: false },
