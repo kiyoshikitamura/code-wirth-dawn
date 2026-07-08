@@ -110,11 +110,14 @@ export default function ColosseumModal({ onClose }: ColosseumModalProps) {
         }
     };
 
-    if (mode === 'pvp') {
-        return <ColosseumPvPModal onClose={onClose} />;
-    }
-
     if (!mounted || !portalTarget) return null;
+
+    if (mode === 'pvp') {
+        return createPortal(
+            <ColosseumPvPModal onClose={onClose} />,
+            portalTarget
+        );
+    }
 
     if (mode === 'select') {
         return createPortal(

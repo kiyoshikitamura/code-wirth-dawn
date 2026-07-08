@@ -145,9 +145,7 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
         }
     };
 
-    if (!mounted || !portalTarget) return null;
-
-    return createPortal(
+    return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#050b14]/90 backdrop-blur-sm animate-in fade-in duration-200">
             <div className="relative w-full max-w-lg bg-[#0d1117] border border-amber-500/30 rounded-2xl overflow-hidden shadow-[0_0_50px_rgba(245,158,11,0.2)] flex flex-col max-h-[90vh]">
                 {/* Header */}
@@ -787,7 +785,6 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                     </div>
                 </div>
             )}
-        </div>,
-        portalTarget
+        </div>
     );
 }
