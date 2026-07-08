@@ -33,6 +33,7 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
     const [updatingDefense, setUpdatingDefense] = useState(false);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
     const [successMsg, setSuccessMsg] = useState<string | null>(null);
+    const [selectedMemberDetail, setSelectedMemberDetail] = useState<any | null>(null);
 
     const [hasDefenseParty, setHasDefenseParty] = useState<boolean>(true);
     const [showDefenseHistory, setShowDefenseHistory] = useState<boolean>(false);
@@ -625,13 +626,20 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                             {/* Party Members Segment */}
                             <div className="space-y-3">
                                 <span className="text-[11px] font-bold text-amber-500/80 uppercase tracking-widest block">
-                                    👥 同行英霊メンバー ({selectedOpponent.party_members_snapshot?.length || 0}名)
+                                    👥 同行メンバー ({selectedOpponent.party_members_snapshot?.length || 0}名)
                                 </span>
                                 
                                 {selectedOpponent.party_members_snapshot && selectedOpponent.party_members_snapshot.length > 0 ? (
                                     <div className="space-y-2.5">
                                         {selectedOpponent.party_members_snapshot && Array.isArray(selectedOpponent.party_members_snapshot) && selectedOpponent.party_members_snapshot.filter(Boolean).map((m: any, idx: number) => (
-                                            <div key={idx} className="bg-[#141822] border border-slate-800 rounded-xl p-3 flex items-center justify-between">
+                                            <div 
+                                                key={idx} 
+                                                onClick={() => {
+                                                    soundManager?.playSE('se_item_get');
+                                                    setSelectedMemberDetail(m);
+                                                }}
+                                                className="bg-[#141822] hover:bg-[#1b2230] border border-slate-800 hover:border-amber-500/20 rounded-xl p-3 flex items-center justify-between cursor-pointer transition-all active:scale-[0.99] select-none"
+                                            >
                                                 <div className="flex items-center gap-2">
                                                     <div className="w-8 h-8 rounded-md border border-slate-700 bg-black/40 flex items-center justify-center overflow-hidden flex-shrink-0">
                                                         {m.icon_url || m.image_url ? (
@@ -650,15 +658,6 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                                                         <span className="text-[9px] text-slate-400 block font-mono">
                                                             クラス: {m.job_class || '傭兵'}
                                                         </span>
-                                                        {m.signature_deck_snapshot && m.signature_deck_snapshot.length > 0 && (
-                                                            <div className="flex flex-wrap gap-1 mt-1 max-w-[260px]">
-                                                                {m.signature_deck_snapshot.map((card: any, cardIdx: number) => (
-                                                                    <span key={cardIdx} className="text-[8px] bg-amber-950/20 text-amber-300 border border-amber-500/20 px-1.5 py-0.5 rounded font-medium">
-                                                                        {card.name}
-                                                                    </span>
-                                                                ))}
-                                                            </div>
-                                                        )}
                                                     </div>
                                                 </div>
 
@@ -876,6 +875,86 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                             >
                                 戻る
                             </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Party Member Detail Modal */}
+            {selectedMemberDetail && (
+                <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150" onClick={() => setSelectedMemberDetail(null)}>
+                    <div className="bg-[#0e121a] border border-amber-500/40 rounded-xl p-5 w-full max-w-[320px] shadow-2xl space-y-4" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-10 h-10 rounded-lg border border-amber-500/30 bg-black/40 flex items-center justify-center overflow-hidden flex-shrink-0">
+                                    {selectedMemberDetail.icon_url || selectedMemberDetail.image_url ? (
+                                        <img src={selectedMemberDetail.icon_url || selectedMemberDetail.image_url} alt="" className="w-full h-full object-cover" />
+                                    ) : (
+                                        <User size={18} className="text-amber-500/60" />
+                                    )}
+                                </div>
+                                <div>
+                                    <h4 className="text-sm font-bold text-slate-200 flex items-center gap-1.5">
+                                        {selectedMemberDetail.name}
+                                        <span className="text-[10px] bg-slate-800 text-slate-400 px-1 py-0.2 rounded font-mono">
+                                            L. {selectedMemberDetail.level || 1}
+                                        </span>
+                                    </h4>
+                                    <span className="text-[10px] text-slate-400 block font-mono">
+                                        クラス: {selectedMemberDetail.job_class || '傭兵'}
+                                    </span>
+                                </div>
+                            </div>
+                            <button onClick={() => setSelectedMemberDetail(null)} className="text-slate-500 hover:text-slate-300 transition-colors p-1">
+                                <X size={16} />
+                            </button>
+                        </div>
+
+                        <div className="space-y-2 text-[11px]">
+                            <div className="flex justify-between items-center bg-slate-900/60 rounded-lg border border-slate-800 px-3 py-1.5">
+                                <span className="text-emerald-400 font-bold">HP</span>
+                                <span className="text-slate-200 font-mono font-bold">{selectedMemberDetail.hp || 100} / {selectedMemberDetail.max_hp || selectedMemberDetail.hp || 100}</span>
+                            </div>
+                            <div className="flex justify-between items-center bg-slate-900/60 rounded-lg border border-slate-800 px-3 py-1.5">
+                                <span className="text-rose-400 font-bold">攻撃力</span>
+                                <span className="text-slate-200 font-mono font-bold">{selectedMemberDetail.atk || 10}</span>
+                            </div>
+                            <div className="flex justify-between items-center bg-slate-900/60 rounded-lg border border-slate-800 px-3 py-1.5">
+                                <span className="text-sky-400 font-bold">防御力</span>
+                                <span className="text-slate-200 font-mono font-bold">{selectedMemberDetail.def || 10}</span>
+                            </div>
+
+                            {/* Equipped Items */}
+                            <div className="bg-slate-900/60 rounded-lg border border-slate-800 px-3 py-2 space-y-1">
+                                <span className="text-slate-400 font-bold text-[10px]">🛡️ 装備中の武具:</span>
+                                <div className="flex flex-wrap gap-1">
+                                    {((selectedMemberDetail.equipped_items_snapshot || selectedMemberDetail.equipped_items || [])).length > 0 ? (
+                                        (selectedMemberDetail.equipped_items_snapshot || selectedMemberDetail.equipped_items).map((item: any, idx: number) => (
+                                            <span key={idx} className="text-[9px] bg-slate-800 text-slate-300 border border-slate-700/50 px-1.5 py-0.5 rounded">
+                                                {item.name || item}
+                                            </span>
+                                        ))
+                                    ) : (
+                                        <span className="text-[9px] text-slate-500 italic">装備なし</span>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Skills */}
+                            <div className="bg-slate-900/60 rounded-lg border border-slate-800 px-3 py-2 space-y-1">
+                                <span className="text-amber-400 font-bold text-[10px]">🔮 所持スキル (デッキ):</span>
+                                <div className="flex flex-wrap gap-1 max-h-[100px] overflow-y-auto custom-scrollbar">
+                                    {(selectedMemberDetail.signature_deck_snapshot || selectedMemberDetail.skill_names || []).length > 0 ? (
+                                        (selectedMemberDetail.signature_deck_snapshot || selectedMemberDetail.skill_names).map((skill: any, si: number) => (
+                                            <span key={si} className="px-1.5 py-0.5 bg-amber-950/20 border border-amber-500/20 rounded text-[9px] text-amber-300 font-medium">
+                                                {typeof skill === 'string' ? skill : skill.name || skill}
+                                            </span>
+                                        ))
+                                    ) : (
+                                        <span className="text-[9px] text-slate-500 italic">なし</span>
+                                    )}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

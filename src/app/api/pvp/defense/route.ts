@@ -80,7 +80,8 @@ export async function POST(req: Request) {
                         id,
                         slug,
                         name,
-                        cards!inner (
+                        card_id,
+                        cards (
                             id,
                             slug,
                             name,
@@ -96,7 +97,7 @@ export async function POST(req: Request) {
                         )
                     )
                 `)
-                .eq('owner_id', userId)
+                .eq('user_id', userId)
                 .eq('is_equipped', true)
         ]);
 
