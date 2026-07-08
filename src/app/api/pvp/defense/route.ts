@@ -65,18 +65,51 @@ export async function POST(req: Request) {
         const enrichedMembers = await PartyService.getEnrichedPartyMembers(userId);
 
         // 3. 装備品およびスキルデッキの取得
-        const { data: inventoryData, error: inventoryError } = await supabaseServer
-            .from('inventory')
-            .select('id, item_id, is_equipped, is_skill, quantity, items!inner(id, name, slug, type, effect_data, linked_card_id)')
-            .eq('user_id', userId)
-            .eq('is_equipped', true);
+        const [inventoryResult, userSkillsResult] = await Promise.all([
+            supabaseServer
+                .from('inventory')
+                .select('id, item_id, is_equipped, is_skill, quantity, items!inner(id, name, slug, type, effect_data, linked_card_id)')
+                .eq('user_id', userId)
+                .eq('is_equipped', true),
+            supabaseServer
+                .from('user_skills')
+                .select(`
+                    id,
+                    is_equipped,
+                    skills!inner (
+                        id,
+                        slug,
+                        name,
+                        cards!inner (
+                            id,
+                            slug,
+                            name,
+                            type,
+                            effect_val,
+                            ap_cost,
+                            cost_type,
+                            effect_id,
+                            effect_duration,
+                            target_type,
+                            image_url,
+                            description
+                        )
+                    )
+                `)
+                .eq('owner_id', userId)
+                .eq('is_equipped', true)
+        ]);
 
-        if (inventoryError) {
-            console.error('[PvP Defense] Inventory fetch error:', inventoryError);
+        if (inventoryResult.error) {
+            console.error('[PvP Defense] Inventory fetch error:', inventoryResult.error);
             return NextResponse.json({ error: 'インベントリの取得に失敗しました。' }, { status: 500 });
         }
 
-        const equippedItems = (inventoryData || [])
+        if (userSkillsResult.error) {
+            console.error('[PvP Defense] User skills fetch error:', userSkillsResult.error);
+        }
+
+        const equippedItems = (inventoryResult.data || [])
             .filter(i => (i as any).items && (i as any).items.type === 'equipment')
             .map(i => ({
                 id: String(i.item_id),
@@ -85,18 +118,28 @@ export async function POST(req: Request) {
                 effect_data: (i as any).items.effect_data,
             }));
 
-        const skillDeck = (inventoryData || [])
-            .filter(i => {
-                if (!(i as any).items) return false;
-                const itemType = String((i as any).items?.type || '').toLowerCase();
-                return i.is_skill || itemType === 'skill' || itemType === 'skill_card';
+        const skillDeck = (userSkillsResult.data || [])
+            .map((entry: any) => {
+                const skill = entry.skills;
+                if (!skill) return null;
+                const card = skill.cards;
+                if (!card) return null;
+                return {
+                    id: String(card.id),
+                    slug: card.slug,
+                    name: card.name,
+                    type: card.type || 'Skill',
+                    effect_val: card.effect_val || 0,
+                    ap_cost: card.ap_cost ?? 1,
+                    cost_type: card.cost_type || undefined,
+                    effect_id: card.effect_id || undefined,
+                    effect_duration: card.effect_duration || undefined,
+                    target_type: card.target_type || undefined,
+                    image_url: card.image_url || undefined,
+                    description: card.description || '',
+                };
             })
-            .map(i => ({
-                id: String((i as any).items.linked_card_id || i.item_id),
-                name: (i as any).items.name,
-                type: 'Skill',
-                effect_data: (i as any).items.effect_data,
-            }));
+            .filter(Boolean);
 
         // 4. プレイヤー自身の装備ボーナスおよび戦闘スコア計算
         const equipBonus = { atk: 0, def: 0, hp: 0 };

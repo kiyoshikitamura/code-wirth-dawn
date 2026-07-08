@@ -650,6 +650,15 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                                                         <span className="text-[9px] text-slate-400 block font-mono">
                                                             クラス: {m.job_class || '傭兵'}
                                                         </span>
+                                                        {m.signature_deck_snapshot && m.signature_deck_snapshot.length > 0 && (
+                                                            <div className="flex flex-wrap gap-1 mt-1 max-w-[260px]">
+                                                                {m.signature_deck_snapshot.map((card: any, cardIdx: number) => (
+                                                                    <span key={cardIdx} className="text-[8px] bg-amber-950/20 text-amber-300 border border-amber-500/20 px-1.5 py-0.5 rounded font-medium">
+                                                                        {card.name}
+                                                                    </span>
+                                                                ))}
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
 
