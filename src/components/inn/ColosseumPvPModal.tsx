@@ -12,8 +12,12 @@ interface ColosseumPvPModalProps {
 
 export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
     const [mounted, setMounted] = useState(false);
+    const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
     useEffect(() => {
         setMounted(true);
+        if (typeof window !== 'undefined') {
+            setPortalTarget(document.body);
+        }
     }, []);
 
     const router = useRouter();
@@ -141,7 +145,7 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
         }
     };
 
-    if (!mounted) return null;
+    if (!mounted || !portalTarget) return null;
 
     return createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#050b14]/90 backdrop-blur-sm animate-in fade-in duration-200">
@@ -784,6 +788,6 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                 </div>
             )}
         </div>,
-        document.body
+        portalTarget
     );
 }

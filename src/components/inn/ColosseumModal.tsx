@@ -14,10 +14,14 @@ interface ColosseumModalProps {
 
 export default function ColosseumModal({ onClose }: ColosseumModalProps) {
     const [mounted, setMounted] = useState(false);
+    const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
     const [mode, setMode] = useState<'select' | 'pve' | 'pvp' | null>(null);
 
     useEffect(() => {
         setMounted(true);
+        if (typeof window !== 'undefined') {
+            setPortalTarget(document.body);
+        }
 
         // 1. 環境変数チェック
         let isPreview = process.env.NEXT_PUBLIC_VERCEL_ENV === 'preview' || process.env.NODE_ENV === 'development';
@@ -110,6 +114,8 @@ export default function ColosseumModal({ onClose }: ColosseumModalProps) {
         return <ColosseumPvPModal onClose={onClose} />;
     }
 
+    if (!mounted || !portalTarget) return null;
+
     if (mode === 'select') {
         return createPortal(
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#050b14]/90 backdrop-blur-sm animate-in fade-in duration-200">
@@ -179,7 +185,7 @@ export default function ColosseumModal({ onClose }: ColosseumModalProps) {
                     </div>
                 </div>
             </div>,
-            document.body
+            portalTarget
         );
     }
 
@@ -332,7 +338,7 @@ export default function ColosseumModal({ onClose }: ColosseumModalProps) {
                     </div>
                 </div>
             </div>,
-            document.body
+            portalTarget
         );
     }
 
@@ -505,6 +511,6 @@ export default function ColosseumModal({ onClose }: ColosseumModalProps) {
                 </div>
             </div>
         </div>,
-        document.body
+        portalTarget
     );
 }
