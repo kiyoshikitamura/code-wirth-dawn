@@ -3321,7 +3321,7 @@ export const createBattleSlice = (
             if (isPvPEnemy && sigDeck.length > 0) {
                 const currentAp = (enemy as any).current_ap ?? 6;
                 // 使用可能なスキルを抽出 (APが足りるもの ＆ 使用禁止カードを除外)
-                const EXCLUDED_NPC_CARDS = ['110', '111', '112', '118', '120', '132', '133', '139', '140'];
+                const EXCLUDED_NPC_CARDS = ['56', '57', '58', '59', '60', '73', '85', '110', '117', '118', '120', '132', '137', '138', '139', '140'];
                 const playableSkills = sigDeck.filter((c: any) => {
                     const apCost = c.ap_cost ?? 1;
                     return currentAp >= apCost && !EXCLUDED_NPC_CARDS.includes(String(c.id));
