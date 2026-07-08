@@ -53,7 +53,10 @@ export async function POST(req: Request) {
             }));
 
         const skillDeck = (inventoryData || [])
-            .filter(i => i.is_skill || (i as any).items?.type === 'skill' || (i as any).items?.type === 'skill_card')
+            .filter(i => {
+                const itemType = String((i as any).items?.type || '').toLowerCase();
+                return i.is_skill || itemType === 'skill' || itemType === 'skill_card';
+            })
             .map(i => ({
                 id: String((i as any).items.linked_card_id || i.item_id),
                 name: (i as any).items.name,

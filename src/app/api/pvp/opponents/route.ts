@@ -8098,6 +8098,19 @@ export async function GET(req: Request) {
         const testTargetIdx = opponentsList.findIndex(opp => String(opp.user_name) === 'きたむ（調整テスト用）');
         if (testTargetIdx !== -1) {
             const [testTarget] = opponentsList.splice(testTargetIdx, 1);
+            
+            // フェールセーフ: skill_deck_snapshot が空の場合はデフォルトスキルを割り当てる
+            if (!testTarget.skill_deck_snapshot || testTarget.skill_deck_snapshot.length === 0) {
+                testTarget.skill_deck_snapshot = [
+                    { id: "26", name: "氣の癒やし", type: "Heal", ap_cost: 2, power: 70 },
+                    { id: "101", name: "カタルシス", type: "Magic", ap_cost: 3, power: 30 },
+                    { id: "102", name: "傷口をえぐる", type: "Skill", ap_cost: 2, power: 25 },
+                    { id: "105", name: "シールドスラム", type: "Skill", ap_cost: 2, power: 10 },
+                    { id: "106", name: "スパイクアーマー", type: "Support", ap_cost: 2, power: 0 },
+                    { id: "136", name: "ファイアウェーブ", type: "Magic", ap_cost: 2, power: 20 }
+                ];
+            }
+            
             opponentsList.unshift(testTarget);
         }
 
