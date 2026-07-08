@@ -5,6 +5,14 @@ import { ShadowService } from '@/services/shadowService';
 
 export const dynamic = 'force-dynamic';
 
+// DB負荷削減のためのシンプルなインメモリキャッシュ
+interface CacheEntry {
+    shadow: any;
+    expiresAt: number;
+}
+const shadowCache = new Map<string, CacheEntry>();
+const CACHE_TTL_MS = 3 * 60 * 1000; // 3分間キャッシュ
+
 export async function GET(req: Request) {
     try {
         const { searchParams } = new URL(req.url);
@@ -14,7 +22,22 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: 'Missing user_id' }, { status: 400 });
         }
 
-        // Service Role client を用いて RLS をバイパスし、装備・スキルを安全にロード
+        // 1. インメモリキャッシュをチェック
+        const now = Date.now();
+        const cached = shadowCache.get(user_id);
+        if (cached && cached.expiresAt > now) {
+            return NextResponse.json(
+                { shadow: cached.shadow },
+                {
+                    headers: {
+                        'Cache-Control': 'public, max-age=180, s-maxage=180, stale-while-revalidate=60',
+                        'X-Cache': 'HIT'
+                    }
+                }
+            );
+        }
+
+        // 2. キャッシュが無い場合のみDBからクエリ
         const shadowService = new ShadowService(supabaseServer);
         const shadow = await shadowService.getShadowByUserId(user_id);
 
@@ -22,7 +45,22 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: 'Shadow data not found' }, { status: 404 });
         }
 
-        return NextResponse.json({ shadow });
+        // 3. インメモリキャッシュに保存
+        shadowCache.set(user_id, {
+            shadow,
+            expiresAt: now + CACHE_TTL_MS
+        });
+
+        // 4. VercelのCDNエッジキャッシュ(Cache-Control)ヘッダー付きでレスポンス返却
+        return NextResponse.json(
+            { shadow },
+            {
+                headers: {
+                    'Cache-Control': 'public, max-age=180, s-maxage=180, stale-while-revalidate=60',
+                    'X-Cache': 'MISS'
+                }
+            }
+        );
 
     } catch (e: any) {
         console.error(`[tavern/profile-shadow] Error:`, e.message);
