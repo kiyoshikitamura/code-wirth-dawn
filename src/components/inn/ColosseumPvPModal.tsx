@@ -305,9 +305,9 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                             </div>
                         ) : (
                             <div className="space-y-2.5 max-h-[320px] overflow-y-auto pr-1 custom-scrollbar">
-                                {opponents.map((opponent, idx) => (
+                                {opponents && Array.isArray(opponents) && opponents.filter(Boolean).map((opponent, idx) => (
                                     <div 
-                                        key={opponent.user_id + '_' + idx}
+                                        key={(opponent.user_id || 'opt') + '_' + idx}
                                         className="bg-[#161a22] border border-slate-800/80 hover:border-amber-500/20 rounded-xl p-3.5 flex items-center justify-between transition-all"
                                     >
                                         {/* Left Side: Opponent Info */}
@@ -342,7 +342,7 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                                                         L. {opponent.player_snapshot?.job_class?.slice(0,6) || 'Hero'}
                                                     </div>
                                                     {/* NPCs */}
-                                                    {opponent.party_members_snapshot?.map((m: any, mi: number) => (
+                                                    {opponent.party_members_snapshot && Array.isArray(opponent.party_members_snapshot) && opponent.party_members_snapshot.filter(Boolean).map((m: any, mi: number) => (
                                                         <div key={mi} className="text-[9px] bg-slate-800/80 text-slate-300 border border-slate-700/50 px-1.5 py-0.5 rounded-md whitespace-nowrap">
                                                             {m.name}
                                                         </div>
@@ -462,7 +462,7 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                                     <span className="text-[10px] text-amber-500/90 font-bold block">🛡️ 装備中の武具:</span>
                                     {selectedOpponent.equipped_items_snapshot && selectedOpponent.equipped_items_snapshot.length > 0 ? (
                                         <div className="flex flex-wrap gap-1.5">
-                                            {selectedOpponent.equipped_items_snapshot.map((item: any, idx: number) => {
+                                            {selectedOpponent.equipped_items_snapshot && Array.isArray(selectedOpponent.equipped_items_snapshot) && selectedOpponent.equipped_items_snapshot.filter(Boolean).map((item: any, idx: number) => {
                                                 let displayName = item.name;
                                                 if (!displayName || displayName.trim() === '') {
                                                     const ed = item.effect_data || {};
@@ -522,7 +522,7 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                                     <span className="text-[10px] text-amber-500/90 font-bold block">🔮 スキルデッキ:</span>
                                     {selectedOpponent.skill_deck_snapshot && selectedOpponent.skill_deck_snapshot.length > 0 ? (
                                         <div className="flex flex-wrap gap-1.5">
-                                            {selectedOpponent.skill_deck_snapshot.map((card: any, idx: number) => (
+                                            {selectedOpponent.skill_deck_snapshot && Array.isArray(selectedOpponent.skill_deck_snapshot) && selectedOpponent.skill_deck_snapshot.filter(Boolean).map((card: any, idx: number) => (
                                                 <span key={idx} className="text-[10px] bg-amber-950/20 text-amber-300 border border-amber-500/20 px-2 py-0.5 rounded-md font-medium">
                                                     {card.name}
                                                 </span>
@@ -542,7 +542,7 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                                 
                                 {selectedOpponent.party_members_snapshot && selectedOpponent.party_members_snapshot.length > 0 ? (
                                     <div className="space-y-2.5">
-                                        {selectedOpponent.party_members_snapshot.map((m: any, idx: number) => (
+                                        {selectedOpponent.party_members_snapshot && Array.isArray(selectedOpponent.party_members_snapshot) && selectedOpponent.party_members_snapshot.filter(Boolean).map((m: any, idx: number) => (
                                             <div key={idx} className="bg-[#141822] border border-slate-800 rounded-xl p-3 flex items-center justify-between">
                                                 <div className="flex items-center gap-2">
                                                     <div className="w-8 h-8 rounded-md border border-slate-700 bg-black/40 flex items-center justify-center overflow-hidden flex-shrink-0">
