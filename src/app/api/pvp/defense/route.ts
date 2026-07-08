@@ -90,7 +90,6 @@ export async function POST(req: Request) {
                             ap_cost,
                             cost_type,
                             effect_id,
-                            effect_duration,
                             target_type,
                             image_url,
                             description
@@ -134,7 +133,6 @@ export async function POST(req: Request) {
                     ap_cost: card.ap_cost ?? 1,
                     cost_type: card.cost_type || undefined,
                     effect_id: card.effect_id || undefined,
-                    effect_duration: card.effect_duration || undefined,
                     target_type: card.target_type || undefined,
                     image_url: card.image_url || undefined,
                     description: card.description || '',
@@ -222,6 +220,7 @@ export async function POST(req: Request) {
                 def: memberDef,
                 inject_cards: m.inject_cards || [],
                 signature_deck_snapshot: resolvedDeck, // 解決済みのスキルカード
+                equipped_items_snapshot: m.snapshot_data?.equipped_items || m.equipped_items || [],
                 icon_url: m.icon_url || null,
                 image_url: m.image_url || null,
                 sort_order: m.sort_order ?? 0,
