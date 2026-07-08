@@ -6,11 +6,6 @@ import path from 'path';
 
 export const dynamic = 'force-dynamic';
 
-/**
- * GET /api/debug/run-production-migration
- * 本番データベース用 移行・データ復旧API
- * 安全のため ADMIN_SECRET_KEY を要求します
- */
 export async function GET(request: Request) {
     const url = new URL(request.url);
     const secret = url.searchParams.get('secret');
@@ -19,16 +14,34 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // 本番用の直接接続ホスト (db.zvoroixjuypnintkpmux.supabase.co)。
-    // 直接接続時のユーザー名は 'postgres.ref' ではなく単純に 'postgres' になります。
-    // VercelサーバーはIPv6に対応しているため、直接接続ドメインへ問題なく接続可能です。
-    const projectRef = 'zvoroixjuypnintkpmux';
-    const password = 'izasama5723';
-    const dbUrl = process.env.DATABASE_URL 
-        || process.env.SUPABASE_DB_URL
-        || `postgresql://postgres:${password}@db.${projectRef}.supabase.co:5432/postgres`;
+    // デバッグ用: 環境変数のキー名一覧を出力
+    const envKeys = Object.keys(process.env);
+    console.log('[RunProductionMigration] Available env keys:', envKeys);
+    
+    // DB関係の可能性がある環境変数を探す
+    const dbKeys = envKeys.filter(k => k.includes('DB') || k.includes('DATABASE') || k.includes('POSTGRES') || k.includes('URL'));
+    console.log('[RunProductionMigration] Potential DB env keys:', dbKeys);
 
-    console.log('[RunProductionMigration] Connecting to PRODUCTION database via direct IPv6 host:', `db.${projectRef}.supabase.co`);
+    // 有効な接続URLの探索
+    let dbUrl = null;
+    for (const key of ['DATABASE_URL', 'SUPABASE_DB_URL', 'DATABASE_URL_UNPOOLED', 'DIRECT_URL', 'POSTGRES_URL']) {
+        if (process.env[key]) {
+            dbUrl = process.env[key];
+            console.log(`[RunProductionMigration] Using env key: ${key}`);
+            break;
+        }
+    }
+
+    if (!dbUrl) {
+        // フォールバック（zvoroixjuypnintkpmux @ シンガポールのpooler）
+        const projectRef = 'zvoroixjuypnintkpmux';
+        const password = 'izasama5723';
+        // プレビューが aws-1-ap-southeast-1 で動いているため、本番もシンガポールの可能性が非常に高い
+        dbUrl = `postgresql://postgres.${projectRef}:${password}@aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres`;
+        console.log('[RunProductionMigration] Fallback to Singapore pooler:', dbUrl.split('@')[1]);
+    }
+
+    console.log('[RunProductionMigration] Connecting to database...');
     const pool = new Pool({
         connectionString: dbUrl,
         ssl: { rejectUnauthorized: false },
