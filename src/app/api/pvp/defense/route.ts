@@ -220,7 +220,10 @@ export async function POST(req: Request) {
 
         if (upsertError) {
             console.error('[PvP Defense] Upsert error:', upsertError);
-            return NextResponse.json({ error: '防衛パーティの登録に失敗しました。' }, { status: 500 });
+            return NextResponse.json({ 
+                error: `防衛パーティの登録に失敗しました: [${upsertError.code}] ${upsertError.message}`,
+                details: upsertError 
+            }, { status: 500 });
         }
 
         return NextResponse.json({ 
@@ -232,6 +235,9 @@ export async function POST(req: Request) {
 
     } catch (err: any) {
         console.error('[PvP Defense] API Error:', err);
-        return NextResponse.json({ error: err.message || '内部エラーが発生しました。' }, { status: 500 });
+        return NextResponse.json({ 
+            error: `内部エラーが発生しました: ${err.message}`, 
+            stack: err.stack 
+        }, { status: 500 });
     }
 }
