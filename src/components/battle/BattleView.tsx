@@ -217,6 +217,25 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
             const npcNames = (battleState?.party || []).map((m: any) => m.name).filter(Boolean);
             const isNpcAction = npcNames.some((name: string) => msg.startsWith(name));
             
+            // PvP対戦相手（敵プレイヤー ＆ 敵お供NPC）の名前を抽出して除外
+            const opponentNames: string[] = [];
+            const pvpOpponent = (useGameStore.getState() as any).pvpOpponent;
+            if (pvpOpponent) {
+                if (pvpOpponent.user_name) opponentNames.push(pvpOpponent.user_name);
+                if (Array.isArray(pvpOpponent.party_members_snapshot)) {
+                    pvpOpponent.party_members_snapshot.forEach((m: any) => {
+                        if (m.name) opponentNames.push(m.name);
+                    });
+                }
+            }
+            if (battleState?.enemy?.name) opponentNames.push(battleState.enemy.name);
+            if (battleState?.enemies) {
+                battleState.enemies.forEach((e: any) => {
+                    if (e.name) opponentNames.push(e.name);
+                });
+            }
+            const isEnemyAction = opponentNames.some((name: string) => msg.startsWith(name));
+            
             const isExplicitCardAction = 
                 msg.includes('『') || 
                 msg.startsWith('魔術書:') || 
@@ -227,7 +246,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                 msg.includes('を服用！') ||
                 msg.includes('を唱えた！');
 
-            if (!isNpcAction && isExplicitCardAction) {
+            if (!isNpcAction && !isEnemyAction && isExplicitCardAction) {
             
             // 0. 二重括弧『 』が含まれている場合は最優先でその中身を抽出 (スキル・魔法発動)
             // 例: 「ハンスの『金剛壁』！」 ➔ 「金剛壁」

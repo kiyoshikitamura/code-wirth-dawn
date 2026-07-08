@@ -3577,13 +3577,34 @@ export const createBattleSlice = (
                     }
                     
                     // 2. 瞑想 (64)
-                    if (cardIdStr === '64') {
+                    if (cardIdStr === '10' || cardIdStr === '64') {
                         const nextAp = Math.min(10, (currentEnemyStatus.current_ap || 0) + 4);
                         const nextHp = Math.min(enemy.maxHp, currentEnemyStatus.hp + 30);
                         updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, current_ap: nextAp, hp: nextHp } : e);
                         newMessages.push(`${enemy.name}の『瞑想』！ 自身のAPとHPが回復した。`);
                         updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, lastUsedSkill: selectedSkillSlug } as any : e);
                         continue; // ダメージ処理を行わずにターン終了！
+                    }
+
+                    // タイムリバース (139)
+                    if (cardIdStr === '139') {
+                        const nextAp = Math.min(10, (currentEnemyStatus.current_ap || 0) + 3);
+                        const cleanEffects = (currentEnemyStatus.status_effects || []).filter(eff => !['atk_down', 'def_down', 'spd_down', 'blind', 'poison', 'bleed', 'bleed_minor', 'burn'].includes(eff.id));
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, current_ap: nextAp, status_effects: cleanEffects } : e);
+                        newMessages.push(`${enemy.name}の『タイムリバース』！ 時間を巻き戻し、APと状態異常を回復した。`);
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, lastUsedSkill: selectedSkillSlug } as any : e);
+                        continue;
+                    }
+
+                    // 闇の代償 (55)
+                    if (cardIdStr === '55') {
+                        const selfDmg = 40;
+                        const nextSelfHp = Math.max(1, currentEnemyStatus.hp - selfDmg);
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, hp: nextSelfHp } : e);
+                        newMessages.push(`${enemy.name}の『闇の代償』！ 自身の生命を削り、破滅の力を引き出した！`);
+                        selectedSkillSlug = 'skill_heavy_blow';
+                        selectedSkillName = '闇の代償';
+                        // continue はしない（後続の攻撃処理に流す）
                     }
 
                     // 3. スパイクアーマー (106)
