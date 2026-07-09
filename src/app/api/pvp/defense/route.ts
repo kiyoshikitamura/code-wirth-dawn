@@ -186,7 +186,27 @@ export async function POST(req: Request) {
             const memberCS = memberHp + (memberAtk * 10) + (memberDef * 10);
             membersCS += memberCS;
 
-            const resolvedDeck = (m.inject_cards || [])
+            // snapshot_data が JSON文字列として格納されている場合を考慮して安全にパース
+            let snapData = m.snapshot_data;
+            if (typeof snapData === 'string') {
+                try {
+                    snapData = JSON.parse(snapData);
+                } catch (e) {
+                    snapData = null;
+                }
+            }
+
+            const equippedItems = snapData?.equipped_items 
+                || m.equipped_items 
+                || m.equipped_items_snapshot 
+                || [];
+
+            // スキルカードIDリスト (inject_cards または snapData.deck)
+            const cardIds = m.inject_cards && m.inject_cards.length > 0
+                ? m.inject_cards
+                : (snapData?.deck || []);
+
+            const resolvedDeck = (cardIds || [])
                 .map((id: any) => {
                     const c = cardMap.get(Number(id));
                     if (!c) return null;
@@ -218,13 +238,13 @@ export async function POST(req: Request) {
                 max_hp: memberHp,
                 atk: memberAtk,
                 def: memberDef,
-                inject_cards: m.inject_cards || [],
+                inject_cards: cardIds,
                 signature_deck_snapshot: resolvedDeck, // 解決済みのスキルカード
-                equipped_items_snapshot: m.snapshot_data?.equipped_items || m.equipped_items || [],
+                equipped_items_snapshot: equippedItems,
                 icon_url: m.icon_url || null,
                 image_url: m.image_url || null,
                 sort_order: m.sort_order ?? 0,
-                snapshot_data: m.snapshot_data || null
+                snapshot_data: snapData || null
             };
         });
 
