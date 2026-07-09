@@ -59,6 +59,12 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
     const [initialFetchDone, setInitialFetchDone] = useState(false);
     const [rankingLastUpdated, setRankingLastUpdated] = useState<string>('');
 
+    // 防衛パーティ確認モーダル用ステート
+    const [showDefenseModal, setShowDefenseModal] = useState(false);
+    const [defensePartyData, setDefensePartyData] = useState<any>(null);
+    const [loadingDefenseData, setLoadingDefenseData] = useState(false);
+    const [defenseExpandedMembers, setDefenseExpandedMembers] = useState<Record<string, boolean>>({});
+
     const router = useRouter();
     const { userProfile, gold, fetchUserProfile } = useGameStore();
 
@@ -257,6 +263,9 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
             return;
         }
 
+        const confirmed = window.confirm("5,000 G を消費してコロシアムポイント(CP)を10回復しますか？");
+        if (!confirmed) return;
+
         setLoading(true); // 連打禁止のためローディング化
         setErrorMsg(null);
         soundManager?.playSE('se_item_get');
@@ -305,6 +314,19 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                 setChallengerScore(data.score || challengerScore);
                 setChallengerRank(data.rank || challengerRank);
                 setHasDefenseParty(true);
+                // サブモーダルを開いている場合は、最新のスナップショットに更新
+                if (data.party) {
+                    setDefensePartyData(data.party);
+                } else {
+                    const getRes = await fetch('/api/pvp/defense', {
+                        method: 'GET',
+                        headers: { ...authHeaders }
+                    });
+                    if (getRes.ok) {
+                        const getData = await getRes.json();
+                        setDefensePartyData(getData.party);
+                    }
+                }
                 setTimeout(() => setSuccessMsg(null), 4000);
             } else {
                 const data = await res.json();
@@ -318,17 +340,38 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
         }
     };
 
-    // 8. 自分の防衛パーティ確認
-    const handleViewMyDefense = async () => {
-        if (userProfile) {
-            loadOpponentDetail(userProfile.id, {
-                user_id: userProfile.id,
-                user_name: userProfile.name || 'あなた',
-                avatar_url: userProfile.avatar_url,
-                is_my_defense: true,
-                defense_rank: challengerRank
+    // 8. 自分の防衛パーティ確認モーダル起動
+    const handleOpenDefenseModal = async () => {
+        soundManager?.playSE('se_item_get');
+        setShowDefenseModal(true);
+        setLoadingDefenseData(true);
+        setDefenseExpandedMembers({});
+        try {
+            const authHeaders = await getAuthHeaders();
+            const res = await fetch('/api/pvp/defense', {
+                method: 'GET',
+                headers: { ...authHeaders }
             });
+            if (res.ok) {
+                const data = await res.json();
+                setDefensePartyData(data.party);
+            } else {
+                setDefensePartyData(null);
+            }
+        } catch (e) {
+            console.error(e);
+            setDefensePartyData(null);
+        } finally {
+            setLoadingDefenseData(false);
         }
+    };
+
+    const toggleDefenseMember = (memberId: string) => {
+        soundManager?.playSE('se_item_get');
+        setDefenseExpandedMembers(prev => ({
+            ...prev,
+            [memberId]: !prev[memberId]
+        }));
     };
 
     // 9. バトル詳細ログの遅延ロード
@@ -564,24 +607,13 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                                 </button>
                             </div>
 
-                            {/* 防衛: 更新/確認 */}
-                            <div className="flex items-center gap-1 bg-[#12223f]/50 border border-[#213a65]/40 px-2 py-0.5 rounded-md">
-                                <span className="text-slate-400 font-bold">防衛:</span>
-                                <button
-                                    disabled={updatingDefense || loading}
-                                    onClick={handleUpdateDefense}
-                                    className="px-1.5 py-0.2 bg-[#1a2d4c] hover:bg-[#28436e] border border-[#2d4b7c] rounded text-[8px] font-bold text-slate-200 cursor-pointer"
-                                >
-                                    更新
-                                </button>
-                                <button
-                                    disabled={!hasDefenseParty || loading}
-                                    onClick={handleViewMyDefense}
-                                    className="px-1.5 py-0.2 bg-[#1a2d4c] hover:bg-[#28436e] border border-[#2d4b7c] rounded text-[8px] font-bold text-slate-200 cursor-pointer"
-                                >
-                                    確認
-                                </button>
-                            </div>
+                             {/* 防衛パーティ確認サブモーダル起動ボタン */}
+                             <button
+                                 onClick={handleOpenDefenseModal}
+                                 className="px-2.5 py-1 bg-[#1a2d4c] hover:bg-[#28436e] border border-[#2d4b7c] rounded-md text-[9px] font-black text-slate-200 cursor-pointer"
+                             >
+                                 防衛パーティ
+                             </button>
                         </div>
                     </div>
 
@@ -1404,6 +1436,9 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                     </div>
                 </div>
             )}
+
+            {/* 防衛確認サブモーダル */}
+            {renderDefenseModal()}
 
             {/* ──── 外部コンポーネント: 他プレイヤーの自己紹介ポップアップ ──── */}
             {viewingProfileUserId && (
