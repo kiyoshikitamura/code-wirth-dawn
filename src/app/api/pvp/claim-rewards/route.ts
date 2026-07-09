@@ -55,20 +55,34 @@ export async function GET(req: Request) {
 
         const userId = user.id;
         const { seasonId, dailyId } = getPeriodIds();
+        const dateStr = dailyId.replace('daily_', '');
 
-        // 1. 最新のランキングキャッシュ (season / daily) を取得
-        const [seasonCache, dailyCache, claimedList] = await Promise.all([
-            supabaseServer.from('pvp_ranking_cache').select('list_data').eq('ranking_type', 'season').maybeSingle(),
-            supabaseServer.from('pvp_ranking_cache').select('list_data').eq('ranking_type', 'daily').maybeSingle(),
-            supabaseServer.from('pvp_claimed_rewards').select('reward_type, season_id').eq('user_id', userId)
+        // 1. 確定済みの履歴テーブル（pvp_season_history / pvp_daily_history）と受け取りログを取得
+        const [seasonHistory, dailyHistory, claimedList] = await Promise.all([
+            supabaseServer
+                .from('pvp_season_history')
+                .select('rank')
+                .eq('user_id', userId)
+                .eq('season_id', seasonId)
+                .maybeSingle(),
+            supabaseServer
+                .from('pvp_daily_history')
+                .select('rank')
+                .eq('user_id', userId)
+                .eq('date_str', dateStr)
+                .maybeSingle(),
+            supabaseServer
+                .from('pvp_claimed_rewards')
+                .select('reward_type, season_id')
+                .eq('user_id', userId)
         ]);
 
         const claimedSet = new Set((claimedList.data || []).map(c => `${c.reward_type}_${c.season_id}`));
         const claimable: any[] = [];
 
-        // シーズン報酬判定 (上位10名 且つ 未受取)
-        if (seasonCache.data?.list_data) {
-            const myRank = seasonCache.data.list_data.find((p: any) => p.user_id === userId)?.rank;
+        // シーズン報酬判定 (確定履歴が存在 且つ 上位10名 且つ 未受取)
+        if (seasonHistory.data) {
+            const myRank = seasonHistory.data.rank;
             if (myRank && myRank <= 10 && !claimedSet.has(`season_${seasonId}`)) {
                 claimable.push({
                     type: 'season',
@@ -79,9 +93,9 @@ export async function GET(req: Request) {
             }
         }
 
-        // デイリー報酬判定 (上位10名 且つ 未受取)
-        if (dailyCache.data?.list_data) {
-            const myRank = dailyCache.data.list_data.find((p: any) => p.user_id === userId)?.rank;
+        // デイリー報酬判定 (確定履歴が存在 且つ 上位10名 且つ 未受取)
+        if (dailyHistory.data) {
+            const myRank = dailyHistory.data.rank;
             if (myRank && myRank <= 10 && !claimedSet.has(`daily_${dailyId}`)) {
                 claimable.push({
                     type: 'daily',
@@ -131,19 +145,28 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'この報酬はすでに受け取り済みです。' }, { status: 400 });
         }
 
-        // 2. 本当に対象期間の上位10名であるかキャッシュから最終確認
-        const { data: rankingCache } = await supabaseServer
-            .from('pvp_ranking_cache')
-            .select('list_data')
-            .eq('ranking_type', reward_type)
-            .maybeSingle();
-
-        if (!rankingCache?.list_data) {
-            return NextResponse.json({ error: 'ランキングキャッシュが見つかりません。' }, { status: 404 });
+        // 2. 本当に対象期間の上位10名であるか確定履歴テーブルから最終確認
+        let finalRank: number | null = null;
+        if (reward_type === 'season') {
+            const { data: history } = await supabaseServer
+                .from('pvp_season_history')
+                .select('rank')
+                .eq('user_id', userId)
+                .eq('season_id', season_id)
+                .maybeSingle();
+            finalRank = history?.rank ?? null;
+        } else {
+            const dateStr = season_id.replace('daily_', '');
+            const { data: history } = await supabaseServer
+                .from('pvp_daily_history')
+                .select('rank')
+                .eq('user_id', userId)
+                .eq('date_str', dateStr)
+                .maybeSingle();
+            finalRank = history?.rank ?? null;
         }
 
-        const rankingUser = rankingCache.list_data.find((p: any) => p.user_id === userId);
-        if (!rankingUser || rankingUser.rank !== rank || rank > 10) {
+        if (finalRank === null || finalRank !== rank || rank > 10) {
             return NextResponse.json({ error: '報酬の獲得対象ではありません。' }, { status: 403 });
         }
 
