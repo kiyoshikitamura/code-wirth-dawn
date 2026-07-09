@@ -17,7 +17,8 @@ let localOpponentsCache: any[] = [];
 export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
     const [mounted, setMounted] = useState(false);
     const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
-    const [tab, setTab] = useState<'opponents' | 'ranking' | 'logs' | 'rules'>('opponents');
+    const [tab, setTab] = useState<'opponents' | 'logs' | 'rules'>('opponents');
+    const [showRankingSubModal, setShowRankingSubModal] = useState<boolean>(false);
 
     // API Stats
     const [cp, setCP] = useState<number>(5);
@@ -593,12 +594,17 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
 
     // タブ切り替え時のデータフェッチ
     useEffect(() => {
-        if (tab === 'ranking') {
-            fetchRanking(rankingType);
-        } else if (tab === 'logs') {
+        if (tab === 'logs') {
             fetchBattleLogs();
         }
-    }, [tab, rankingType]);
+    }, [tab]);
+
+    // ランキングサブモーダル展開時、またはランキング種別切り替え時のデータフェッチ
+    useEffect(() => {
+        if (showRankingSubModal) {
+            fetchRanking(rankingType);
+        }
+    }, [showRankingSubModal, rankingType]);
 
     // CP回復タイマーの進行
     useEffect(() => {
@@ -894,6 +900,153 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
         );
     };
 
+    // ランキングサブモーダル
+    const renderRankingSubModal = () => {
+        if (!showRankingSubModal) return null;
+
+        return (
+            <div className="absolute inset-0 z-50 flex items-center justify-center p-4 bg-[#050b14]/90 backdrop-blur-sm animate-in fade-in duration-200">
+                <div className="relative w-full max-w-md bg-[#0c1628]/95 border border-[#1e345b] rounded-2xl overflow-hidden shadow-[0_0_50px_rgba(30,52,91,0.5)] flex flex-col max-h-[80vh]">
+                    
+                    {/* Header */}
+                    <div className="flex items-center justify-between px-6 py-4 bg-[#11203b]/80 border-b border-[#1e345b]">
+                        <div className="flex items-center gap-2 text-amber-400">
+                            <Trophy size={18} className="animate-pulse" />
+                            <h3 className="font-black tracking-widest text-sm text-slate-100">コロシアムランキング</h3>
+                        </div>
+                        <button
+                            onClick={() => setShowRankingSubModal(false)}
+                            className="text-slate-400 hover:text-white transition-colors p-1 rounded-lg hover:bg-white/5"
+                        >
+                            <X size={18} />
+                        </button>
+                    </div>
+
+                    {/* Content Area */}
+                    <div className="flex-1 overflow-y-auto p-5 space-y-4 custom-scrollbar text-left">
+                        <div className="flex items-center justify-between">
+                            <div className="flex bg-[#0b1220] border border-[#1e345b] rounded-lg p-0.5 animate-in fade-in">
+                                <button
+                                    onClick={() => setRankingType('season')}
+                                    className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${rankingType === 'season' ? 'bg-amber-500 text-slate-950' : 'text-slate-400'}`}
+                                >
+                                    シーズン
+                                </button>
+                                <button
+                                    onClick={() => setRankingType('daily')}
+                                    className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${rankingType === 'daily' ? 'bg-amber-500 text-slate-950' : 'text-slate-400'}`}
+                                >
+                                    デイリー
+                                </button>
+                            </div>
+
+                            {/* 報酬確認ボタン */}
+                            <button
+                                onClick={checkClaimableRewards}
+                                className="flex items-center gap-1 px-3 py-1.5 bg-amber-500/10 hover:bg-amber-500/25 border border-amber-500/30 rounded-lg text-[10px] font-bold text-amber-400 hover:text-amber-300 transition-all active:scale-95 cursor-pointer shrink-0"
+                            >
+                                <Award size={12} />
+                                報酬一覧/受取
+                            </button>
+                        </div>
+
+                        {/* デイリーの場合はデイリーの集計期間を表示 (改行しないようにコンパクト化) */}
+                        {rankingType === 'daily' && (
+                            <div className="text-[9px] text-slate-400 bg-[#09111c]/60 border border-[#213a65]/40 rounded-xl px-3 py-1.5 font-mono flex items-center justify-between shadow-inner animate-in fade-in duration-200">
+                                <span className="text-slate-500 font-bold">集計期間:</span>
+                                <span className="text-amber-300 font-bold text-[9px] whitespace-nowrap">{getDailyPeriodStr()}</span>
+                            </div>
+                        )}
+
+                        {/* My Ranking Status */}
+                        {myRankingStatus && (
+                            <div className="bg-gradient-to-r from-[#1b3152]/70 to-[#0e1c33]/70 border-2 border-amber-500/40 rounded-xl px-4 py-2.5 flex items-center justify-between shadow-md animate-in slide-in-from-top-2 duration-200 text-xs">
+                                <span className="text-slate-300 font-bold">
+                                    現在の順位: <span className="text-amber-400 font-black font-mono ml-1">{myRankingStatus.rank}位</span>
+                                </span>
+                                <span className="font-black text-amber-400 font-mono">
+                                    {myRankingStatus.arena_rate.toLocaleString()} pts
+                                </span>
+                            </div>
+                        )}
+
+                        {/* 可読性のための明確な区切り線 */}
+                        <div className="relative flex py-1 items-center">
+                            <div className="flex-grow border-t border-[#1e345b]/60"></div>
+                            <span className="flex-shrink mx-4 text-[9px] text-[#5586d5] uppercase font-black tracking-wider">RANKINGS</span>
+                            <div className="flex-grow border-t border-[#1e345b]/60"></div>
+                        </div>
+
+                        {/* Top 50 List */}
+                        <div className="space-y-1.5 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
+                            {loading && rankingList.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center py-16 space-y-3">
+                                    <RefreshCw className="animate-spin text-amber-500" size={24} />
+                                    <span className="text-xs text-slate-400">ランキングをロード中...</span>
+                                </div>
+                            ) : (
+                                <>
+                                    {rankingList.map((player) => (
+                                        <div
+                                            key={player.user_id}
+                                            className={`p-2.5 border rounded-lg flex items-center justify-between transition-all ${player.user_id === userProfile?.id ? 'bg-[#1b3152]/40 border-amber-500/30' : 'bg-[#0f1d35]/40 border-[#1e345b]/50'}`}
+                                        >
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-xs font-black text-slate-400 font-mono w-9 text-center">
+                                                    {player.rank}位
+                                                </span>
+                                                <div 
+                                                    onClick={() => setViewingProfileUserId(player.user_id)}
+                                                    className="w-7 h-7 rounded-full border border-slate-700 bg-black/40 flex items-center justify-center overflow-hidden cursor-pointer hover:border-amber-400 shrink-0"
+                                                >
+                                                    {player.avatar_url ? (
+                                                        <img src={player.avatar_url} alt="" className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <User size={12} className="text-slate-600" />
+                                                    )}
+                                                </div>
+                                                <div className="text-left">
+                                                    <h5 
+                                                        onClick={() => setViewingProfileUserId(player.user_id)}
+                                                        className="text-xs font-bold text-slate-200 truncate cursor-pointer hover:text-amber-400"
+                                                    >
+                                                        {player.user_name}
+                                                    </h5>
+                                                    <span className="text-[9px] text-slate-400 block font-mono">
+                                                        Lv.{player.level} | {player.job_class}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <span className="text-xs font-bold text-slate-300 font-mono shrink-0">
+                                                {player.arena_rate.toLocaleString()} pts
+                                            </span>
+                                        </div>
+                                    ))}
+
+                                    {rankingList.length === 0 && !loading && (
+                                        <div className="text-center py-10 text-xs text-slate-500">
+                                            ランキングデータはありません。
+                                        </div>
+                                    )}
+                                </>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="px-6 py-4 bg-[#0a0d14] border-t border-[#1e345b] flex justify-end">
+                        <button
+                            onClick={() => setShowRankingSubModal(false)}
+                            className="px-4 py-2 bg-[#1f2937] border border-slate-700 text-slate-300 font-bold text-xs rounded-xl hover:text-white transition-all cursor-pointer active:scale-95"
+                        >
+                            閉じる
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
     // 過去成績履歴確認モーダル
     const renderHistoryModal = () => {
         if (!showHistoryModal) return null;
@@ -1116,38 +1269,48 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                 </div>
 
                 {/* Top Profile Info & Season & CP & Defense Deck (Always Visible) */}
-                <div className="px-6 py-4 bg-[#0e192c] border-b border-[#1e345b]/60 flex flex-col gap-2.5">
+                <div className="px-6 py-2.5 bg-[#0e192c] border-b border-[#1e345b]/60 flex flex-col gap-2">
                     
                     {/* Season Info (先頭に王冠を配置、浮遊カット) */}
-                    <div className="bg-[#12223f]/80 px-4 py-2.5 border border-[#213a65] rounded-xl text-left flex items-center gap-2 shadow-inner">
-                        <Trophy size={16} className="text-amber-400 shrink-0" />
+                    <div className="bg-[#12223f]/80 px-4 py-2 border border-[#213a65] rounded-xl text-left flex items-center gap-2 shadow-inner">
+                        <Trophy size={14} className="text-amber-400 shrink-0" />
                         <div>
-                            <span className="text-[9px] text-[#5586d5] uppercase font-bold tracking-wider block">CURRENT SEASON</span>
-                            <span className="text-xs text-amber-300 font-mono font-bold block leading-none mt-0.5">
+                            <span className="text-[8px] text-[#5586d5] uppercase font-bold tracking-wider block">CURRENT SEASON</span>
+                            <span className="text-[10px] sm:text-xs text-amber-300 font-mono font-bold block leading-none mt-0.5 whitespace-nowrap">
                                 {getCurrentSeasonPeriod()}
                             </span>
                         </div>
                     </div>
 
-                    {/* ユーザー名＆ランク、CP回復、防衛（インラインで1行に格納） */}
-                    <div className="flex items-center justify-between gap-2 bg-[#09111c]/90 border border-slate-800/80 px-4 py-2 rounded-xl">
-                        {/* 左：ユーザー名 ＆ ランク */}
-                        <div className="flex items-center gap-1.5 min-w-0">
-                            <span className="text-sm font-black text-slate-100 truncate">{userProfile?.name}</span>
-                            <span className="text-[9px] bg-amber-500/20 text-amber-400 border border-amber-500/30 px-1.5 py-0.2 rounded font-black shrink-0">
-                                {challengerRank} RANK
-                            </span>
+                    {/* ユーザー情報（2行にスプリットしてモバイルでも余裕のある配置へ） */}
+                    <div className="flex flex-col gap-2 bg-[#09111c]/90 border border-slate-800/80 p-3 rounded-xl">
+                        {/* 1行目: ユーザーネーム & RANK ＆ 防衛パーティボタン */}
+                        <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-1.5 min-w-0">
+                                <span className="text-xs font-black text-slate-100 truncate max-w-[120px] sm:max-w-[180px]">
+                                    {userProfile?.name}
+                                </span>
+                                <span className="text-[8px] bg-amber-500/20 text-amber-400 border border-amber-500/30 px-1 py-0.2 rounded font-black shrink-0">
+                                    {challengerRank} RANK
+                                </span>
+                            </div>
+                            
+                            <button
+                                onClick={handleOpenDefenseModal}
+                                className="px-2 py-1 bg-[#1a2d4c] hover:bg-[#28436e] border border-[#2d4b7c] rounded-md text-[9px] font-black text-slate-200 active:scale-95 transition-all cursor-pointer shrink-0"
+                            >
+                                防衛パーティ
+                            </button>
                         </div>
 
-                        {/* 右：CP ＆ 防衛 (一括格納) */}
-                        <div className="flex items-center gap-2 shrink-0 text-[10px]">
-                            {/* CP & 回復 */}
-                            <div className="flex items-center gap-1 bg-[#12223f]/50 border border-[#213a65]/40 px-2 py-0.5 rounded-md min-w-[70px] justify-between">
-                                <span className="text-slate-400 font-bold">CP:</span>
+                        {/* 2行目: CP ＆ 回復ボタン (若干大きくする) */}
+                        <div className="flex items-center gap-2 border-t border-slate-800/40 pt-1.5">
+                            <div className="flex items-center justify-between bg-[#12223f]/50 border border-[#213a65]/40 px-2 py-1 rounded-md min-w-[70px] justify-between">
+                                <span className="text-slate-400 font-bold text-[9px]">CP:</span>
                                 {syncing ? (
-                                    <RefreshCw className="animate-spin text-amber-500 w-3 h-3 mx-1 shrink-0" />
+                                    <RefreshCw className="animate-spin text-amber-500 w-2.5 h-2.5" />
                                 ) : (
-                                    <span className={`font-mono font-bold ${
+                                    <span className={`font-mono font-bold text-[10px] ${
                                         cp === 0 ? 'text-red-500 font-black' :
                                         cp >= 6 ? 'text-rose-500 animate-pulse' : 
                                         'text-slate-200'
@@ -1155,52 +1318,53 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                                         {cp}/5
                                     </span>
                                 )}
-                                <button
-                                    disabled={loading || cp >= 6 || gold < 5000}
-                                    onClick={handleRecoverCP}
-                                    className="ml-1 px-1.5 py-0.2 bg-[#1a2d4c] hover:bg-[#28436e] border border-[#2d4b7c] rounded text-[8px] font-black text-amber-400 cursor-pointer"
-                                >
-                                    回復
-                                </button>
                             </div>
 
-                             {/* 防衛パーティ確認サブモーダル起動ボタン */}
-                             <button
-                                 onClick={handleOpenDefenseModal}
-                                 className="px-2.5 py-1 bg-[#1a2d4c] hover:bg-[#28436e] border border-[#2d4b7c] rounded-md text-[9px] font-black text-slate-200 cursor-pointer"
-                             >
-                                 防衛パーティ
-                             </button>
+                            <button
+                                disabled={loading || cp >= 6 || gold < 5000}
+                                onClick={handleRecoverCP}
+                                className="flex-1 py-1 bg-gradient-to-r from-amber-500/90 to-amber-600/90 hover:from-amber-400 hover:to-amber-500 text-slate-950 disabled:from-slate-800 disabled:to-slate-800 disabled:text-slate-500 border border-amber-500/30 disabled:border-slate-700/50 rounded-md text-[9px] font-black tracking-wider transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1"
+                            >
+                                <Zap size={8} />
+                                CP回復 (5k G)
+                            </button>
                         </div>
                     </div>
 
-                    {/* アリーナレート (コロンを削除、フォントを太く目立たせる) */}
-                    <div className="text-center bg-[#070e1c]/40 border border-[#1b2f51]/40 rounded-xl py-2.5 flex items-center justify-center gap-3 min-h-[58px]">
-                        <span className="text-xs text-slate-200 font-extrabold tracking-widest uppercase">アリーナレート</span>
-                        {syncing ? (
-                            <RefreshCw className="animate-spin text-amber-500 w-6 h-6 mx-4" />
-                        ) : (
-                            <span className="text-3xl font-black text-amber-400 font-mono tracking-wider">
-                                {arenaRate.toLocaleString()}
-                            </span>
-                        )}
-                        <span className="text-xs text-slate-400 font-mono">pts</span>
+                    {/* レート表示 ＆ ランキングボタン (横並びで縦幅を節約) */}
+                    <div className="flex items-center gap-2">
+                        <div className="flex-1 text-center bg-[#070e1c]/40 border border-[#1b2f51]/40 rounded-xl py-1.5 flex items-center justify-center gap-1.5">
+                            <span className="text-[9px] text-slate-300 font-bold tracking-widest uppercase">レート</span>
+                            {syncing ? (
+                                <RefreshCw className="animate-spin text-amber-500 w-3 h-3" />
+                            ) : (
+                                <span className="text-base font-black text-amber-400 font-mono tracking-wider">
+                                    {arenaRate.toLocaleString()}
+                                </span>
+                            )}
+                            <span className="text-[9px] text-slate-400 font-mono">pts</span>
+                        </div>
+
+                        <button
+                            onClick={() => {
+                                soundManager?.playSE('se_item_get');
+                                setShowRankingSubModal(true);
+                            }}
+                            className="px-3.5 py-1.5 bg-gradient-to-r from-amber-500/10 to-amber-600/10 hover:from-amber-500/20 border border-amber-500/30 rounded-xl text-[10px] font-black text-amber-400 hover:text-amber-300 transition-all active:scale-95 cursor-pointer shrink-0 flex items-center gap-1"
+                        >
+                            <Trophy size={10} />
+                            ランキング
+                        </button>
                     </div>
                 </div>
 
                 {/* Tab buttons */}
-                <div className="grid grid-cols-4 bg-[#0a1120] border-b border-[#1e345b] text-center text-xs">
+                <div className="grid grid-cols-3 bg-[#0a1120] border-b border-[#1e345b] text-center text-xs">
                     <button
                         onClick={() => { soundManager?.playSE('se_item_get'); setTab('opponents'); }}
                         className={`py-3 font-bold border-b-2 transition-all ${tab === 'opponents' ? 'text-amber-400 border-amber-500 bg-[#11203b]/30' : 'text-slate-400 border-transparent hover:text-slate-200'}`}
                     >
                         対戦相手
-                    </button>
-                    <button
-                        onClick={() => { soundManager?.playSE('se_item_get'); setTab('ranking'); }}
-                        className={`py-3 font-bold border-b-2 transition-all ${tab === 'ranking' ? 'text-amber-400 border-amber-500 bg-[#11203b]/30' : 'text-slate-400 border-transparent hover:text-slate-200'}`}
-                    >
-                        ランキング
                     </button>
                     <button
                         onClick={() => { soundManager?.playSE('se_item_get'); setTab('logs'); }}
@@ -1310,136 +1474,7 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                         </div>
                     )}
 
-                    {/* ──── TAB: RANKING ──── */}
-                    {tab === 'ranking' && (
-                        <div className="space-y-4 text-left">
-                            <div className="flex items-center justify-between">
-                                <div className="flex bg-[#0b1220] border border-[#1e345b] rounded-lg p-0.5 animate-in fade-in">
-                                    <button
-                                        onClick={() => setRankingType('season')}
-                                        className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${rankingType === 'season' ? 'bg-amber-500 text-slate-950' : 'text-slate-400'}`}
-                                    >
-                                        シーズン
-                                    </button>
-                                    <button
-                                        onClick={() => setRankingType('daily')}
-                                        className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${rankingType === 'daily' ? 'bg-amber-500 text-slate-950' : 'text-slate-400'}`}
-                                    >
-                                        デイリー
-                                    </button>
-                                </div>
 
-                                {/* 右側：コンパクトな報酬確認ボタン（横幅いっぱいを廃止） */}
-                                <button
-                                    onClick={checkClaimableRewards}
-                                    className="flex items-center gap-1 px-3 py-1.5 bg-amber-500/10 hover:bg-amber-500/25 border border-amber-500/30 rounded-lg text-[10px] font-bold text-amber-400 hover:text-amber-300 transition-all active:scale-95 cursor-pointer shrink-0"
-                                >
-                                    <Award size={12} />
-                                    報酬一覧/受取
-                                </button>
-                            </div>
-
-                            {/* デイリーの場合はデイリーの集計期間を表示 */}
-                            {rankingType === 'daily' && (
-                                <div className="text-[10px] text-slate-400 bg-[#09111c]/60 border border-[#213a65]/40 rounded-xl px-4 py-2 font-mono flex items-center justify-between shadow-inner animate-in fade-in duration-200">
-                                    <span className="text-slate-500 font-bold">デイリー集計期間:</span>
-                                    <span className="text-amber-300 font-bold">{getDailyPeriodStr()}</span>
-                                </div>
-                            )}
-
-                            {/* My Ranking Status (上部固定) */}
-                            {myRankingStatus && (
-                                <div className="bg-gradient-to-r from-[#1b3152]/70 to-[#0e1c33]/70 border-2 border-amber-500/40 rounded-xl p-3 flex items-center justify-between shadow-md animate-in slide-in-from-top-2 duration-200">
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-xs font-black text-amber-400 font-mono w-10 text-center shrink-0">
-                                            {myRankingStatus.rank}位
-                                        </span>
-                                        <div className="w-8 h-8 rounded-full border border-amber-500/30 bg-[#070e1e] flex items-center justify-center overflow-hidden shrink-0">
-                                            {myRankingStatus.avatar_url ? (
-                                                <img src={myRankingStatus.avatar_url} alt="" className="w-full h-full object-cover" />
-                                            ) : (
-                                                <User size={14} className="text-slate-500" />
-                                            )}
-                                        </div>
-                                        <div>
-                                            <h4 className="text-xs font-bold text-slate-100 flex items-center gap-1.5">
-                                                {myRankingStatus.user_name}
-                                                <span className="text-[8px] bg-amber-500/20 text-amber-300 px-1 py-0.2 rounded font-black">
-                                                    {myRankingStatus.job_class?.slice(0, 4)}
-                                                </span>
-                                            </h4>
-                                            <span className="text-[9px] text-slate-400 block font-mono">あなた</span>
-                                        </div>
-                                    </div>
-                                    <span className="text-xs font-black text-amber-400 font-mono shrink-0">
-                                        {myRankingStatus.arena_rate.toLocaleString()} pts
-                                    </span>
-                                </div>
-                            )}
-
-                            {/* 可読性のための明確な区切り線 */}
-                            <div className="relative flex py-1 items-center">
-                                <div className="flex-grow border-t border-[#1e345b]/60"></div>
-                                <span className="flex-shrink mx-4 text-[9px] text-[#5586d5] uppercase font-black tracking-wider">RANKINGS</span>
-                                <div className="flex-grow border-t border-[#1e345b]/60"></div>
-                            </div>
-
-                            {/* Top 50 List */}
-                            <div className="space-y-1.5 max-h-[260px] overflow-y-auto pr-1 custom-scrollbar">
-                                {loading && rankingList.length === 0 ? (
-                                    <div className="flex flex-col items-center justify-center py-16 space-y-3">
-                                        <RefreshCw className="animate-spin text-amber-500" size={24} />
-                                        <span className="text-xs text-slate-400">ランキングをロード中...</span>
-                                    </div>
-                                ) : (
-                                    <>
-                                        {rankingList.map((player) => (
-                                            <div
-                                                key={player.user_id}
-                                                className={`p-2.5 border rounded-lg flex items-center justify-between transition-all ${player.user_id === userProfile?.id ? 'bg-[#1b3152]/40 border-amber-500/30' : 'bg-[#0f1d35]/40 border-[#1e345b]/50'}`}
-                                            >
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-xs font-black text-slate-400 font-mono w-9 text-center">
-                                                        {player.rank}位
-                                                    </span>
-                                                    <div 
-                                                        onClick={() => setViewingProfileUserId(player.user_id)}
-                                                        className="w-7 h-7 rounded-full border border-slate-700 bg-black/40 flex items-center justify-center overflow-hidden cursor-pointer hover:border-amber-400 shrink-0"
-                                                    >
-                                                        {player.avatar_url ? (
-                                                            <img src={player.avatar_url} alt="" className="w-full h-full object-cover" />
-                                                        ) : (
-                                                            <User size={12} className="text-slate-600" />
-                                                        )}
-                                                    </div>
-                                                    <div className="text-left">
-                                                        <h5 
-                                                            onClick={() => setViewingProfileUserId(player.user_id)}
-                                                            className="text-xs font-bold text-slate-200 truncate cursor-pointer hover:text-amber-400"
-                                                        >
-                                                            {player.user_name}
-                                                        </h5>
-                                                        <span className="text-[9px] text-slate-400 block font-mono">
-                                                            Lv.{player.level} | {player.job_class}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                                <span className="text-xs font-bold text-slate-300 font-mono shrink-0">
-                                                    {player.arena_rate.toLocaleString()} pts
-                                                </span>
-                                            </div>
-                                        ))}
-
-                                        {rankingList.length === 0 && !loading && (
-                                            <div className="text-center py-10 text-xs text-slate-500">
-                                                ランキングデータはありません。
-                                            </div>
-                                        )}
-                                    </>
-                                )}
-                            </div>
-                        </div>
-                    )}
 
                     {/* ──── TAB: BATTLE LOGS ──── */}
                     {tab === 'logs' && (
@@ -2035,6 +2070,9 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
 
             {/* 過去成績履歴確認サブモーダル */}
             {renderHistoryModal()}
+
+            {/* ランキングサブモーダル */}
+            {renderRankingSubModal()}
 
             {/* 自動防衛登録確認アラート */}
             {renderAutoDefenseAlert()}

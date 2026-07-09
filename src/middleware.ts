@@ -18,6 +18,27 @@ export async function middleware(request: NextRequest) {
     const { nextUrl } = request;
     const path = nextUrl.pathname;
 
+    // A. 先行リリース期間中のアリーナ(PvP)APIアクセス制限（ガード）
+    if (path.startsWith('/api/pvp')) {
+        const userId = extractUserIdFromRequest(request);
+        const ALLOWED_TEST_USERS = [
+            'c1cf67dd-527a-497e-bf88-ce10c2cb516f', // 本番テストユーザー
+            'af2848d0-40f2-4f75-bd2b-ac633184107c'  // 開発・Previewテストユーザー
+        ];
+        if (!userId || !ALLOWED_TEST_USERS.includes(userId)) {
+            return new NextResponse(
+                JSON.stringify({
+                    error: 'Arena Under Maintenance',
+                    message: '闘技場対人戦は現在準備中です。'
+                }),
+                {
+                    status: 503,
+                    headers: { 'content-type': 'application/json; charset=utf-8' }
+                }
+            );
+        }
+    }
+
     // 1. 静的アセット、メディア、およびメンテナンス画面自体は常に通過させる
     if (
         path.startsWith('/_next') ||
@@ -291,3 +312,60 @@ export const config = {
         '/((?!_next/static|_next/image|favicon.ico|images/|audio/).*)',
     ],
 };
+
+// セッションクッキー（JWT）のアクセストークンから userId (sub) を抽出するヘルパー
+function extractUserIdFromRequest(request: NextRequest): string | null {
+    const allCookies = request.cookies.getAll();
+    const authCookies = allCookies
+        .filter(c => c.name.includes('auth-token'))
+        .sort((a, b) => a.name.localeCompare(b.name));
+
+    if (authCookies.length === 0) return null;
+
+    try {
+        const rawCookieValue = authCookies.map(c => c.value).join('');
+        let accessToken: string | null = null;
+        let rawVal = decodeURIComponent(rawCookieValue);
+
+        if (!rawVal.startsWith('[') && !rawVal.startsWith('{')) {
+            try {
+                let base64 = rawVal.replace(/-/g, '+').replace(/_/g, '/');
+                while (base64.length % 4) {
+                    base64 += '=';
+                }
+                const decoded = atob(base64);
+                if (decoded.startsWith('[') || decoded.startsWith('{')) {
+                    rawVal = decoded;
+                }
+            } catch {}
+        }
+
+        if (rawVal.startsWith('[') || rawVal.startsWith('{')) {
+            const parsed = JSON.parse(rawVal);
+            if (Array.isArray(parsed)) {
+                accessToken = parsed[0];
+            } else if (parsed.access_token) {
+                accessToken = parsed.access_token;
+            }
+        } else {
+            accessToken = rawVal;
+        }
+
+        if (accessToken) {
+            const parts = accessToken.split('.');
+            if (parts.length === 3) {
+                const base64Url = parts[1];
+                let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                while (base64.length % 4) {
+                    base64 += '=';
+                }
+                const jsonPayload = atob(base64);
+                const payload = JSON.parse(jsonPayload);
+                return payload.sub || null;
+            }
+        }
+    } catch (e) {
+        // 静かにスルー
+    }
+    return null;
+}

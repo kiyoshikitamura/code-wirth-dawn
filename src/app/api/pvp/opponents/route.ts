@@ -8048,9 +8048,10 @@ export async function GET(req: Request) {
         // 2. 対戦相手選出（同ランク優先2枠、残りは全体/レート近接からランダム）
         // 負荷軽減のため、軽量なカラム情報のみを取得 (snapshot_dataを除外するために、取得後に必要な部分のみにマップ)
         
-        // 重複排除のための seenUserIds セット (自分自身を除外)
+        // 重複排除のための seenUserIds セット (自分自身および本番テストユーザーを除外)
         const seenUserIds = new Set<string>();
         seenUserIds.add(userId);
+        seenUserIds.add('c1cf67dd-527a-497e-bf88-ce10c2cb516f');
 
         // フェーズ1: 同ランク優先枠 (最大2枠)
         const { data: sameRankOpponents } = await supabaseServer
@@ -8058,6 +8059,7 @@ export async function GET(req: Request) {
             .select('user_id, defender_rank, updated_at, snapshot_data')
             .eq('defender_rank', rankClass)
             .neq('user_id', userId)
+            .neq('user_id', 'c1cf67dd-527a-497e-bf88-ce10c2cb516f')
             .limit(10); // 候補をいくつか取ってインメモリでランダム選択
 
         const chosenSameRank: any[] = [];
@@ -8080,6 +8082,7 @@ export async function GET(req: Request) {
             .from('pvp_defense_parties')
             .select('user_id, defender_rank, updated_at, snapshot_data')
             .neq('user_id', userId)
+            .neq('user_id', 'c1cf67dd-527a-497e-bf88-ce10c2cb516f')
             .limit(30);
 
         const chosenOthers: any[] = [];
