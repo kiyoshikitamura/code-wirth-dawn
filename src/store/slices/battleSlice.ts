@@ -570,7 +570,14 @@ export const createBattleSlice = (
     // v15.0: runNpcPhase -- NPCフェーズ（旧 endTurn、setTimeout 廃止）
     runNpcPhase: async () => {
         const { battleState, userProfile } = get();
-        if (battleState.isVictory || battleState.isDefeat) return;
+        if (
+            battleState.isVictory || 
+            battleState.isDefeat || 
+            battleState.battle_result === 'victory' || 
+            battleState.battle_result === 'defeat' || 
+            battleState.battle_result === 'time_over' || 
+            battleState.battle_result === 'escape'
+        ) return;
 
         // [Security] Sync turn end and AP recovery to server (v28.0)
         if (battleState.battle_session_id) {

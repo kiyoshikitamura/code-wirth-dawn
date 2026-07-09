@@ -58,6 +58,7 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
     const [successMsg, setSuccessMsg] = useState<string | null>(null);
     const [initialFetchDone, setInitialFetchDone] = useState(false);
     const [rankingLastUpdated, setRankingLastUpdated] = useState<string>('');
+    const [syncing, setSyncing] = useState(false);
 
     // 防衛パーティ確認モーダル用ステート
     const [showDefenseModal, setShowDefenseModal] = useState(false);
@@ -106,6 +107,7 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
 
     // 1. CPとアリーナレートの超軽量同期 (sync-stats)
     const syncStats = async () => {
+        setSyncing(true);
         try {
             const authHeaders = await getAuthHeaders();
             const res = await fetch('/api/pvp/sync-stats', {
@@ -120,6 +122,8 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
             }
         } catch (err) {
             console.warn('[PvP Sync] Sync stats failed:', err);
+        } finally {
+            setSyncing(false);
         }
     };
 
@@ -133,6 +137,7 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
         }
 
         setLoading(true);
+        setSyncing(true);
         setErrorMsg(null);
         try {
             const authHeaders = await getAuthHeaders();
@@ -158,6 +163,7 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
             setErrorMsg('通信エラーが発生しました。');
         } finally {
             setLoading(false);
+            setSyncing(false);
             setInitialFetchDone(true);
         }
     };
@@ -509,9 +515,9 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
         }
     };
 
-    // 初期マウント時の対戦相手フェッチ
+    // 初期マウント時の対戦相手フェッチ (バトル後の最新レート・CPを即時反映するため強制フェッチ)
     useEffect(() => {
-        fetchOpponents();
+        fetchOpponents(true);
     }, []);
 
     // タブ切り替え時のデータフェッチ
@@ -864,11 +870,15 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                         {/* 右：CP ＆ 防衛 (一括格納) */}
                         <div className="flex items-center gap-2 shrink-0 text-[10px]">
                             {/* CP & 回復 */}
-                            <div className="flex items-center gap-1 bg-[#12223f]/50 border border-[#213a65]/40 px-2 py-0.5 rounded-md">
+                            <div className="flex items-center gap-1 bg-[#12223f]/50 border border-[#213a65]/40 px-2 py-0.5 rounded-md min-w-[70px] justify-between">
                                 <span className="text-slate-400 font-bold">CP:</span>
-                                <span className={`font-mono font-bold ${cp >= 6 ? 'text-rose-500 animate-pulse' : 'text-slate-200'}`}>
-                                    {cp}/5
-                                </span>
+                                {syncing ? (
+                                    <RefreshCw className="animate-spin text-amber-500 w-3 h-3 mx-1 shrink-0" />
+                                ) : (
+                                    <span className={`font-mono font-bold ${cp >= 6 ? 'text-rose-500 animate-pulse' : 'text-slate-200'}`}>
+                                        {cp}/5
+                                    </span>
+                                )}
                                 <button
                                     disabled={loading || cp >= 6 || gold < 5000}
                                     onClick={handleRecoverCP}
@@ -889,11 +899,15 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                     </div>
 
                     {/* アリーナレート (コロンを削除、フォントを太く目立たせる) */}
-                    <div className="text-center bg-[#070e1c]/40 border border-[#1b2f51]/40 rounded-xl py-2.5 flex items-center justify-center gap-3">
+                    <div className="text-center bg-[#070e1c]/40 border border-[#1b2f51]/40 rounded-xl py-2.5 flex items-center justify-center gap-3 min-h-[58px]">
                         <span className="text-xs text-slate-200 font-extrabold tracking-widest uppercase">アリーナレート</span>
-                        <span className="text-3xl font-black text-amber-400 font-mono tracking-wider">
-                            {arenaRate.toLocaleString()}
-                        </span>
+                        {syncing ? (
+                            <RefreshCw className="animate-spin text-amber-500 w-6 h-6 mx-4" />
+                        ) : (
+                            <span className="text-3xl font-black text-amber-400 font-mono tracking-wider">
+                                {arenaRate.toLocaleString()}
+                            </span>
+                        )}
                         <span className="text-xs text-slate-400 font-mono">pts</span>
                     </div>
                 </div>

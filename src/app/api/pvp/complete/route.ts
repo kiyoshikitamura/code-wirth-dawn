@@ -137,20 +137,6 @@ export async function POST(req: Request) {
                         text_log: text_log || ''
                     });
 
-                // 防衛側ログ (相手がゴーストでなければ)
-                if (!isGhost) {
-                    await supabaseServer
-                        .from('pvp_battle_logs')
-                        .insert({
-                            attacker_user_id: userId,
-                            defender_user_id: opponent_id,
-                            is_attacker_victory: is_victory,
-                            attacker_rate_change: attackerChange,
-                            defender_rate_change: defenderChange,
-                            battle_type: 'defense',
-                            text_log: text_log || ''
-                        });
-                }
                 console.log('[PvP Complete] Async battle logs inserted successfully.');
             } catch (err) {
                 console.error('[PvP Complete] Async log insert error:', err);

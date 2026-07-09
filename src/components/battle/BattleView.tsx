@@ -548,13 +548,14 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
 
     // Handle Pub NPC Death
     useEffect(() => {
-        if (battleState.isVictory && !selectedScenario && battleState.enemy?.id) {
+        const isPvP = (battleState.enemies || []).some((e: any) => e.is_pvp_player || e.is_pvp_member);
+        if (battleState.isVictory && !selectedScenario && battleState.enemy?.id && !isPvP) {
             fetch('/api/pub', {
                 method: 'POST',
                 body: JSON.stringify({ action: 'kill', npc_id: battleState.enemy.id })
             }).catch(err => console.error("Failed to eliminate NPC:", err));
         }
-    }, [battleState.isVictory, selectedScenario, battleState.enemy]);
+    }, [battleState.isVictory, selectedScenario, battleState.enemy, battleState.enemies]);
 
     // マウント解除時にタイマーをクリーンアップ
     useEffect(() => {
