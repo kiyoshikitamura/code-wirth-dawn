@@ -546,6 +546,277 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
         return `(回復まで ${mins}:${secs < 10 ? '0' : ''}${secs})`;
     };
 
+    // 防衛パーティ専用サブモーダル描画
+    const renderDefenseModal = () => {
+        if (!showDefenseModal) return null;
+
+        return (
+            <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-in fade-in duration-150" onClick={() => setShowDefenseModal(false)}>
+                <div className="bg-[#0b1322] border border-[#2b4772] w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+                    
+                    {/* Header */}
+                    <div className="bg-gradient-to-r from-[#12223e] to-slate-900 px-6 py-4 flex items-center justify-between border-b border-[#213a65]/50">
+                        <div className="flex items-center gap-2">
+                            <Shield className="w-5 h-5 text-amber-400" />
+                            <h3 className="text-sm font-black text-slate-100">防衛パーティ確認</h3>
+                        </div>
+                        <button
+                            onClick={() => setShowDefenseModal(false)}
+                            className="p-1 text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 rounded-lg transition-all"
+                        >
+                            <X className="w-4 h-4" />
+                        </button>
+                    </div>
+
+                    {/* Content */}
+                    <div className="px-6 py-4 max-h-[65vh] overflow-y-auto space-y-4 font-sans text-slate-300">
+                        {loadingDefenseData ? (
+                            <div className="flex flex-col items-center justify-center py-12 space-y-3">
+                                <RefreshCw className="animate-spin text-amber-500" size={24} />
+                                <span className="text-[11px] text-slate-400">防衛データを取得中...</span>
+                            </div>
+                        ) : !defensePartyData ? (
+                            <div className="flex flex-col items-center justify-center py-10 space-y-3">
+                                <Shield className="w-12 h-12 text-slate-600 stroke-[1.5]" />
+                                <span className="text-xs text-slate-400 font-bold">現在は防衛パーティが未登録です</span>
+                                <p className="text-[10px] text-slate-500 text-center max-w-[280px]">
+                                    防衛パーティが登録されていないと、他プレイヤーから攻撃された際にデフォルト構成で戦闘が発生します。下の「防衛パーティを更新」ボタンから登録してください。
+                                </p>
+                            </div>
+                        ) : (() => {
+                            const pSnap = defensePartyData.player_snapshot || {};
+                            const mSnaps = defensePartyData.party_members_snapshot || [];
+
+                            return (
+                                <div className="space-y-4">
+                                    {/* リーダー（プレイヤー） */}
+                                    <div className="bg-[#12223f]/30 border border-[#213a65]/40 rounded-xl p-4 space-y-3">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-12 h-12 rounded-full bg-slate-800/80 border border-slate-700 flex items-center justify-center overflow-hidden shrink-0">
+                                                {defensePartyData.avatar_url ? (
+                                                    <img src={defensePartyData.avatar_url} alt={defensePartyData.user_name} className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <User className="w-6 h-6 text-slate-500" />
+                                                )}
+                                            </div>
+                                            <div>
+                                                <h4 className="text-xs font-bold text-slate-100">
+                                                    {defensePartyData.user_name} <span className="text-[9px] text-slate-400 font-normal">（リーダー）</span>
+                                                </h4>
+                                                <div className="flex items-center gap-1.5 mt-0.5">
+                                                    <span className="text-[9px] px-1.5 py-0.2 rounded border border-amber-700/40 text-amber-300 bg-amber-950/20">
+                                                        Lv.{pSnap.level || 1} {pSnap.job_class || 'Adventurer'}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* ステータス */}
+                                        <div className="grid grid-cols-3 gap-2 text-center text-[10px] bg-[#070e1c]/40 py-2 rounded-lg border border-[#1b2f51]/20">
+                                            <div>
+                                                <span className="text-[8px] text-slate-500 block">HP</span>
+                                                <span className="font-bold text-emerald-400">{pSnap.hp || 100}</span>
+                                            </div>
+                                            <div>
+                                                <span className="text-[8px] text-slate-500 block">ATK</span>
+                                                <span className="font-bold text-rose-400">{pSnap.atk || 10}</span>
+                                            </div>
+                                            <div>
+                                                <span className="text-[8px] text-slate-500 block">DEF</span>
+                                                <span className="font-bold text-sky-400">{pSnap.def || 10}</span>
+                                            </div>
+                                        </div>
+
+                                        {/* 装備 */}
+                                        <div className="space-y-1">
+                                            <span className="text-[9px] text-amber-500 font-bold block">🛡️ 装備武具:</span>
+                                            {defensePartyData.equipped_items_snapshot && defensePartyData.equipped_items_snapshot.length > 0 ? (
+                                                <div className="flex flex-wrap gap-1">
+                                                    {defensePartyData.equipped_items_snapshot.map((g: any, gi: number) => (
+                                                        <span key={gi} className="text-[8px] bg-[#1a2d4c] text-slate-300 border border-[#2c4772]/60 px-1.5 py-0.2 rounded">
+                                                            {g.name}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <span className="text-[9px] text-slate-500 italic block">装備なし</span>
+                                            )}
+                                        </div>
+
+                                        {/* スキル */}
+                                        <div className="space-y-1">
+                                            <span className="text-[9px] text-amber-500 font-bold block">🔮 スキルデッキ:</span>
+                                            {defensePartyData.skill_deck_snapshot && defensePartyData.skill_deck_snapshot.length > 0 ? (
+                                                <div className="flex flex-wrap gap-1">
+                                                    {defensePartyData.skill_deck_snapshot.map((s: any, si: number) => (
+                                                        <span key={si} className="text-[8px] bg-[#1d1f35] text-amber-300 border border-amber-500/20 px-1.5 py-0.2 rounded">
+                                                            {s.name}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <span className="text-[9px] text-slate-500 italic block">初期スキル構成</span>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* 同行メンバー */}
+                                    <div className="space-y-2">
+                                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">同行メンバー:</span>
+                                        {mSnaps.length > 0 ? (
+                                            <div className="space-y-2">
+                                                {mSnaps.map((m: any) => {
+                                                    const mIdStr = String(m.id);
+                                                    const isExpanded = !!defenseExpandedMembers[mIdStr];
+
+                                                    return (
+                                                        <div key={m.id} className="border border-[#213a65]/40 rounded-xl overflow-hidden bg-[#0c1524]/60">
+                                                            {/* ヘッダー部分 */}
+                                                            <div
+                                                                onClick={() => toggleDefenseMember(mIdStr)}
+                                                                className="p-3 flex items-center justify-between gap-3 cursor-pointer hover:bg-[#12223e]/50 transition-all select-none"
+                                                            >
+                                                                <div className="flex items-center gap-2.5 min-w-0">
+                                                                    <div className="w-8 h-8 rounded-full bg-slate-800/80 border border-slate-700/50 flex items-center justify-center shrink-0 overflow-hidden">
+                                                                        {m.icon_url || m.image_url ? (
+                                                                            <img src={m.icon_url || m.image_url} alt={m.name} className="w-full h-full object-cover" />
+                                                                        ) : (
+                                                                            <User className="w-4 h-4 text-slate-500" />
+                                                                        )}
+                                                                    </div>
+                                                                    <div className="min-w-0">
+                                                                        <span className="text-xs font-bold text-slate-100 block truncate">{m.name}</span>
+                                                                        <span className="text-[8px] text-slate-400 block mt-0.5">
+                                                                            Lv.{m.level || 1} {m.job_class || 'Civilian'}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div className="flex items-center gap-3 shrink-0">
+                                                                    <div className="flex gap-2 text-[9px] text-right font-mono">
+                                                                        <div>
+                                                                            <span className="text-[8px] text-slate-500 block">HP</span>
+                                                                            <span className="font-bold text-emerald-400">{m.hp}</span>
+                                                                        </div>
+                                                                        <div>
+                                                                            <span className="text-[8px] text-slate-500 block">ATK</span>
+                                                                            <span className="font-bold text-rose-400">{m.atk}</span>
+                                                                        </div>
+                                                                        <div>
+                                                                            <span className="text-[8px] text-slate-500 block">DEF</span>
+                                                                            <span className="font-bold text-sky-400">{m.def}</span>
+                                                                        </div>
+                                                                    </div>
+                                                                    <span className="text-slate-500 text-xs font-bold font-mono pl-1">
+                                                                        {isExpanded ? '▲' : '▼'}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+
+                                                            {/* 詳細展開 (アコーディオン) */}
+                                                            {isExpanded && (() => {
+                                                                let memberEquippedItems: any[] = [];
+                                                                if (m.equipped_items_snapshot && Array.isArray(m.equipped_items_snapshot)) {
+                                                                    memberEquippedItems = m.equipped_items_snapshot;
+                                                                } else {
+                                                                    let snapData = m.snapshot_data;
+                                                                    if (typeof snapData === 'string') {
+                                                                        try { snapData = JSON.parse(snapData); } catch (e) { snapData = null; }
+                                                                    }
+                                                                    if (snapData && Array.isArray(snapData.equipped_items)) {
+                                                                        memberEquippedItems = snapData.equipped_items;
+                                                                    } else if (m.equipped_items && Array.isArray(m.equipped_items)) {
+                                                                        memberEquippedItems = m.equipped_items;
+                                                                    }
+                                                                }
+
+                                                                let memberSkills: any[] = [];
+                                                                if (m.signature_deck_snapshot && Array.isArray(m.signature_deck_snapshot)) {
+                                                                    memberSkills = m.signature_deck_snapshot;
+                                                                } else {
+                                                                    let snapData = m.snapshot_data;
+                                                                    if (typeof snapData === 'string') {
+                                                                        try { snapData = JSON.parse(snapData); } catch (e) { snapData = null; }
+                                                                    }
+                                                                    if (snapData && Array.isArray(snapData.signature_deck_snapshot)) {
+                                                                        memberSkills = snapData.signature_deck_snapshot;
+                                                                    } else if (snapData && Array.isArray(snapData.deck)) {
+                                                                        memberSkills = snapData.deck.map((id: any) => ({ name: `カード #${id}` }));
+                                                                    } else if (m.inject_cards && Array.isArray(m.inject_cards)) {
+                                                                        memberSkills = m.inject_cards.map((id: any) => ({ name: `スキル #${id}` }));
+                                                                    }
+                                                                }
+
+                                                                return (
+                                                                    <div className="px-3 pb-3 pt-1 border-t border-[#20365b]/50 bg-[#0c1626]/80 text-[10px] space-y-2 animate-in slide-in-from-top-2 duration-150">
+                                                                        {/* 装備 */}
+                                                                        <div className="space-y-1">
+                                                                            <span className="text-[9px] text-amber-500 font-bold block">🛡️ 装備武具:</span>
+                                                                            {memberEquippedItems && memberEquippedItems.length > 0 ? (
+                                                                                <div className="flex flex-wrap gap-1">
+                                                                                    {memberEquippedItems.map((g: any, gi: number) => (
+                                                                                        <span key={gi} className="text-[8px] bg-[#1a2d4c] text-slate-300 border border-[#2c4772]/60 px-1.5 py-0.2 rounded">
+                                                                                            {g.name}
+                                                                                        </span>
+                                                                                    ))}
+                                                                                </div>
+                                                                            ) : (
+                                                                                <span className="text-[9px] text-slate-500 italic block">装備なし</span>
+                                                                            )}
+                                                                        </div>
+
+                                                                        {/* スキル */}
+                                                                        <div className="space-y-1">
+                                                                            <span className="text-[9px] text-amber-500 font-bold block">🔮 所持スキル:</span>
+                                                                            {memberSkills && memberSkills.length > 0 ? (
+                                                                                <div className="flex flex-wrap gap-1">
+                                                                                    {memberSkills.map((s: any, si: number) => (
+                                                                                        <span key={si} className="text-[8px] bg-[#1d1f35] text-amber-300 border border-amber-500/20 px-1.5 py-0.2 rounded">
+                                                                                            {s.name}
+                                                                                        </span>
+                                                                                    ))}
+                                                                                </div>
+                                                                            ) : (
+                                                                                <span className="text-[9px] text-slate-500 italic block">初期スキル構成</span>
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
+                                                                );
+                                                            })()}
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        ) : (
+                                            <span className="text-[10px] text-slate-500 italic block text-center py-2 bg-[#0c1524]/60 border border-[#213a65]/40 rounded-xl">同行メンバーなし (ソロ)</span>
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })()}
+                    </div>
+
+                    {/* Footer */}
+                    <div className="px-6 py-4 bg-[#0a0d14] border-t border-[#213a65]/50 flex justify-end gap-2">
+                        <button
+                            disabled={updatingDefense || loadingDefenseData}
+                            onClick={handleUpdateDefense}
+                            className="px-4 py-2 bg-[#1d2f4d] hover:bg-[#2c4772] border border-[#3c5e94] text-slate-100 font-bold text-xs rounded-xl active:scale-95 transition-all disabled:opacity-50 cursor-pointer"
+                        >
+                            {updatingDefense ? '更新中...' : '防衛パーティを更新'}
+                        </button>
+                        <button
+                            onClick={() => setShowDefenseModal(false)}
+                            className="px-4 py-2 bg-[#1f2937] hover:bg-[#374151] border border-slate-700 text-slate-300 font-bold text-xs rounded-xl active:scale-95 transition-all cursor-pointer"
+                        >
+                            閉じる
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
     if (!mounted || !portalTarget) return null;
 
     return createPortal(
