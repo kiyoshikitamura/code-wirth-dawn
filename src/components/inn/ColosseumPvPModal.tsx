@@ -39,6 +39,7 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
     const [selectedOpponentDetail, setSelectedOpponentDetail] = useState<any | null>(null);
     const [loadingDetail, setLoadingDetail] = useState<boolean>(false);
     const [detailErrorMsg, setDetailErrorMsg] = useState<string | null>(null);
+    const [expandedMemberId, setExpandedMemberId] = useState<string | null>(null);
     const [selectedLogText, setSelectedLogText] = useState<string | null>(null);
     const [loadingLogText, setLoadingLogText] = useState<boolean>(false);
     
@@ -213,6 +214,7 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
     // 5. 特定対戦相手の装備・スキル詳細を遅延ロード (Lazy Load)
     const loadOpponentDetail = async (oppId: string, opponentObj: any) => {
         setDetailErrorMsg(null);
+        setExpandedMemberId(null);
         setSelectedOpponent(opponentObj);
         setSelectedOpponentDetail(null);
 
@@ -1093,31 +1095,94 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
 
                                     {/* Members info */}
                                     <div className="space-y-2">
-                                        <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">同行メンバー</span>
+                                        <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">同行メンバー (タップで詳細確認)</span>
                                         {selectedOpponentDetail.party_members_snapshot && selectedOpponentDetail.party_members_snapshot.length > 0 ? (
                                             <div className="space-y-1.5">
-                                                {selectedOpponentDetail.party_members_snapshot.map((m: any, mi: number) => (
-                                                    <div key={mi} className="p-2.5 bg-[#0f1d35]/50 border border-[#20365b] rounded-xl flex items-center justify-between font-mono">
-                                                        <div className="text-left">
-                                                            <h5 className="text-xs font-bold text-slate-200">{m.name}</h5>
-                                                            <span className="text-[9px] text-slate-400 block">Lv.{m.level} | {m.job_class}</span>
+                                                {selectedOpponentDetail.party_members_snapshot.map((m: any, mi: number) => {
+                                                    const isExpanded = expandedMemberId === m.id;
+                                                    return (
+                                                        <div 
+                                                            key={mi} 
+                                                            className="border border-[#20365b] rounded-xl overflow-hidden bg-[#0f1d35]/30 hover:bg-[#12223e]/50 transition-all"
+                                                        >
+                                                            {/* ヘッダー部分 (タップ領域) */}
+                                                            <div 
+                                                                onClick={() => {
+                                                                    soundManager?.playSE('se_item_get');
+                                                                    setExpandedMemberId(isExpanded ? null : m.id);
+                                                                }}
+                                                                className="p-2.5 flex items-center justify-between font-mono cursor-pointer select-none"
+                                                            >
+                                                                <div className="text-left col-span-3">
+                                                                    <h5 className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                                                                        {m.name}
+                                                                        <span className="text-[9px] bg-slate-800 text-slate-400 px-1 py-0.2 rounded font-black">
+                                                                            Lv.{m.level}
+                                                                        </span>
+                                                                    </h5>
+                                                                    <span className="text-[9px] text-slate-400 block">{m.job_class}</span>
+                                                                </div>
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="flex gap-2.5 text-right text-[10px]">
+                                                                        <div>
+                                                                            <span className="text-[8px] text-slate-500 block">HP</span>
+                                                                            <span className="font-bold text-emerald-400">{m.hp?.toLocaleString() || 100}</span>
+                                                                        </div>
+                                                                        <div>
+                                                                            <span className="text-[8px] text-slate-500 block">ATK</span>
+                                                                            <span className="font-bold text-rose-400">{m.atk?.toLocaleString() || 10}</span>
+                                                                        </div>
+                                                                        <div>
+                                                                            <span className="text-[8px] text-slate-500 block">DEF</span>
+                                                                            <span className="font-bold text-sky-400">{m.def?.toLocaleString() || 10}</span>
+                                                                        </div>
+                                                                    </div>
+                                                                    {/* 矢印表示 */}
+                                                                    <span className="text-slate-500 text-xs font-bold font-mono pl-1">
+                                                                        {isExpanded ? '▲' : '▼'}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+
+                                                            {/* 詳細展開部分 (装備・スキル) */}
+                                                            {isExpanded && (
+                                                                <div className="px-3 pb-3 pt-1 border-t border-[#20365b]/50 bg-[#0c1626]/80 text-[10px] space-y-2 animate-in slide-in-from-top-2 duration-150">
+                                                                    {/* 装備 */}
+                                                                    <div className="space-y-1">
+                                                                        <span className="text-[9px] text-amber-500 font-bold block">🛡️ 装備武具:</span>
+                                                                        {m.equipped_items_snapshot && m.equipped_items_snapshot.length > 0 ? (
+                                                                            <div className="flex flex-wrap gap-1">
+                                                                                {m.equipped_items_snapshot.map((g: any, gi: number) => (
+                                                                                    <span key={gi} className="text-[8px] bg-[#1a2d4c] text-slate-300 border border-[#2c4772]/60 px-1.5 py-0.2 rounded">
+                                                                                        {g.name}
+                                                                                    </span>
+                                                                                ))}
+                                                                            </div>
+                                                                        ) : (
+                                                                            <span className="text-[9px] text-slate-500 italic block">装備なし</span>
+                                                                        )}
+                                                                    </div>
+
+                                                                    {/* スキル */}
+                                                                    <div className="space-y-1">
+                                                                        <span className="text-[9px] text-amber-500 font-bold block">🔮 所持スキル:</span>
+                                                                        {m.signature_deck_snapshot && m.signature_deck_snapshot.length > 0 ? (
+                                                                            <div className="flex flex-wrap gap-1">
+                                                                                {m.signature_deck_snapshot.map((s: any, si: number) => (
+                                                                                    <span key={si} className="text-[8px] bg-[#1d1f35] text-amber-300 border border-amber-500/20 px-1.5 py-0.2 rounded">
+                                                                                        {s.name}
+                                                                                    </span>
+                                                                                ))}
+                                                                            </div>
+                                                                        ) : (
+                                                                            <span className="text-[9px] text-slate-500 italic block">初期スキル構成</span>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            )}
                                                         </div>
-                                                        <div className="flex gap-2.5 text-right text-[10px]">
-                                                            <div>
-                                                                <span className="text-[8px] text-slate-500 block">HP</span>
-                                                                <span className="font-bold text-emerald-400">{m.hp?.toLocaleString() || 100}</span>
-                                                            </div>
-                                                            <div>
-                                                                <span className="text-[8px] text-slate-500 block">ATK</span>
-                                                                <span className="font-bold text-rose-400">{m.atk?.toLocaleString() || 10}</span>
-                                                            </div>
-                                                            <div>
-                                                                <span className="text-[8px] text-slate-500 block">DEF</span>
-                                                                <span className="font-bold text-sky-400">{m.def?.toLocaleString() || 10}</span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                ))}
+                                                    );
+                                                })}
                                             </div>
                                         ) : (
                                             <span className="text-[10px] text-slate-500 italic block text-center py-2">同行メンバーなし (ソロ)</span>
