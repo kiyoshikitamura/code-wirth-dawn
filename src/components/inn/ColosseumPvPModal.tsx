@@ -38,6 +38,7 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
     const [selectedOpponent, setSelectedOpponent] = useState<any | null>(null);
     const [selectedOpponentDetail, setSelectedOpponentDetail] = useState<any | null>(null);
     const [loadingDetail, setLoadingDetail] = useState<boolean>(false);
+    const [detailErrorMsg, setDetailErrorMsg] = useState<string | null>(null);
     const [selectedLogText, setSelectedLogText] = useState<string | null>(null);
     const [loadingLogText, setLoadingLogText] = useState<boolean>(false);
     
@@ -211,12 +212,12 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
 
     // 5. 特定対戦相手の装備・スキル詳細を遅延ロード (Lazy Load)
     const loadOpponentDetail = async (oppId: string, opponentObj: any) => {
-        setErrorMsg(null);
+        setDetailErrorMsg(null);
         setSelectedOpponent(opponentObj);
         setSelectedOpponentDetail(null);
 
         // ゴースト（NPC）の場合はAPIコールの必要がなく、一覧に含まれているプリセット詳細データをそのままマージする
-        if (oppId.startsWith('ghost_')) {
+        if (opponentObj?.is_ghost) {
             setSelectedOpponentDetail(opponentObj);
             return;
         }
@@ -233,11 +234,11 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                 setSelectedOpponentDetail(data.party);
             } else {
                 const data = await res.json();
-                setErrorMsg(data.error || '詳細の取得に失敗しました。');
+                setDetailErrorMsg(data.error || '詳細の取得に失敗しました。');
             }
         } catch (err) {
             console.error('[PvP Detail] Error:', err);
-            setErrorMsg('通信エラーが発生しました。');
+            setDetailErrorMsg('通信エラーが発生しました。');
         } finally {
             setLoadingDetail(false);
         }
@@ -987,10 +988,10 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                         <div className="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-amber-950/40 to-slate-900 border-b border-amber-500/20">
                             <h3 className="font-black text-amber-400 tracking-wider flex items-center gap-2 text-xs">
                                 <Shield size={16} />
-                                防衛構成プレビュー
+                                対戦相手
                             </h3>
                             <button
-                                onClick={() => setSelectedOpponent(null)}
+                                onClick={() => { setSelectedOpponent(null); setDetailErrorMsg(null); }}
                                 className="text-slate-400 hover:text-white p-1 hover:bg-white/5 rounded-lg"
                             >
                                 <X size={16} />
@@ -1003,6 +1004,15 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                                 <div className="flex flex-col items-center justify-center py-20 space-y-2">
                                     <RefreshCw className="animate-spin text-amber-500" size={24} />
                                     <span className="text-slate-400">防衛データを同期中...</span>
+                                </div>
+                            )}
+
+                            {detailErrorMsg && (
+                                <div className="flex flex-col items-center justify-center py-16 space-y-3">
+                                    <div className="p-3 bg-red-950/20 border border-red-500/30 rounded-xl text-red-400 text-center font-bold">
+                                        {detailErrorMsg}
+                                    </div>
+                                    <p className="text-[10px] text-slate-500">※ご自身の防衛確認でこれが表示される場合は、まず「更新」を押して防衛登録を行ってください。</p>
                                 </div>
                             )}
 
