@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useGameStore } from '@/store/gameStore';
 import { getAuthHeaders } from '@/lib/authToken';
 import { soundManager } from '@/lib/soundManager';
-import { Swords, Trophy, X, RefreshCw, Shield, User, Zap, BookOpen, Clock, Award } from 'lucide-react';
+import { Swords, Trophy, X, RefreshCw, Shield, User, Zap, BookOpen, Clock, Award, History } from 'lucide-react';
 import SimpleUserProfilePopup from '@/components/shared/SimpleUserProfilePopup';
 
 interface ColosseumPvPModalProps {
@@ -66,6 +66,12 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
     const [loadingDefenseData, setLoadingDefenseData] = useState(false);
     const [defenseExpandedMembers, setDefenseExpandedMembers] = useState<Record<string, boolean>>({});
 
+    // 過去成績履歴モーダル用ステート
+    const [showHistoryModal, setShowHistoryModal] = useState(false);
+    const [historyData, setHistoryData] = useState<{ seasons: any[], dailies: any[] }>({ seasons: [], dailies: [] });
+    const [loadingHistory, setLoadingHistory] = useState(false);
+    const [historyTab, setHistoryTab] = useState<'season' | 'daily'>('season');
+
     const router = useRouter();
     const { userProfile, gold, fetchUserProfile } = useGameStore();
 
@@ -103,6 +109,52 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
         };
 
         return `${formatJST(prevWed)} 〜 ${formatJST(nextWed)}`;
+    };
+
+    // 現在のデイリーランキング期間算出 (6時間切り替え)
+    const getDailyPeriodStr = () => {
+        const jstOffset = 9 * 60 * 60 * 1000;
+        const now = new Date();
+        const jstNow = new Date(now.getTime() + jstOffset);
+
+        const hour = jstNow.getUTCHours();
+        const cycleStartHour = Math.floor(hour / 6) * 6;
+        
+        const start = new Date(jstNow);
+        start.setUTCHours(cycleStartHour, 0, 0, 0);
+
+        const end = new Date(start);
+        end.setUTCHours(cycleStartHour + 6, 0, 0, 0);
+
+        const format = (d: Date) => {
+            const l = new Date(d.getTime() - jstOffset);
+            return `${l.getFullYear()}/${(l.getMonth()+1).toString().padStart(2,'0')}/${l.getDate().toString().padStart(2,'0')} ${l.getHours().toString().padStart(2,'0')}:00`;
+        };
+
+        return `${format(start)} 〜 ${format(end)}`;
+    };
+
+    // 成績履歴のフェッチ
+    const fetchHistoryData = async () => {
+        setLoadingHistory(true);
+        try {
+            const authHeaders = await getAuthHeaders();
+            const res = await fetch('/api/pvp/history', {
+                method: 'GET',
+                headers: { ...authHeaders }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setHistoryData({
+                    seasons: data.seasons || [],
+                    dailies: data.dailies || []
+                });
+            }
+        } catch (err) {
+            console.error('[PvP History Fetch] Error:', err);
+        } finally {
+            setLoadingHistory(false);
+        }
     };
 
     // 1. CPとアリーナレートの超軽量同期 (sync-stats)
@@ -823,6 +875,136 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
         );
     };
 
+    // 過去成績履歴確認モーダル
+    const renderHistoryModal = () => {
+        if (!showHistoryModal) return null;
+
+        return (
+            <div className="absolute inset-0 z-50 flex items-center justify-center p-4 bg-[#050b14]/90 backdrop-blur-sm animate-in fade-in duration-200">
+                <div className="relative w-full max-w-md bg-[#0c1628]/95 border border-[#1e345b] rounded-2xl overflow-hidden shadow-[0_0_50px_rgba(30,52,91,0.5)] flex flex-col max-h-[80vh]">
+                    
+                    {/* Header */}
+                    <div className="flex items-center justify-between px-6 py-4 bg-[#11203b]/80 border-b border-[#1e345b]">
+                        <div className="flex items-center gap-2 text-amber-400">
+                            <History size={18} className="animate-pulse" />
+                            <h3 className="font-black tracking-widest text-sm text-slate-100">過去の成績履歴</h3>
+                        </div>
+                        <button
+                            onClick={() => setShowHistoryModal(false)}
+                            className="text-slate-400 hover:text-white transition-colors p-1 rounded-lg hover:bg-white/5"
+                        >
+                            <X size={18} />
+                        </button>
+                    </div>
+
+                    {/* Sub tabs (過去シーズン vs 今週のデイリー) */}
+                    <div className="grid grid-cols-2 bg-[#0a1120] border-b border-[#1e345b] text-center text-xs">
+                        <button
+                            onClick={() => setHistoryTab('season')}
+                            className={`py-2.5 font-bold border-b-2 transition-all ${historyTab === 'season' ? 'text-amber-400 border-amber-500 bg-[#11203b]/30' : 'text-slate-400 border-transparent hover:text-slate-200'}`}
+                        >
+                            過去シーズン成績
+                        </button>
+                        <button
+                            onClick={() => setHistoryTab('daily')}
+                            className={`py-2.5 font-bold border-b-2 transition-all ${historyTab === 'daily' ? 'text-amber-400 border-amber-500 bg-[#11203b]/30' : 'text-slate-400 border-transparent hover:text-slate-200'}`}
+                        >
+                            今週のデイリー成績
+                        </button>
+                    </div>
+
+                    {/* Content */}
+                    <div className="flex-1 overflow-y-auto p-5 space-y-4 custom-scrollbar">
+                        {loadingHistory ? (
+                            <div className="flex flex-col items-center justify-center py-20 space-y-3">
+                                <RefreshCw className="animate-spin text-[#5586d5]" size={24} />
+                                <span className="text-xs text-slate-400">履歴をロード中...</span>
+                            </div>
+                        ) : (
+                            <div className="space-y-2">
+                                {historyTab === 'season' ? (
+                                    <>
+                                        {historyData.seasons.map((item, idx) => (
+                                            <div
+                                                key={idx}
+                                                className="bg-[#0f1d35]/50 border border-[#20365b] rounded-xl p-3 flex justify-between items-center"
+                                            >
+                                                <div className="text-left space-y-1">
+                                                    <span className="text-[8px] bg-amber-500/20 text-amber-400 border border-amber-500/30 px-1.5 py-0.2 rounded font-black">
+                                                        {item.season_id}
+                                                    </span>
+                                                    <div className="text-[10px] text-slate-400 font-mono">
+                                                        確定日時: {new Date(item.created_at).toLocaleDateString('ja-JP')}
+                                                    </div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <span className="text-xs font-mono font-bold text-slate-300 block">
+                                                        {item.arena_rate.toLocaleString()} pts
+                                                    </span>
+                                                    <span className="text-xs font-black text-amber-400 font-sans">
+                                                        {item.rank}位
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        ))}
+
+                                        {historyData.seasons.length === 0 && (
+                                            <div className="text-center py-10 text-xs text-slate-500 italic">
+                                                過去シーズンの成績履歴はありません。
+                                            </div>
+                                        )}
+                                    </>
+                                ) : (
+                                    <>
+                                        {historyData.dailies.map((item, idx) => (
+                                            <div
+                                                key={idx}
+                                                className="bg-[#0f1d35]/50 border border-[#20365b] rounded-xl p-3 flex justify-between items-center"
+                                            >
+                                                <div className="text-left space-y-1">
+                                                    <span className="text-[8px] bg-sky-500/20 text-sky-400 border border-sky-500/30 px-1.5 py-0.2 rounded font-black">
+                                                        {item.date_str}
+                                                    </span>
+                                                    <div className="text-[10px] text-slate-400 font-mono">
+                                                        記録日時: {new Date(item.created_at).toLocaleDateString('ja-JP')}
+                                                    </div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <span className="text-xs font-mono font-bold text-slate-300 block">
+                                                        {item.arena_rate.toLocaleString()} pts
+                                                    </span>
+                                                    <span className="text-xs font-black text-amber-400 font-sans">
+                                                        {item.rank}位
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        ))}
+
+                                        {historyData.dailies.length === 0 && (
+                                            <div className="text-center py-10 text-xs text-slate-500 italic">
+                                                今シーズンのデイリー成績履歴はありません。
+                                            </div>
+                                        )}
+                                    </>
+                                )}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Footer */}
+                    <div className="px-6 py-4 bg-[#0a0d14] border-t border-[#1e345b]/50 flex justify-end">
+                        <button
+                            onClick={() => setShowHistoryModal(false)}
+                            className="px-4 py-2 bg-[#1f2937] hover:bg-[#374151] border border-slate-700 text-slate-300 font-bold text-xs rounded-xl active:scale-95 transition-all cursor-pointer"
+                        >
+                            閉じる
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
     if (!mounted || !portalTarget) return null;
 
     return createPortal(
@@ -1066,6 +1248,14 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                                 </button>
                             </div>
 
+                            {/* デイリーの場合はデイリーの集計期間を表示 */}
+                            {rankingType === 'daily' && (
+                                <div className="text-[10px] text-slate-400 bg-[#09111c]/60 border border-[#213a65]/40 rounded-xl px-4 py-2 font-mono flex items-center justify-between shadow-inner animate-in fade-in duration-200">
+                                    <span className="text-slate-500 font-bold">デイリー集計期間:</span>
+                                    <span className="text-amber-300 font-bold">{getDailyPeriodStr()}</span>
+                                </div>
+                            )}
+
                             {/* My Ranking Status (上部固定) */}
                             {myRankingStatus && (
                                 <div className="bg-gradient-to-r from-[#1b3152]/70 to-[#0e1c33]/70 border-2 border-amber-500/40 rounded-xl p-3 flex items-center justify-between shadow-md animate-in slide-in-from-top-2 duration-200">
@@ -1105,47 +1295,56 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
 
                             {/* Top 50 List */}
                             <div className="space-y-1.5 max-h-[260px] overflow-y-auto pr-1 custom-scrollbar">
-                                {rankingList.map((player) => (
-                                    <div
-                                        key={player.user_id}
-                                        className={`p-2.5 border rounded-lg flex items-center justify-between transition-all ${player.user_id === userProfile?.id ? 'bg-[#1b3152]/40 border-amber-500/30' : 'bg-[#0f1d35]/40 border-[#1e345b]/50'}`}
-                                    >
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-xs font-black text-slate-400 font-mono w-9 text-center">
-                                                {player.rank}位
-                                            </span>
-                                            <div 
-                                                onClick={() => setViewingProfileUserId(player.user_id)}
-                                                className="w-7 h-7 rounded-full border border-slate-700 bg-black/40 flex items-center justify-center overflow-hidden cursor-pointer hover:border-amber-400 shrink-0"
+                                {loading && rankingList.length === 0 ? (
+                                    <div className="flex flex-col items-center justify-center py-16 space-y-3">
+                                        <RefreshCw className="animate-spin text-amber-500" size={24} />
+                                        <span className="text-xs text-slate-400">ランキングをロード中...</span>
+                                    </div>
+                                ) : (
+                                    <>
+                                        {rankingList.map((player) => (
+                                            <div
+                                                key={player.user_id}
+                                                className={`p-2.5 border rounded-lg flex items-center justify-between transition-all ${player.user_id === userProfile?.id ? 'bg-[#1b3152]/40 border-amber-500/30' : 'bg-[#0f1d35]/40 border-[#1e345b]/50'}`}
                                             >
-                                                {player.avatar_url ? (
-                                                    <img src={player.avatar_url} alt="" className="w-full h-full object-cover" />
-                                                ) : (
-                                                    <User size={12} className="text-slate-600" />
-                                                )}
-                                            </div>
-                                            <div className="text-left">
-                                                <h5 
-                                                    onClick={() => setViewingProfileUserId(player.user_id)}
-                                                    className="text-xs font-bold text-slate-200 truncate cursor-pointer hover:text-amber-400"
-                                                >
-                                                    {player.user_name}
-                                                </h5>
-                                                <span className="text-[9px] text-slate-400 block font-mono">
-                                                    Lv.{player.level} | {player.job_class}
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-xs font-black text-slate-400 font-mono w-9 text-center">
+                                                        {player.rank}位
+                                                    </span>
+                                                    <div 
+                                                        onClick={() => setViewingProfileUserId(player.user_id)}
+                                                        className="w-7 h-7 rounded-full border border-slate-700 bg-black/40 flex items-center justify-center overflow-hidden cursor-pointer hover:border-amber-400 shrink-0"
+                                                    >
+                                                        {player.avatar_url ? (
+                                                            <img src={player.avatar_url} alt="" className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <User size={12} className="text-slate-600" />
+                                                        )}
+                                                    </div>
+                                                    <div className="text-left">
+                                                        <h5 
+                                                            onClick={() => setViewingProfileUserId(player.user_id)}
+                                                            className="text-xs font-bold text-slate-200 truncate cursor-pointer hover:text-amber-400"
+                                                        >
+                                                            {player.user_name}
+                                                        </h5>
+                                                        <span className="text-[9px] text-slate-400 block font-mono">
+                                                            Lv.{player.level} | {player.job_class}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <span className="text-xs font-bold text-slate-300 font-mono shrink-0">
+                                                    {player.arena_rate.toLocaleString()} pts
                                                 </span>
                                             </div>
-                                        </div>
-                                        <span className="text-xs font-bold text-slate-300 font-mono shrink-0">
-                                            {player.arena_rate.toLocaleString()} pts
-                                        </span>
-                                    </div>
-                                ))}
+                                        ))}
 
-                                {rankingList.length === 0 && !loading && (
-                                    <div className="text-center py-10 text-xs text-slate-500">
-                                        ランキングデータはありません。
-                                    </div>
+                                        {rankingList.length === 0 && !loading && (
+                                            <div className="text-center py-10 text-xs text-slate-500">
+                                                ランキングデータはありません。
+                                            </div>
+                                        )}
+                                    </>
                                 )}
                             </div>
                         </div>
@@ -1154,7 +1353,19 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                     {/* ──── TAB: BATTLE LOGS ──── */}
                     {tab === 'logs' && (
                         <div className="space-y-3 text-left">
-                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">バトル履歴 (過去20戦)</span>
+                            <div className="flex items-center justify-between">
+                                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">バトル履歴 (過去20戦)</span>
+                                <button
+                                    onClick={() => {
+                                        fetchHistoryData();
+                                        setShowHistoryModal(true);
+                                    }}
+                                    className="flex items-center gap-1.5 px-2.5 py-1 bg-[#1e345b]/50 hover:bg-[#28436e] border border-[#2d4b7c] rounded-lg text-[9px] font-bold text-sky-400 hover:text-sky-300 transition-all active:scale-95 cursor-pointer shrink-0"
+                                >
+                                    <History size={10} />
+                                    過去成績確認
+                                </button>
+                            </div>
                             
                             <div className="space-y-2 max-h-[350px] overflow-y-auto pr-1 custom-scrollbar">
                                 {loading && battleLogs.length === 0 ? (
@@ -1730,6 +1941,9 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                     </div>
                 </div>
             )}
+
+            {/* 過去成績履歴確認サブモーダル */}
+            {renderHistoryModal()}
 
             {/* 防衛確認サブモーダル */}
             {renderDefenseModal()}

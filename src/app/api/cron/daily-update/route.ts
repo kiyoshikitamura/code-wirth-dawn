@@ -505,6 +505,135 @@ async function performUpdate(isForceUgcReset: boolean) {
         logs.push(`[RankingAggregation] error: ${rankErr.message}`);
     }
 
+    // 2.8. アリーナ（非同期PvP）デイリー ＆ シーズン集計処理 (毎日 JST 18:00 のみ実行)
+    try {
+        const now = new Date();
+        const jstOffset = 9 * 60 * 60 * 1000;
+        const jstNow = new Date(now.getTime() + jstOffset);
+
+        // JST基準で18:00付近であるか判定 (UTC 9:00 = JST 18:00。Cron起動は6時間ごとなので exact match)
+        const isJst18 = jstNow.getUTCHours() === 9;
+
+        if (isJst18) {
+            logs.push(`[PvPArenaUpdate] Starting PvP Arena daily/season aggregation...`);
+
+            // A. デイリーランキングキャッシュの強制更新 (集計前の最新化)
+            const { data: topPlayersDaily } = await supabaseServer
+                .from('user_profiles')
+                .select('id, name, avatar_url, level, job_class, arena_rate')
+                .order('arena_rate', { ascending: false })
+                .limit(50);
+
+            if (topPlayersDaily) {
+                const listData = topPlayersDaily.map((p, idx) => ({
+                    rank: idx + 1,
+                    user_id: p.id,
+                    user_name: p.name || '名もなき旅人',
+                    avatar_url: p.avatar_url || null,
+                    level: p.level ?? 1,
+                    job_class: p.job_class || 'Adventurer',
+                    arena_rate: p.arena_rate ?? 1000
+                }));
+                await supabaseServer
+                    .from('pvp_ranking_cache')
+                    .upsert({
+                        ranking_type: 'daily',
+                        list_data: listData,
+                        updated_at: now.toISOString()
+                    }, { onConflict: 'ranking_type' });
+            }
+
+            // B. デイリー履歴のアーカイブ (RPC)
+            const dateStr = jstNow.toISOString().split('T')[0]; // YYYY-MM-DD
+            const { error: dailyErr } = await supabaseServer.rpc('archive_pvp_daily_history', {
+                p_date_str: dateStr
+            });
+            if (dailyErr) {
+                logs.push(`[PvPArenaUpdate] Failed to archive daily history: ${dailyErr.message}`);
+            } else {
+                logs.push(`[PvPArenaUpdate] Successfully archived daily history for date: ${dateStr}`);
+            }
+
+            // C. シーズンリセット判定 (毎週水曜日 JST 18:00)
+            const isWednesday = jstNow.getUTCDay() === 3;
+            if (isWednesday) {
+                logs.push(`[PvPArenaUpdate] Wednesday 18:00 JST detected. Running PvP Season Reset...`);
+
+                // 1) シーズンランキングキャッシュの強制更新
+                const { data: topPlayersSeason } = await supabaseServer
+                    .from('user_profiles')
+                    .select('id, name, avatar_url, level, job_class, arena_rate')
+                    .order('arena_rate', { ascending: false })
+                    .limit(50);
+
+                if (topPlayersSeason) {
+                    const listData = topPlayersSeason.map((p, idx) => ({
+                        rank: idx + 1,
+                        user_id: p.id,
+                        user_name: p.name || '名もなき旅人',
+                        avatar_url: p.avatar_url || null,
+                        level: p.level ?? 1,
+                        job_class: p.job_class || 'Adventurer',
+                        arena_rate: p.arena_rate ?? 1000
+                    }));
+                    await supabaseServer
+                        .from('pvp_ranking_cache')
+                        .upsert({
+                            ranking_type: 'season',
+                            list_data: listData,
+                            updated_at: now.toISOString()
+                        }, { onConflict: 'ranking_type' });
+                }
+
+                // 2) シーズン履歴のアーカイブ (RPC)
+                const seasonId = `season_${jstNow.getUTCFullYear()}${(jstNow.getUTCMonth()+1).toString().padStart(2,'0')}${jstNow.getUTCDate().toString().padStart(2,'0')}`;
+                const { error: seasonErr } = await supabaseServer.rpc('archive_pvp_season_history', {
+                    p_season_id: seasonId
+                });
+                if (seasonErr) {
+                    logs.push(`[PvPArenaUpdate] Failed to archive season history: ${seasonErr.message}`);
+                } else {
+                    logs.push(`[PvPArenaUpdate] Successfully archived season history for ID: ${seasonId}`);
+                }
+
+                // 3) デイリー履歴のクリア (今シーズンのデイリー成績はシーズン切り替わりでクリアされる)
+                const { error: clearDailyErr } = await supabaseServer
+                    .from('pvp_daily_history')
+                    .delete()
+                    .neq('id', 0);
+                if (clearDailyErr) {
+                    logs.push(`[PvPArenaUpdate] Failed to clear daily history: ${clearDailyErr.message}`);
+                } else {
+                    logs.push(`[PvPArenaUpdate] Successfully cleared daily history for the new season`);
+                }
+
+                // 4) 全ユーザーのアリーナレートを1000に一括リセット (変更があるアクティブユーザーに絞り込んで負荷低減)
+                const { error: resetRateErr } = await supabaseServer
+                    .from('user_profiles')
+                    .update({ arena_rate: 1000 })
+                    .neq('arena_rate', 1000);
+                if (resetRateErr) {
+                    logs.push(`[PvPArenaUpdate] Failed to reset user arena rates: ${resetRateErr.message}`);
+                } else {
+                    logs.push(`[PvPArenaUpdate] Successfully reset user arena rates to 1000`);
+                }
+            }
+
+            // D. 古い（30日以上前）履歴データの自動クリーンアップ
+            const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
+            await Promise.all([
+                supabaseServer.from('pvp_daily_history').delete().lt('created_at', thirtyDaysAgo),
+                supabaseServer.from('pvp_season_history').delete().lt('created_at', thirtyDaysAgo)
+            ]).then(() => {
+                logs.push(`[PvPArenaUpdate] Cleaned up PvP history older than 30 days`);
+            }).catch(err => {
+                logs.push(`[PvPArenaUpdate] Failed to cleanup old PvP history: ${err.message}`);
+            });
+        }
+    } catch (arenaUpdateExc: any) {
+        logs.push(`[PvPArenaUpdate] Exception: ${arenaUpdateExc.message}`);
+    }
+
     // 3. 失効した匿名（テストプレイ）プロファイルを削除 (daily)
     // 安全のため失敗しても全体は継続する
     let cleanupLog = 'skipped';
