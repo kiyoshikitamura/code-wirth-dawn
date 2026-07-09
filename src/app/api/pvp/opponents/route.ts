@@ -8127,21 +8127,42 @@ export async function GET(req: Request) {
         });
 
         // 3. 不足分をゴーストデータで補填 (最大5件、同じゴーストNPCの重複も seenUserIds で完全遮断)
-        const ghostCountNeeded = 5 - opponentsList.length;
+        let ghostCountNeeded = 5 - opponentsList.length;
         if (ghostCountNeeded > 0) {
-            const ghostPool = GHOST_PRESETS[rankClass] || GHOST_PRESETS.C;
-            const shuffledGhosts = [...ghostPool].sort(() => Math.random() - 0.5);
+            // まずは自ランクのゴーストから補充
+            const primaryPool = GHOST_PRESETS[rankClass] || GHOST_PRESETS.C;
+            const shuffledPrimary = [...primaryPool].sort(() => Math.random() - 0.5);
             
-            let ghostAdded = 0;
-            for (const g of shuffledGhosts) {
-                if (ghostAdded >= ghostCountNeeded) break;
+            for (const g of shuffledPrimary) {
+                if (ghostCountNeeded <= 0) break;
                 if (!seenUserIds.has(g.user_id)) {
                     opponentsList.push({
                         ...g,
                         arena_rate: 1000
                     });
                     seenUserIds.add(g.user_id);
-                    ghostAdded++;
+                    ghostCountNeeded--;
+                }
+            }
+            
+            // それでも足りない場合は、全ランクのゴーストプールから重複しないものを補充
+            if (ghostCountNeeded > 0) {
+                const allRanks: ('S' | 'A' | 'B' | 'C')[] = ['S', 'A', 'B', 'C'];
+                for (const r of allRanks) {
+                    if (ghostCountNeeded <= 0) break;
+                    const fallbackPool = GHOST_PRESETS[r] || [];
+                    const shuffledFallback = [...fallbackPool].sort(() => Math.random() - 0.5);
+                    for (const g of shuffledFallback) {
+                        if (ghostCountNeeded <= 0) break;
+                        if (!seenUserIds.has(g.user_id)) {
+                            opponentsList.push({
+                                ...g,
+                                arena_rate: 1000
+                            });
+                            seenUserIds.add(g.user_id);
+                            ghostCountNeeded--;
+                        }
+                    }
                 }
             }
         }
