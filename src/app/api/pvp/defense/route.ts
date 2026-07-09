@@ -30,7 +30,7 @@ export async function GET(req: Request) {
 
         return NextResponse.json({
             success: true,
-            party: defenseParty || null
+            party: defenseParty ? defenseParty.snapshot_data : null
         });
 
     } catch (err: any) {
@@ -235,8 +235,7 @@ export async function POST(req: Request) {
         else if (totalScore >= 3000) rankClass = 'A';
         else if (totalScore >= 1500) rankClass = 'B';
 
-        // 7. pvp_defense_parties テーブルへの Upsert
-        const defenseData = {
+        const newSnapshot = {
             user_id: userId,
             user_name: profile.name || '名もなき旅人',
             avatar_url: profile.avatar_url || null,
@@ -254,24 +253,60 @@ export async function POST(req: Request) {
             party_members_snapshot: membersSnapshot,
             equipped_items_snapshot: equippedItems,
             skill_deck_snapshot: skillDeck,
-            updated_at: new Date().toISOString()
         };
 
-        const { error: upsertError } = await supabaseServer
+        // 7. 差分検知 (ディファレンシャル・アップデータによる無駄なWrite遮断)
+        const { data: existingParty } = await supabaseServer
             .from('pvp_defense_parties')
-            .upsert(defenseData, { onConflict: 'user_id' });
+            .select('snapshot_data')
+            .eq('user_id', userId)
+            .maybeSingle();
 
-        if (upsertError) {
-            console.error('[PvP Defense] Upsert error:', upsertError);
-            return NextResponse.json({ 
-                error: `防衛パーティの登録に失敗しました: [${upsertError.code}] ${upsertError.message}`,
-                details: upsertError 
-            }, { status: 500 });
+        let hasChanged = true;
+        if (existingParty && existingParty.snapshot_data) {
+            const ext = existingParty.snapshot_data;
+            const oldJSON = JSON.stringify({
+                battle_score: ext.battle_score,
+                player_snapshot: ext.player_snapshot,
+                party_members_snapshot: ext.party_members_snapshot?.map((m: any) => ({ id: m.id, level: m.level, hp: m.hp, atk: m.atk, def: m.def })),
+                equipped_items_snapshot: ext.equipped_items_snapshot,
+                skill_deck_snapshot: ext.skill_deck_snapshot
+            });
+            const newJSON = JSON.stringify({
+                battle_score: totalScore,
+                player_snapshot: newSnapshot.player_snapshot,
+                party_members_snapshot: membersSnapshot.map((m: any) => ({ id: m.id, level: m.level, hp: m.hp, atk: m.atk, def: m.def })),
+                equipped_items_snapshot: equippedItems,
+                skill_deck_snapshot: skillDeck
+            });
+            if (oldJSON === newJSON) {
+                hasChanged = false;
+            }
+        }
+
+        if (hasChanged) {
+            const { error: upsertError } = await supabaseServer
+                .from('pvp_defense_parties')
+                .upsert({
+                    user_id: userId,
+                    defender_rank: rankClass,
+                    snapshot_data: newSnapshot,
+                    updated_at: new Date().toISOString()
+                }, { onConflict: 'user_id' });
+
+            if (upsertError) {
+                console.error('[PvP Defense] Upsert error:', upsertError);
+                return NextResponse.json({ 
+                    error: `防衛パーティの登録に失敗しました: [${upsertError.code}] ${upsertError.message}`
+                }, { status: 500 });
+            }
+        } else {
+            console.log('[PvP Defense] No changes detected. Upsert skipped.');
         }
 
         return NextResponse.json({ 
             success: true, 
-            message: '防衛パーティを登録・更新しました。',
+            message: hasChanged ? '防衛パーティを登録・更新しました。' : '防衛パーティに変更はありませんでした。',
             score: totalScore,
             rank: rankClass
         });

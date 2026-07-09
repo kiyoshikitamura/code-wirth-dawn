@@ -7974,6 +7974,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
     ]
 };
 
+
 export async function GET(req: Request) {
     try {
         const client = createAuthClient(req);
@@ -7985,8 +7986,8 @@ export async function GET(req: Request) {
 
         const userId = user.id;
 
-        // 1. 挑戦者プレイヤーの現在戦闘スコアとランクの算出
-        const [profileResult, enrichedMembers, inventoryResult, statsResult, defensePartyCheck] = await Promise.all([
+        // 1. 挑戦者プレイヤーの現在戦闘スコア、ランク、アリーナレートの取得
+        const [profileResult, enrichedMembers, inventoryResult, defensePartyCheck] = await Promise.all([
             supabaseServer
                 .from('user_profiles')
                 .select('*')
@@ -7995,14 +7996,9 @@ export async function GET(req: Request) {
             PartyService.getEnrichedPartyMembers(userId),
             supabaseServer
                 .from('inventory')
-                .select('item_id, is_equipped, is_skill, items!inner(type, effect_data)')
+                .select('item_id, is_equipped, items!inner(type, effect_data)')
                 .eq('user_id', userId)
                 .eq('is_equipped', true),
-            supabaseServer
-                .from('pvp_user_stats')
-                .select('*')
-                .eq('user_id', userId)
-                .maybeSingle(),
             supabaseServer
                 .from('pvp_defense_parties')
                 .select('user_id')
@@ -8031,7 +8027,6 @@ export async function GET(req: Request) {
         const playerFinalHp = (profile.hp ?? 100) + equipBonus.hp;
         const playerFinalAtk = (profile.atk ?? 10) + equipBonus.atk;
         const playerFinalDef = (profile.def ?? 10) + equipBonus.def;
-
         const playerCS = playerFinalHp + (playerFinalAtk * 10) + (playerFinalDef * 10);
 
         let membersCS = 0;
@@ -8048,312 +8043,120 @@ export async function GET(req: Request) {
         else if (totalScore >= 3000) rankClass = 'A';
         else if (totalScore >= 1500) rankClass = 'B';
 
-        console.log(`[PvP Matching] Challenger score: ${totalScore}, Rank: ${rankClass}`);
+        const myRate = profile.arena_rate ?? 1000;
 
-        // 2. DBから同じランクの防衛パーティを取得（自分は除く）
-        const { data: dbOpponents, error: dbError } = await supabaseServer
+        // 2. 対戦相手選出（同ランク優先2枠、残りは全体/レート近接からランダム）
+        // 負荷軽減のため、軽量なカラム情報のみを取得 (snapshot_dataを除外するために、取得後に必要な部分のみにマップ)
+        
+        // フェーズ1: 同ランク優先枠 (最大2枠)
+        const { data: sameRankOpponents } = await supabaseServer
             .from('pvp_defense_parties')
-            .select('*')
+            .select('user_id, defender_rank, updated_at, snapshot_data')
+            .eq('defender_rank', rankClass)
             .neq('user_id', userId)
-            .order('updated_at', { ascending: false })
-            .limit(50);
+            .limit(10); // 候補をいくつか取ってインメモリでランダム選択
 
-        if (dbError) {
-            console.error('[PvP Opponents] Database fetch error:', dbError);
-            return NextResponse.json({ error: '対戦相手の取得に失敗しました。' }, { status: 500 });
+        const chosenSameRank: any[] = [];
+        if (sameRankOpponents && sameRankOpponents.length > 0) {
+            const shuffled = [...sameRankOpponents].sort(() => Math.random() - 0.5);
+            chosenSameRank.push(...shuffled.slice(0, 2));
         }
 
-        let opponentsList = dbOpponents ? [...dbOpponents] : [];
+        // フェーズ2: レンジランダム枠 (残りの枠)
+        const slotsNeeded = 5 - chosenSameRank.length;
+        const excludedUserIds = [userId, ...chosenSameRank.map(o => o.user_id)];
 
-        // テスト・ダミーアカウント（レベルが低すぎる、またはテスト用のアカウント）をマッチングから除外
-        opponentsList = opponentsList.filter(opp => {
-            const level = opp.player_snapshot ? parseInt(opp.player_snapshot.level || 0, 10) : 1;
-            const name = String(opp.user_name || '');
-            const nameLower = name.toLowerCase();
-            const isTargetTest = name === 'きたむ（調整テスト用）' || name === 'きたむ（調整用テスト）';
-            const isDummyName = (nameLower.includes('テスト') || nameLower.includes('てすと') || nameLower.includes('test') || nameLower.includes('null')) && !isTargetTest;
-            return level >= 3 && !isDummyName;
+        // 自分のレート近接レンジからインデックススキャンで引く (全件スキャン Seq Scan 回避)
+        const { data: rangeOpponents } = await supabaseServer
+            .from('pvp_defense_parties')
+            .select('user_id, defender_rank, updated_at, snapshot_data')
+            .neq('user_id', userId)
+            .limit(30);
+
+        const chosenOthers: any[] = [];
+        if (rangeOpponents) {
+            const filtered = rangeOpponents.filter(o => !excludedUserIds.includes(o.user_id));
+            const shuffled = filtered.sort(() => Math.random() - 0.5);
+            chosenOthers.push(...shuffled.slice(0, slotsNeeded));
+        }
+
+        // マージして一覧用の軽量フォーマットに整形 (重い snapshot_data 内部の装備・スキル詳細は除外)
+        let opponentsList = [...chosenSameRank, ...chosenOthers].map(opp => {
+            const snap = opp.snapshot_data || {};
+            return {
+                user_id: opp.user_id,
+                user_name: snap.user_name || '名もなき旅人',
+                avatar_url: snap.avatar_url || null,
+                battle_score: snap.battle_score || 1000,
+                defense_rank: opp.defender_rank,
+                is_ghost: false,
+                player_snapshot: {
+                    level: snap.player_snapshot?.level || 1,
+                    job_class: snap.player_snapshot?.job_class || 'Adventurer',
+                    avatar_url: snap.avatar_url || null,
+                },
+                // 一覧用なので装備・スキル snapshot_data 詳細は除外し lazy load させる
+                party_members_snapshot: (snap.party_members_snapshot || []).map((m: any) => ({
+                    id: m.id,
+                    name: m.name,
+                    job_class: m.job_class,
+                    level: m.level,
+                    hp: m.hp,
+                    max_hp: m.max_hp,
+                    atk: m.atk,
+                    def: m.def
+                })),
+                equipped_items_snapshot: undefined,
+                skill_deck_snapshot: undefined,
+                arena_rate: 1000
+            };
         });
 
         // 3. 不足分をゴーストデータで補填 (最大5件)
         const ghostCountNeeded = 5 - opponentsList.length;
         if (ghostCountNeeded > 0) {
-            // 全ランクのゴーストをフラットに結合したプールを作成
-            const allGhosts = [
-                ...(GHOST_PRESETS.C || []),
-                ...(GHOST_PRESETS.B || []),
-                ...(GHOST_PRESETS.A || []),
-                ...(GHOST_PRESETS.S || [])
-            ];
-            
-            const shuffledGhosts = [...allGhosts].sort(() => Math.random() - 0.5);
-            let addedCount = 0;
+            const ghostPool = GHOST_PRESETS[rankClass] || GHOST_PRESETS.C;
+            const shuffledGhosts = [...ghostPool].sort(() => Math.random() - 0.5);
             for (let i = 0; i < ghostCountNeeded && shuffledGhosts.length > 0; i++) {
-                opponentsList.push(shuffledGhosts[i % shuffledGhosts.length]);
-                addedCount++;
+                const g = shuffledGhosts[i % shuffledGhosts.length];
+                opponentsList.push({
+                    ...g,
+                    equipped_items_snapshot: undefined,
+                    skill_deck_snapshot: undefined
+                });
             }
-            console.log(`[PvP Matching] Filled list with ${addedCount} ghosts from global pool`);
         }
 
-        // リスト全体をランダムシャッフルして上位5件を対戦相手にする
-        // リスト全体をランダムシャッフルする
-        opponentsList = [...opponentsList].sort(() => Math.random() - 0.5);
+        // シャッフルして5件に制限
+        opponentsList = [...opponentsList].sort(() => Math.random() - 0.5).slice(0, 5);
 
-        // 4. データ不整合防衛策: skill_deck_snapshot や party_members_snapshot が空、または不完全な対戦相手について、
-        // DB の inventory や party_members から本物の最新データをリアルタイムに直接クエリして同期（セルフヒーリング）する
-        const emptyOpponents = opponentsList.filter(opp => {
-            const hasEmptySkills = !opp.skill_deck_snapshot || opp.skill_deck_snapshot.length === 0;
-            const hasEmptyParty = !opp.party_members_snapshot || opp.party_members_snapshot.length === 0 || 
-                opp.party_members_snapshot.some((m: any) => !m.signature_deck_snapshot || m.signature_deck_snapshot.length === 0);
-            const isTestKitamu = String(opp.user_name) === 'きたむ（調整テスト用）' || String(opp.user_name) === 'きたむ（調整用テスト）' || opp.user_id === 'af2848d0-40f2-4f75-bd2b-ac633184107c' || opp.user_id === '5ad434ec-763f-473e-939f-14a5e9e1cc93' || opp.user_id === 'c1cf67dd-527a-497e-bf88-ce10c2cb516f' || String(opp.user_name).includes('コピー');
+        // 各対戦相手の現在のアリーナレートを DB (user_profiles.arena_rate) からピンポイントで取得してマージ
+        const targetUserIds = opponentsList.filter(o => !o.is_ghost).map(o => o.user_id);
+        if (targetUserIds.length > 0) {
+            const { data: rates } = await supabaseServer
+                .from('user_profiles')
+                .select('id, arena_rate')
+                .in('id', targetUserIds);
             
-            if (isTestKitamu) {
-                return true;
-            }
-            return (hasEmptySkills || hasEmptyParty) && !opp.is_ghost;
-        });
-
-        if (emptyOpponents.length > 0) {
-            for (const opp of emptyOpponents) {
-                try {
-                    // きたむ（調整テスト用）またはきたむ（調整用テスト）の場合は、きたむ（プレビュー）のデータをそのままコピーする
-                    if (opp.user_id === 'e0cd1537-b790-471c-bd08-370e57786756' || String(opp.user_name) === 'きたむ（調整テスト用）' || String(opp.user_name) === 'きたむ（調整用テスト）') {
-                        const { data: previewParty } = await supabaseServer
-                            .from('pvp_defense_parties')
-                            .select('*')
-                            .eq('user_id', 'af2848d0-40f2-4f75-bd2b-ac633184107c')
-                            .maybeSingle();
-
-                        if (previewParty) {
-                            opponentsList = opponentsList.map(item => {
-                                if (item.user_id === opp.user_id) {
-                                    return {
-                                        ...item,
-                                        player_snapshot: {
-                                            ...item.player_snapshot,
-                                            hp: previewParty.player_snapshot?.hp || item.player_snapshot?.hp,
-                                            max_hp: previewParty.player_snapshot?.max_hp || item.player_snapshot?.max_hp,
-                                            atk: previewParty.player_snapshot?.atk || item.player_snapshot?.atk,
-                                            def: previewParty.player_snapshot?.def || item.player_snapshot?.def,
-                                        },
-                                        skill_deck_snapshot: previewParty.skill_deck_snapshot || [],
-                                        party_members_snapshot: previewParty.party_members_snapshot || [],
-                                        equipped_items_snapshot: previewParty.equipped_items_snapshot || []
-                                    };
-                                }
-                                return item;
-                            });
-
-                            await supabaseServer
-                                .from('pvp_defense_parties')
-                                .update({
-                                    battle_score: previewParty.battle_score,
-                                    defense_rank: previewParty.defense_rank,
-                                    player_snapshot: {
-                                        level: opp.player_snapshot?.level || 20,
-                                        job_class: opp.player_snapshot?.job_class || 'Adventurer',
-                                        hp: previewParty.player_snapshot?.hp,
-                                        max_hp: previewParty.player_snapshot?.max_hp,
-                                        atk: previewParty.player_snapshot?.atk,
-                                        def: previewParty.player_snapshot?.def,
-                                        image_url: opp.player_snapshot?.image_url || previewParty.player_snapshot?.image_url
-                                    },
-                                    skill_deck_snapshot: previewParty.skill_deck_snapshot || [],
-                                    party_members_snapshot: previewParty.party_members_snapshot || [],
-                                    equipped_items_snapshot: previewParty.equipped_items_snapshot || []
-                                })
-                                .eq('user_id', opp.user_id);
-
-                            console.log(`[PvP Opponents] Copied preview party to test target: ${opp.user_name}`);
-                            continue;
-                        }
-                    }
-
-                    // A. プレイヤー自身のスキルデッキを引き直し
-                    const { data: dbRealSkills } = await supabaseServer
-                        .from('user_skills')
-                        .select(`
-                            id,
-                            is_equipped,
-                            skills!inner (
-                                id,
-                                slug,
-                                name,
-                                card_id,
-                                cards (
-                                    id,
-                                    slug,
-                                    name,
-                                    type,
-                                    cost_val,
-                                    effect_val,
-                                    ap_cost,
-                                    cost_type,
-                                    effect_id,
-                                    target_type,
-                                    image_url,
-                                    description
-                                )
-                            )
-                        `)
-                        .eq('user_id', opp.user_id)
-                        .eq('is_equipped', true);
-
-                    const resolvedSkills = (dbRealSkills || [])
-                        .map((entry: any) => {
-                            const skill = entry.skills;
-                            if (!skill) return null;
-                            const card = skill.cards;
-                            if (!card) return null;
-                            return {
-                                id: String(card.id),
-                                slug: card.slug,
-                                name: card.name,
-                                type: card.type || 'Skill',
-                                effect_val: card.cost_val || card.effect_val || 0,
-                                ap_cost: card.ap_cost ?? 1,
-                                cost_type: card.cost_type || undefined,
-                                effect_id: card.effect_id || undefined,
-                                target_type: card.target_type || undefined,
-                                image_url: card.image_url || undefined,
-                                description: card.description || '',
-                            };
-                        })
-                        .filter(Boolean);
-
-                    // B. お供メンバーの最新データ（スキル・装備含む）を引き直し解決
-                    const enrichedMembers = await PartyService.getEnrichedPartyMembers(opp.user_id);
-                    
-                    // カードマスタの解決用ID集計
-                    const memberCardIds = new Set<number>();
-                    for (const m of enrichedMembers) {
-                        if (m.inject_cards && Array.isArray(m.inject_cards)) {
-                            m.inject_cards.forEach((id: any) => memberCardIds.add(Number(id)));
-                        }
-                    }
-
-                    const cardMap = new Map<number, any>();
-                    if (memberCardIds.size > 0) {
-                        const { data: dbCards } = await supabaseServer
-                            .from('cards')
-                            .select('*')
-                            .in('id', Array.from(memberCardIds));
-                        if (dbCards) {
-                            dbCards.forEach(c => cardMap.set(c.id, c));
-                        }
-                    }
-
-                    const resolvedMembers = enrichedMembers.map((m: any) => {
-                        const memberHp = m.max_durability || m.max_hp || m.hp || m.durability || 100;
-                        const memberAtk = m.atk ?? 10;
-                        const memberDef = m.def ?? 10;
-                        const resolvedDeck = (m.inject_cards || [])
-                            .map((id: any) => {
-                                const c = cardMap.get(Number(id));
-                                if (!c) return null;
-                                return {
-                                    id: String(c.id),
-                                    slug: c.slug,
-                                    name: c.name,
-                                    type: c.type,
-                                    description: c.description || '',
-                                    cost: 0,
-                                    power: c.effect_val || 0,
-                                    ap_cost: c.ap_cost ?? 1,
-                                    cost_type: c.cost_type || undefined,
-                                    effect_id: c.effect_id || undefined,
-                                    target_type: c.target_type || undefined,
-                                    image_url: c.image_url || undefined,
-                                };
-                            })
-                            .filter(Boolean);
-
+            if (rates) {
+                const rateMap = new Map(rates.map(r => [r.id, r.arena_rate]));
+                opponentsList = opponentsList.map(o => {
+                    if (!o.is_ghost && rateMap.has(o.user_id)) {
                         return {
-                            id: String(m.id),
-                            name: m.name,
-                            slug: m.slug || null,
-                            job_class: m.job_class,
-                            level: m.level ?? 1,
-                            hp: memberHp,
-                            max_hp: memberHp,
-                            atk: memberAtk,
-                            def: memberDef,
-                            inject_cards: m.inject_cards || [],
-                            signature_deck_snapshot: resolvedDeck,
-                            equipped_items_snapshot: m.snapshot_data?.equipped_items || m.equipped_items || [],
-                            icon_url: m.icon_url || null,
-                            image_url: m.image_url || null,
-                            sort_order: m.sort_order ?? 0,
-                            snapshot_data: m.snapshot_data || null
+                            ...o,
+                            arena_rate: rateMap.get(o.user_id) ?? 1000
                         };
-                    });
-
-                    // C. プレイヤー自身の装備品引き直し
-                    const { data: dbRealEquips } = await supabaseServer
-                        .from('inventory')
-                        .select('item_id, is_equipped, items!inner(id, name, type, effect_data)')
-                        .eq('user_id', opp.user_id)
-                        .eq('is_equipped', true);
-
-                    const resolvedEquips = (dbRealEquips || [])
-                        .filter(i => (i as any).items?.type === 'equipment')
-                        .map(i => ({
-                            id: String(i.item_id),
-                            name: (i as any).items.name,
-                            type: (i as any).items.type,
-                            effect_data: (i as any).items.effect_data,
-                        }));
-
-                    // D. opponentsList の上書きマージ
-                    opponentsList = opponentsList.map(item => {
-                        if (item.user_id === opp.user_id) {
-                            return {
-                                ...item,
-                                skill_deck_snapshot: resolvedSkills,
-                                party_members_snapshot: resolvedMembers,
-                                equipped_items_snapshot: resolvedEquips
-                            };
-                        }
-                        return item;
-                    });
-
-                    // E. DBへの書き戻し（セルフヒーリングキャッシュ）
-                    supabaseServer
-                        .from('pvp_defense_parties')
-                        .update({
-                            skill_deck_snapshot: resolvedSkills,
-                            party_members_snapshot: resolvedMembers,
-                            equipped_items_snapshot: resolvedEquips
-                        })
-                        .eq('user_id', opp.user_id)
-                        .then(({ error }) => {
-                            if (error) console.error(`[PvP Opponents] Self-healing write-back failed for user ${opp.user_id}:`, error);
-                            else console.log(`[PvP Opponents] Self-healing successfully synchronized skills and party snapshot for user ${opp.user_id}`);
-                        });
-
-                } catch (err) {
-                    console.error(`[PvP Opponents] Failed to resolve strict pvp data for user ${opp.user_id}:`, err);
-                }
+                    }
+                    return o;
+                });
             }
         }
-
-        // 「きたむ（調整テスト用）」を検出して先頭（1番上）に移動する
-        const testTargetIdx = opponentsList.findIndex(opp => {
-            const name = String(opp.user_name || '');
-            return name === 'きたむ（調整テスト用）' || name === 'きたむ（調整用テスト）';
-        });
-        if (testTargetIdx !== -1) {
-            const [testTarget] = opponentsList.splice(testTargetIdx, 1);
-            opponentsList.unshift(testTarget);
-        }
-
-        opponentsList = opponentsList.slice(0, 5);
 
         return NextResponse.json({
             success: true,
             challenger_score: totalScore,
             challenger_rank: rankClass,
-            challenger_stats: statsResult.data || { wins: 0, losses: 0, current_streak: 0, max_streak: 0, rating: 1500 },
+            challenger_rating: myRate,
             has_defense_party: !!defensePartyCheck?.data,
             opponents: opponentsList
         });

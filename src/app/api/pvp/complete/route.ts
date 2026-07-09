@@ -5,6 +5,46 @@ import { supabaseServer } from '@/lib/supabase-admin';
 
 export const dynamic = 'force-dynamic';
 
+function getRatingChanges(myRank: string, oppRank: string, isVictory: boolean): { attackerChange: number; defenderChange: number } {
+    const rankWeights: Record<string, number> = { 'S': 4, 'A': 3, 'B': 2, 'C': 1 };
+    const myWeight = rankWeights[myRank] || 1;
+    const oppWeight = rankWeights[oppRank] || 1;
+
+    let attackerChange = 0;
+    let defenderChange = 0;
+
+    if (myWeight < oppWeight) {
+        // 格上相手
+        if (isVictory) {
+            attackerChange = Math.floor(Math.random() * (50 - 30 + 1)) + 30; // +30〜50
+            defenderChange = -(Math.floor(Math.random() * (50 - 30 + 1)) + 30); // 相手は格下に負けたので -30〜50
+        } else {
+            attackerChange = -(Math.floor(Math.random() * (10 - 1 + 1)) + 1); // -1〜10
+            defenderChange = Math.floor(Math.random() * (10 - 1 + 1)) + 1; // 相手は格上に勝ったので +1〜10
+        }
+    } else if (myWeight === oppWeight) {
+        // 同格
+        if (isVictory) {
+            attackerChange = Math.floor(Math.random() * (25 - 10 + 1)) + 10; // +10〜25
+            defenderChange = -(Math.floor(Math.random() * (25 - 10 + 1)) + 10); // -10〜25
+        } else {
+            attackerChange = -(Math.floor(Math.random() * (25 - 10 + 1)) + 10); // -10〜25
+            defenderChange = Math.floor(Math.random() * (25 - 10 + 1)) + 10; // +10〜25
+        }
+    } else {
+        // 格下相手
+        if (isVictory) {
+            attackerChange = Math.floor(Math.random() * (10 - 1 + 1)) + 1; // +1〜10
+            defenderChange = -(Math.floor(Math.random() * (10 - 1 + 1)) + 1); // -1〜10
+        } else {
+            attackerChange = -(Math.floor(Math.random() * (50 - 30 + 1)) + 30); // -30〜50
+            defenderChange = Math.floor(Math.random() * (50 - 30 + 1)) + 30; // 相手は格上に勝ったので +30〜50
+        }
+    }
+
+    return { attackerChange, defenderChange };
+}
+
 export async function POST(req: Request) {
     try {
         const client = createAuthClient(req);
@@ -15,165 +55,120 @@ export async function POST(req: Request) {
         }
 
         const userId = user.id;
-        const { is_victory, opponent_id, opponent_name, battle_logs } = await req.json();
+        const { is_victory, opponent_id, opponent_name, text_log, my_rank, opponent_rank } = await req.json();
 
-        if (is_victory === undefined || !opponent_name) {
+        if (is_victory === undefined || !opponent_id) {
             return NextResponse.json({ error: 'パラメータが不足しています。' }, { status: 400 });
         }
 
-        // 1. プロフィール情報取得（年代記用）
-        const { data: profile } = await supabaseServer
+        // 1. 自分自身のプロフィール情報（現在レート）の取得
+        const { data: myProfile, error: myError } = await supabaseServer
             .from('user_profiles')
-            .select('current_location_id, locations:locations!fk_current_location(name), accumulated_days')
+            .select('arena_rate')
             .eq('id', userId)
-            .maybeSingle();
+            .single();
 
-        // 2. 現在の戦績取得
-        const { data: stats, error: statsError } = await supabaseServer
-            .from('pvp_user_stats')
-            .select('*')
-            .eq('user_id', userId)
-            .maybeSingle();
-
-        let currentWins = stats?.wins ?? 0;
-        let currentLosses = stats?.losses ?? 0;
-        let currentStreak = stats?.current_streak ?? 0;
-        let maxStreak = stats?.max_streak ?? 0;
-        let currentRating = stats?.rating ?? 1500;
-
-        let ratingChange = 0;
-
-        // 3. 勝敗による計算
-        if (is_victory) {
-            currentWins += 1;
-            currentStreak += 1;
-            maxStreak = Math.max(maxStreak, currentStreak);
-            ratingChange = 16; // 勝利時は+16
-            currentRating += ratingChange;
-        } else {
-            currentLosses += 1;
-            currentStreak = 0;
-            ratingChange = -12; // 敗北時は-12
-            currentRating = Math.max(1000, currentRating + ratingChange); // レーティング下限1000
+        if (myError || !myProfile) {
+            return NextResponse.json({ error: '自身のプロフィールが見つかりません。' }, { status: 404 });
         }
 
-        // 4. 戦績の Upsert
-        const { error: upsertError } = await supabaseServer
-            .from('pvp_user_stats')
-            .upsert({
-                user_id: userId,
-                wins: currentWins,
-                losses: currentLosses,
-                current_streak: currentStreak,
-                max_streak: maxStreak,
-                rating: currentRating,
-                updated_at: new Date().toISOString()
-            });
-
-        if (upsertError) {
-            console.error('[PvP Complete] Stats upsert error:', upsertError);
-            return NextResponse.json({ error: '戦績の更新に失敗しました。' }, { status: 500 });
+        // 2. 対戦相手のアリーナレートの取得（ゴーストでなければ）
+        let oppRate = 1000;
+        const isGhost = opponent_id.startsWith('ghost_');
+        if (!isGhost) {
+            const { data: oppProfile } = await supabaseServer
+                .from('user_profiles')
+                .select('arena_rate')
+                .eq('id', opponent_id)
+                .maybeSingle();
+            if (oppProfile) {
+                oppRate = oppProfile.arena_rate ?? 1000;
+            }
         }
 
-        // 4.5 プレイヤーのクエストロック解除 (current_quest_id = null)
-        const { error: resetLockError } = await supabaseServer
+        // 3. 自分と相手のランク比較によるレート増減値の決定
+        const { attackerChange, defenderChange } = getRatingChanges(
+            my_rank || 'C',
+            opponent_rank || 'C',
+            is_victory
+        );
+
+        const newMyRate = Math.max(1000, (myProfile.arena_rate ?? 1000) + attackerChange);
+        const newOppRate = Math.max(1000, oppRate + defenderChange);
+
+        // 4. 自分自身のレートを DB 更新（およびクエスト進行中ロックの解除）
+        const { error: myUpdateError } = await supabaseServer
             .from('user_profiles')
-            .update({ current_quest_id: null })
+            .update({
+                arena_rate: newMyRate,
+                current_quest_id: null
+            })
             .eq('id', userId);
 
-        if (resetLockError) {
-            console.error('[PvP Complete] Reset quest lock error:', resetLockError);
-            // 警告ログを出すが、戦績自体は更新できているので処理は続行
+        if (myUpdateError) {
+            console.error('[PvP Complete] Attacker rate update failed:', myUpdateError);
+            return NextResponse.json({ error: 'アリーナレートの更新に失敗しました。' }, { status: 500 });
         }
 
-        // 5. 個人タイムライン（年代記）にインサート
-        try {
-            const locName = (profile as any)?.locations?.name || '闘技場';
-            const days = profile?.accumulated_days ?? 0;
-            await supabaseServer.from('user_chronicles').insert({
-                user_id: userId,
-                event_type: 'arena_battle',
-                accumulated_days: days,
-                location_id: profile?.current_location_id || null,
-                location_name: locName,
-                title: is_victory ? `闘技場勝利 (vs ${opponent_name})` : `闘技場敗北 (vs ${opponent_name})`,
-                description: `${opponent_name}の防衛パーティとの対人戦に挑み、${is_victory ? '見事勝利を収めた' : '惜しくも敗北した'}。(レート: ${currentRating - ratingChange} ➔ ${currentRating})`,
-                param_changes: {
-                    is_victory,
-                    opponent_id,
-                    opponent_name,
-                    rating_change: ratingChange,
-                    new_rating: currentRating,
-                    battle_logs: battle_logs || []
-                }
-            });
-        } catch (chronicleErr) {
-            console.warn('[PvP Complete] Chronicle insert failed (ignored):', chronicleErr);
+        // 5. ゴーストではない対戦相手（防衛側）のレートを DB 更新 (アトミックに加算)
+        if (!isGhost) {
+            await supabaseServer
+                .from('user_profiles')
+                .update({
+                    arena_rate: newOppRate
+                })
+                .eq('id', opponent_id);
         }
 
-        // 5.5 防衛側（対戦相手）の戦績更新 ＆ 防衛ログの登録
-        if (opponent_id && opponent_id !== 'ghost' && !opponent_id.startsWith('ghost_')) {
+        // 6. バトルログの非同期バックグラウンド書き込み (API応答時間の劇的短縮)
+        // 攻撃側視点（challenge）と、ゴーストでなければ防衛側視点（defense）の2つのログを書き込む
+        const logPromise = (async () => {
             try {
-                const { data: oppStats } = await supabaseServer
-                    .from('pvp_user_stats')
-                    .select('*')
-                    .eq('user_id', opponent_id)
-                    .maybeSingle();
-
-                let oppWins = oppStats?.wins ?? 0;
-                let oppLosses = oppStats?.losses ?? 0;
-                let oppRating = oppStats?.rating ?? 1500;
-                const oppRatingChange = is_victory ? -12 : 16;
-                
-                if (is_victory) {
-                    oppLosses += 1;
-                } else {
-                    oppWins += 1;
-                }
-                const nextOppRating = Math.max(1000, oppRating + oppRatingChange);
-
+                // 攻撃側ログ
                 await supabaseServer
-                    .from('pvp_user_stats')
-                    .upsert({
-                        user_id: opponent_id,
-                        wins: oppWins,
-                        losses: oppLosses,
-                        rating: nextOppRating,
-                        updated_at: new Date().toISOString()
-                    });
-
-                const { data: challengerProfile } = await supabaseServer
-                    .from('user_profiles')
-                    .select('name')
-                    .eq('id', userId)
-                    .maybeSingle();
-                const challengerName = challengerProfile?.name || '名もなき冒険者';
-
-                await supabaseServer
-                    .from('pvp_defense_logs')
+                    .from('pvp_battle_logs')
                     .insert({
-                        user_id: opponent_id,
-                        challenger_id: userId,
-                        challenger_name: challengerName,
-                        is_defense_win: !is_victory,
-                        rating_change: oppRatingChange,
-                        battle_logs: battle_logs || []
+                        attacker_user_id: userId,
+                        defender_user_id: isGhost ? '00000000-0000-0000-0000-000000000000' : opponent_id,
+                        is_attacker_victory: is_victory,
+                        attacker_rate_change: attackerChange,
+                        defender_rate_change: defenderChange,
+                        battle_type: 'challenge',
+                        text_log: text_log || ''
                     });
-                
-                console.log(`[PvP Complete] Successfully updated defense stats/logs for user ${opponent_id}`);
-            } catch (defenseErr) {
-                console.error('[PvP Complete] Failed to update defense stats/logs:', defenseErr);
+
+                // 防衛側ログ (相手がゴーストでなければ)
+                if (!isGhost) {
+                    await supabaseServer
+                        .from('pvp_battle_logs')
+                        .insert({
+                            attacker_user_id: userId,
+                            defender_user_id: opponent_id,
+                            is_attacker_victory: is_victory,
+                            attacker_rate_change: attackerChange,
+                            defender_rate_change: defenderChange,
+                            battle_type: 'defense',
+                            text_log: text_log || ''
+                        });
+                }
+                console.log('[PvP Complete] Async battle logs inserted successfully.');
+            } catch (err) {
+                console.error('[PvP Complete] Async log insert error:', err);
             }
+        })();
+
+        // Vercel サーバー側でレスポンス返却後に非同期プロセスが打ち切られるのを防ぐため、
+        // 開発環境および本番環境のサーバーランタイムで非同期で待機（Next.js の waitUntil が無いため Promise のまま実行）
+        if (typeof process !== 'undefined') {
+            process.nextTick(() => logPromise);
         }
 
         return NextResponse.json({
             success: true,
-            wins: currentWins,
-            losses: currentLosses,
-            current_streak: currentStreak,
-            max_streak: maxStreak,
-            rating: currentRating,
-            rating_change: ratingChange
+            is_victory,
+            new_rating: newMyRate,
+            rating_change: attackerChange,
+            opponent_rating_change: defenderChange
         });
 
     } catch (err: any) {
