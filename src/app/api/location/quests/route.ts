@@ -66,9 +66,8 @@ export async function GET(req: Request) {
         const generation = (retiredCount || 0) + 1;
 
         // 2. All remaining data fetches in parallel
-        const [worldStateResult, allWorldStatesResult, inventoryResult, reputationsResult, completedQuestsResult, locationResult, scenariosResult] = await Promise.all([
-            supabaseServer.from('world_states').select('id, prosperity_level, location_name').maybeSingle(),
-            supabaseServer.from('world_states').select('id, order_score, chaos_score, justice_score, evil_score, updated_at'),
+        const [allWorldStatesResult, inventoryResult, reputationsResult, completedQuestsResult, locationResult, scenariosResult] = await Promise.all([
+            supabaseServer.from('world_states').select('id, location_name, prosperity_level, order_score, chaos_score, justice_score, evil_score, updated_at'),
             supabaseServer.from('inventory').select('item_id, quantity').eq('user_id', userId),
             supabaseServer.from('reputations').select('location_name, score').eq('user_id', userId),
             supabaseServer
@@ -88,7 +87,9 @@ export async function GET(req: Request) {
         ]);
 
         // Extract results
-        const worldState = worldStateResult.data;
+        let allWorldStates = allWorldStatesResult.data || [];
+        const currentLocationName = locationResult.data?.name;
+        const worldState = allWorldStates.find((ws: any) => ws.location_name === currentLocationName) || null;
         const inventory = inventoryResult.data;
         const rawCompletedQuests = completedQuestsResult.data || [];
         const reputations = reputationsResult.data;
@@ -104,10 +105,7 @@ export async function GET(req: Request) {
         // v4.2: world_states.controlling_nation を location_name 経由で取得
         let currentNationSlug: string | null = locationResult.data?.ruling_nation_id || null;
         if (locationResult.data?.name) {
-            const { data: ws } = await supabaseServer.from('world_states')
-                .select('controlling_nation')
-                .eq('location_name', locationResult.data.name)
-                .maybeSingle();
+            const ws = allWorldStates.find((w: any) => w.location_name === locationResult.data.name);
             if (ws?.controlling_nation) {
                 currentNationSlug = ws.controlling_nation;
             }
@@ -129,7 +127,6 @@ export async function GET(req: Request) {
         debug.push(`prosperity = ${currentProsperity} (scale: 1-5) `);
 
         // 2.5 Alignment reset fallback + world states for alignment percentage calculation
-        let allWorldStates = allWorldStatesResult.data || [];
 
         // 6時間リセット: Cronで定期実行に移行（/api/cron/world-reset）
         // フォールバック: Cron未実行時のために、read時にもリセットを実行

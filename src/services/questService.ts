@@ -500,9 +500,8 @@ export class QuestService {
             throw new Error(uError?.message || 'User not found');
         }
 
-        const [worldStateResult, allWorldStatesResult, inventoryResult, reputationsResult, completedQuestsResult, locationResult, scenariosResult, retiredResult] = await Promise.all([
-            supabaseServer.from('world_states').select('id, prosperity_level, location_name').maybeSingle(),
-            supabaseServer.from('world_states').select('id, order_score, chaos_score, justice_score, evil_score, updated_at'),
+        const [allWorldStatesResult, inventoryResult, reputationsResult, completedQuestsResult, locationResult, scenariosResult, retiredResult] = await Promise.all([
+            supabaseServer.from('world_states').select('id, location_name, prosperity_level, order_score, chaos_score, justice_score, evil_score, updated_at'),
             supabaseServer.from('inventory').select('item_id, quantity').eq('user_id', userId),
             supabaseServer.from('reputations').select('location_name, score').eq('user_id', userId),
             supabaseServer
@@ -521,7 +520,9 @@ export class QuestService {
             supabaseServer.from('retired_characters').select('*', { count: 'exact', head: true }).eq('user_id', userId)
         ]);
 
-        const worldState = worldStateResult.data;
+        let allWorldStates = allWorldStatesResult.data || [];
+        const currentLocationName = locationResult.data?.name;
+        const worldState = allWorldStates.find((ws: any) => ws.location_name === currentLocationName) || null;
         const inventory = inventoryResult.data;
         const reputations = reputationsResult.data;
         const completedQuests = completedQuestsResult.data;
@@ -531,18 +532,13 @@ export class QuestService {
          let currentNationSlug: string | null = locationResult.data?.ruling_nation_id || null;
         let currentLocationSlug: string | null = locationResult.data?.slug || null;
         if (locationResult.data?.name) {
-            const { data: ws } = await supabaseServer.from('world_states')
-                .select('controlling_nation')
-                .eq('location_name', locationResult.data.name)
-                .maybeSingle();
+            const ws = allWorldStates.find((w: any) => w.location_name === locationResult.data.name);
             if (ws?.controlling_nation) {
                 currentNationSlug = ws.controlling_nation;
             }
         }
         const quests = scenariosResult.data || [];
         const currentProsperity = worldState?.prosperity_level || 3;
-
-        let allWorldStates = allWorldStatesResult.data || [];
 
         // worldStateReset 処理は廃止され、世界状態の更新は Cron (updateWorldSimulation) に統合されたため、リセット処理は削除
 

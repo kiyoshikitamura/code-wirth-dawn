@@ -63,7 +63,15 @@ export async function POST(req: Request) {
                 // ハブ拠点: 固定100G
                 finalCost = 100;
             } else if (locData) {
-                const prosp = locData.prosperity_level || 3;
+                let prosp = locData.prosperity_level || 3;
+                if (locData.name) {
+                    const { data: ws } = await supabaseService
+                        .from('world_states')
+                        .select('prosperity_level')
+                        .eq('location_name', locData.name)
+                        .maybeSingle();
+                    if (ws) prosp = ws.prosperity_level || locData.prosperity_level || 3;
+                }
                 if (prosp >= 4) finalCost = ECONOMY_RULES.INN_REST_COST_CHEAP;
                 else if (prosp <= 2) finalCost = ECONOMY_RULES.INN_REST_COST_EXPENSIVE;
                 else finalCost = ECONOMY_RULES.INN_REST_COST_BASE;

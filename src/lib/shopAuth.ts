@@ -76,10 +76,17 @@ export async function getInflationMultiplier(locationId: string | undefined): Pr
     if (locationId) {
         const { data: loc } = await supabaseServer
             .from('locations')
-            .select('prosperity_level')
+            .select('name, prosperity_level')
             .eq('id', locationId)
             .maybeSingle();
-        if (loc) prosperityLevel = loc.prosperity_level || 3;
+        if (loc) {
+            const { data: ws } = await supabaseServer
+                .from('world_states')
+                .select('prosperity_level')
+                .eq('location_name', loc.name)
+                .maybeSingle();
+            prosperityLevel = ws?.prosperity_level || loc.prosperity_level || 3;
+        }
     }
     const inflationMap: Record<number, number> = { 5: 1.0, 4: 1.0, 3: 1.2, 2: 1.5, 1: 3.0 };
     return { multiplier: inflationMap[prosperityLevel] || 1.0, prosperityLevel };
