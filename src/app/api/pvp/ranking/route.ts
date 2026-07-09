@@ -49,10 +49,11 @@ export async function GET(req: Request) {
 
         // 3. キャッシュ期限切れの場合のみ、DB集計を走らせて更新
         if (isExpired) {
-            // DB負荷軽減のため、インデックスを利用した上位50名のみのソートスキャン
+            // DB負荷軽減のため、インデックスを利用した上位50名のみのソートスキャン (本番テストユーザーは除外)
             const { data: topPlayers, error: fetchErr } = await supabaseServer
                 .from('user_profiles')
                 .select('id, name, avatar_url, level, job_class, arena_rate')
+                .neq('id', 'c1cf67dd-527a-497e-bf88-ce10c2cb516f')
                 .order('arena_rate', { ascending: false })
                 .limit(50);
 
@@ -78,10 +79,11 @@ export async function GET(req: Request) {
             }
         }
 
-        // 4. 自分自身のリアルタイム順位を COUNT クエリで高速特定 (全件ソートSeq Scanの回避)
+        // 4. 自分自身のリアルタイム順位を COUNT クエリで高速特定 (本番テストユーザーを除外してカウント)
         const { count: higherRateCount } = await supabaseServer
             .from('user_profiles')
             .select('*', { count: 'exact', head: true })
+            .neq('id', 'c1cf67dd-527a-497e-bf88-ce10c2cb516f')
             .gt('arena_rate', myRate);
 
         const myCurrentRank = (higherRateCount ?? 0) + 1;
