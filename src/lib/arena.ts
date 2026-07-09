@@ -9,7 +9,11 @@ export function calculateCurrentCP(
     dbCP: number,
     lastRecoveredAtStr: string | Date
 ): { currentCP: number; nextRecoveryTimeMs: number | null; recoveredPoints: number } {
-    const lastTime = new Date(lastRecoveredAtStr).getTime();
+    let timeStr = typeof lastRecoveredAtStr === 'string' ? lastRecoveredAtStr : lastRecoveredAtStr.toISOString();
+    if (typeof lastRecoveredAtStr === 'string' && !timeStr.endsWith('Z') && !timeStr.includes('+') && !timeStr.includes('-')) {
+        timeStr = timeStr.replace(' ', 'T') + 'Z';
+    }
+    const lastTime = new Date(timeStr).getTime();
     const now = Date.now();
     const elapsed = now - lastTime;
 
