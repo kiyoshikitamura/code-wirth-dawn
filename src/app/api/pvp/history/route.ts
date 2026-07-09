@@ -22,12 +22,14 @@ export async function GET(req: Request) {
                 .select('season_id, arena_rate, rank, created_at')
                 .eq('user_id', userId)
                 .order('created_at', { ascending: false })
+                .order('id', { ascending: false })
                 .limit(50),
             supabaseServer
                 .from('pvp_daily_history')
                 .select('date_str, arena_rate, rank, created_at')
                 .eq('user_id', userId)
                 .order('created_at', { ascending: false })
+                .order('id', { ascending: false })
                 .limit(50)
         ]);
 
