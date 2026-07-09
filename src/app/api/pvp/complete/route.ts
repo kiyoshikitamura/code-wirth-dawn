@@ -55,7 +55,14 @@ export async function POST(req: Request) {
         }
 
         const userId = user.id;
-        const { is_victory, opponent_id, opponent_name, text_log, my_rank, opponent_rank } = await req.json();
+        const { is_victory, opponent_id, opponent_name, text_log, battle_logs, my_rank, opponent_rank } = await req.json();
+
+        let textLogStr = '';
+        if (text_log) {
+            textLogStr = text_log;
+        } else if (Array.isArray(battle_logs)) {
+            textLogStr = battle_logs.join('\n');
+        }
 
         if (is_victory === undefined || !opponent_id) {
             return NextResponse.json({ error: 'パラメータが不足しています。' }, { status: 400 });
@@ -132,7 +139,7 @@ export async function POST(req: Request) {
                     attacker_rate_change: attackerChange,
                     defender_rate_change: defenderChange,
                     battle_type: 'challenge',
-                    text_log: text_log || ''
+                    text_log: textLogStr || ''
                 });
 
             console.log('[PvP Complete] Battle log inserted successfully.');
