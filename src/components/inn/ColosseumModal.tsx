@@ -155,7 +155,7 @@ export default function ColosseumModal({ onClose }: ColosseumModalProps) {
                                     soundManager?.playSE('se_item_get');
                                     setMode('pvp');
                                 }}
-                                className="flex flex-col items-center justify-center p-6 bg-[#0f1d35]/60 border border-[#20365b] hover:border-amber-500/50 hover:bg-[#152747] rounded-xl text-center transition-all group cursor-pointer shadow-lg hover:scale-105 active:scale-95"
+                                className="flex flex-col items-center justify-start pt-7 pb-5 px-4 h-[170px] bg-[#0f1d35]/60 border border-[#20365b] hover:border-amber-500/50 hover:bg-[#152747] rounded-xl text-center transition-all group cursor-pointer shadow-lg hover:scale-105 active:scale-95"
                             >
                                 <Swords size={40} className="text-amber-400 mb-3 group-hover:animate-bounce" />
                                 <span className="text-base font-black text-slate-100">対人戦</span>
@@ -170,7 +170,7 @@ export default function ColosseumModal({ onClose }: ColosseumModalProps) {
                                     soundManager?.playSE('se_item_get');
                                     setMode('pve');
                                 }}
-                                className="flex flex-col items-center justify-center p-6 bg-[#0f1d35]/60 border border-[#20365b] hover:border-amber-500/50 hover:bg-[#152747] rounded-xl text-center transition-all group cursor-pointer shadow-lg hover:scale-105 active:scale-95"
+                                className="flex flex-col items-center justify-start pt-7 pb-5 px-4 h-[170px] bg-[#0f1d35]/60 border border-[#20365b] hover:border-amber-500/50 hover:bg-[#152747] rounded-xl text-center transition-all group cursor-pointer shadow-lg hover:scale-105 active:scale-95"
                             >
                                 <Trophy size={40} className="text-amber-500/80 mb-3 group-hover:animate-bounce" />
                                 <span className="text-base font-black text-slate-100">ボス戦</span>

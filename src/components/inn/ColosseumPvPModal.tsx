@@ -894,6 +894,171 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
         );
     };
 
+    // ランキングサブモーダル
+    const renderRankingSubModal = () => {
+        if (!showRankingSubModal) return null;
+
+        return (
+            <div className="absolute inset-0 z-50 flex items-center justify-center p-4 bg-[#050b14]/90 backdrop-blur-sm animate-in fade-in duration-200">
+                <div className="relative w-full max-w-md bg-[#0c1628]/95 border border-[#1e345b] rounded-2xl overflow-hidden shadow-[0_0_50px_rgba(30,52,91,0.5)] flex flex-col max-h-[80vh]">
+                    
+                    {/* Header */}
+                    <div className="flex items-center justify-between px-6 py-4 bg-[#11203b]/80 border-b border-[#1e345b]">
+                        <div className="flex items-center gap-2 text-amber-400">
+                            <Trophy size={18} className="animate-pulse" />
+                            <h3 className="font-black tracking-widest text-sm text-slate-100">コロシアムランキング</h3>
+                        </div>
+                        <button
+                            onClick={() => setShowRankingSubModal(false)}
+                            className="text-slate-400 hover:text-white transition-colors p-1 rounded-lg hover:bg-white/5"
+                        >
+                            <X size={18} />
+                        </button>
+                    </div>
+
+                    {/* Content Area */}
+                    <div className="flex-1 overflow-y-auto p-5 space-y-4 custom-scrollbar text-left">
+                        <div className="flex items-center justify-between">
+                            <div className="flex bg-[#0b1220] border border-[#1e345b] rounded-lg p-0.5 animate-in fade-in">
+                                <button
+                                    onClick={() => setRankingType('season')}
+                                    className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${rankingType === 'season' ? 'bg-amber-500 text-slate-950' : 'text-slate-400'}`}
+                                >
+                                    シーズン
+                                </button>
+                                <button
+                                    onClick={() => setRankingType('daily')}
+                                    className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${rankingType === 'daily' ? 'bg-amber-500 text-slate-950' : 'text-slate-400'}`}
+                                >
+                                    デイリー
+                                </button>
+                            </div>
+
+                            {/* 報酬確認ボタン */}
+                            <button
+                                onClick={checkClaimableRewards}
+                                className="flex items-center gap-1 px-3 py-1.5 bg-amber-500/10 hover:bg-amber-500/25 border border-amber-500/30 rounded-lg text-[10px] font-bold text-amber-400 hover:text-amber-300 transition-all active:scale-95 cursor-pointer shrink-0"
+                            >
+                                <Award size={12} />
+                                報酬一覧/受取
+                            </button>
+                        </div>
+
+                        {/* デイリーの場合はデイリーの集計期間を表示 (改行しないようにコンパクト化) */}
+                        {rankingType === 'daily' && (
+                            <div className="text-[9px] text-slate-400 bg-[#09111c]/60 border border-[#213a65]/40 rounded-xl px-3 py-1.5 font-mono flex items-center justify-between shadow-inner animate-in fade-in duration-200">
+                                <span className="text-slate-500 font-bold">集計期間:</span>
+                                <span className="text-amber-300 font-bold text-[9px] whitespace-nowrap">{getDailyPeriodStr()}</span>
+                            </div>
+                        )}
+
+                        {/* My Ranking Status */}
+                        {myRankingStatus && (
+                            <div className="bg-gradient-to-r from-[#1b3152]/70 to-[#0e1c33]/70 border-2 border-amber-500/40 rounded-xl p-3 flex items-center justify-between shadow-md animate-in slide-in-from-top-2 duration-200">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-xs font-black text-amber-400 font-mono w-10 text-center shrink-0">
+                                        {myRankingStatus.rank}位
+                                    </span>
+                                    <div className="w-8 h-8 rounded-full border border-amber-500/30 bg-[#070e1e] flex items-center justify-center overflow-hidden shrink-0">
+                                        {myRankingStatus.avatar_url ? (
+                                            <img src={myRankingStatus.avatar_url} alt="" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <User size={14} className="text-slate-500" />
+                                        )}
+                                    </div>
+                                    <div>
+                                        <h4 className="text-xs font-bold text-slate-100 flex items-center gap-1.5">
+                                            {myRankingStatus.user_name}
+                                            <span className="text-[8px] bg-amber-500/20 text-amber-300 px-1 py-0.2 rounded font-black">
+                                                {myRankingStatus.job_class?.slice(0, 4)}
+                                            </span>
+                                        </h4>
+                                        <span className="text-[9px] text-slate-400 block font-mono">あなた</span>
+                                    </div>
+                                </div>
+                                <span className="text-xs font-black text-amber-400 font-mono shrink-0">
+                                    {myRankingStatus.arena_rate.toLocaleString()} pts
+                                </span>
+                            </div>
+                        )}
+
+                        {/* 可読性のための明確な区切り線 */}
+                        <div className="relative flex py-1 items-center">
+                            <div className="flex-grow border-t border-[#1e345b]/60"></div>
+                            <span className="flex-shrink mx-4 text-[9px] text-[#5586d5] uppercase font-black tracking-wider">RANKINGS</span>
+                            <div className="flex-grow border-t border-[#1e345b]/60"></div>
+                        </div>
+
+                        {/* Top 50 List */}
+                        <div className="space-y-1.5 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
+                            {loading && rankingList.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center py-16 space-y-3">
+                                    <RefreshCw className="animate-spin text-amber-500" size={24} />
+                                    <span className="text-xs text-slate-400">ランキングをロード中...</span>
+                                </div>
+                            ) : (
+                                <>
+                                    {rankingList.map((player) => (
+                                        <div
+                                            key={player.user_id}
+                                            className={`p-2.5 border rounded-lg flex items-center justify-between transition-all ${player.user_id === userProfile?.id ? 'bg-[#1b3152]/40 border-amber-500/30' : 'bg-[#0f1d35]/40 border-[#1e345b]/50'}`}
+                                        >
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-xs font-black text-slate-400 font-mono w-9 text-center">
+                                                    {player.rank}位
+                                                </span>
+                                                <div 
+                                                    onClick={() => setViewingProfileUserId(player.user_id)}
+                                                    className="w-7 h-7 rounded-full border border-slate-700 bg-black/40 flex items-center justify-center overflow-hidden cursor-pointer hover:border-amber-400 shrink-0"
+                                                >
+                                                    {player.avatar_url ? (
+                                                        <img src={player.avatar_url} alt="" className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <User size={12} className="text-slate-600" />
+                                                    )}
+                                                </div>
+                                                <div className="text-left">
+                                                    <h5 
+                                                        onClick={() => setViewingProfileUserId(player.user_id)}
+                                                        className="text-xs font-bold text-slate-200 truncate cursor-pointer hover:text-amber-400"
+                                                    >
+                                                        {player.user_name}
+                                                    </h5>
+                                                    <span className="text-[9px] text-slate-400 block font-mono">
+                                                        Lv.{player.level} | {player.job_class}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <span className="text-xs font-bold text-slate-300 font-mono shrink-0">
+                                                {player.arena_rate.toLocaleString()} pts
+                                            </span>
+                                        </div>
+                                    ))}
+
+                                    {rankingList.length === 0 && !loading && (
+                                        <div className="text-center py-10 text-xs text-slate-500">
+                                            ランキングデータはありません。
+                                        </div>
+                                    )}
+                                </>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="px-6 py-4 bg-[#0a0d14] border-t border-[#1e345b] flex justify-end">
+                        <button
+                            onClick={() => setShowRankingSubModal(false)}
+                            className="px-4 py-2 bg-[#1f2937] border border-slate-700 text-slate-300 font-bold text-xs rounded-xl hover:text-white transition-all cursor-pointer active:scale-95"
+                        >
+                            閉じる
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
     // 過去成績履歴確認モーダル
     const renderHistoryModal = () => {
         if (!showHistoryModal) return null;
@@ -1116,7 +1281,7 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                 </div>
 
                 {/* Top Profile Info & Season & CP & Defense Deck (Always Visible) */}
-                <div className="px-6 py-4 bg-[#0e192c] border-b border-[#1e345b]/60 flex flex-col gap-2.5">
+                <div className="px-6 py-2.5 bg-[#0e192c] border-b border-[#1e345b]/60 flex flex-col gap-2">
                     
                     {/* Season Info (先頭に王冠を配置、浮遊カット) */}
                     <div className="bg-[#12223f]/80 px-4 py-2 border border-[#213a65] rounded-xl text-left flex items-center gap-2 shadow-inner">
@@ -1178,33 +1343,40 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                         </div>
                     </div>
 
-                    {/* アリーナレート (モバイル用にサイズを縮小してコンパクトに) */}
-                    <div className="text-center bg-[#070e1c]/40 border border-[#1b2f51]/40 rounded-xl py-1.5 flex items-center justify-center gap-2 min-h-[42px]">
-                        <span className="text-[10px] text-slate-300 font-bold tracking-widest uppercase">アリーナレート</span>
-                        {syncing ? (
-                            <RefreshCw className="animate-spin text-amber-500 w-4 h-4 mx-4" />
-                        ) : (
-                            <span className="text-lg font-black text-amber-400 font-mono tracking-wider">
-                                {arenaRate.toLocaleString()}
-                            </span>
-                        )}
-                        <span className="text-[10px] text-slate-400 font-mono">pts</span>
+                    {/* レート表示 ＆ ランキングボタン (横並びで縦幅を節約) */}
+                    <div className="flex items-center gap-2">
+                        <div className="flex-1 text-center bg-[#070e1c]/40 border border-[#1b2f51]/40 rounded-xl py-1.5 flex items-center justify-center gap-1.5">
+                            <span className="text-[9px] text-slate-300 font-bold tracking-widest uppercase">レート</span>
+                            {syncing ? (
+                                <RefreshCw className="animate-spin text-amber-500 w-3 h-3" />
+                            ) : (
+                                <span className="text-base font-black text-amber-400 font-mono tracking-wider">
+                                    {arenaRate.toLocaleString()}
+                                </span>
+                            )}
+                            <span className="text-[9px] text-slate-400 font-mono">pts</span>
+                        </div>
+
+                        <button
+                            onClick={() => {
+                                soundManager?.playSE('se_item_get');
+                                setShowRankingSubModal(true);
+                            }}
+                            className="px-3.5 py-1.5 bg-gradient-to-r from-amber-500/10 to-amber-600/10 hover:from-amber-500/20 border border-amber-500/30 rounded-xl text-[10px] font-black text-amber-400 hover:text-amber-300 transition-all active:scale-95 cursor-pointer shrink-0 flex items-center gap-1"
+                        >
+                            <Trophy size={10} />
+                            ランキング
+                        </button>
                     </div>
                 </div>
 
                 {/* Tab buttons */}
-                <div className="grid grid-cols-4 bg-[#0a1120] border-b border-[#1e345b] text-center text-xs">
+                <div className="grid grid-cols-3 bg-[#0a1120] border-b border-[#1e345b] text-center text-xs">
                     <button
                         onClick={() => { soundManager?.playSE('se_item_get'); setTab('opponents'); }}
                         className={`py-3 font-bold border-b-2 transition-all ${tab === 'opponents' ? 'text-amber-400 border-amber-500 bg-[#11203b]/30' : 'text-slate-400 border-transparent hover:text-slate-200'}`}
                     >
                         対戦相手
-                    </button>
-                    <button
-                        onClick={() => { soundManager?.playSE('se_item_get'); setTab('ranking'); }}
-                        className={`py-3 font-bold border-b-2 transition-all ${tab === 'ranking' ? 'text-amber-400 border-amber-500 bg-[#11203b]/30' : 'text-slate-400 border-transparent hover:text-slate-200'}`}
-                    >
-                        ランキング
                     </button>
                     <button
                         onClick={() => { soundManager?.playSE('se_item_get'); setTab('logs'); }}
@@ -2039,6 +2211,9 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
 
             {/* 過去成績履歴確認サブモーダル */}
             {renderHistoryModal()}
+
+            {/* ランキングサブモーダル */}
+            {renderRankingSubModal()}
 
             {/* 自動防衛登録確認アラート */}
             {renderAutoDefenseAlert()}
