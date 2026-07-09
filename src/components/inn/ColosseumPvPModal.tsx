@@ -1157,46 +1157,55 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">バトル履歴 (過去20戦)</span>
                             
                             <div className="space-y-2 max-h-[350px] overflow-y-auto pr-1 custom-scrollbar">
-                                {battleLogs.map((log, idx) => {
-                                    const dateStr = new Date(log.created_at).toLocaleString('ja-JP', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-                                    const isWin = log.is_victory;
-                                    const isChallenge = log.battle_type === 'challenge';
-                                    
-                                    return (
-                                        <div
-                                            key={log.id || idx}
-                                            className="bg-[#0f1d35]/60 border border-[#20365b] rounded-xl p-3 flex items-center justify-between"
-                                        >
-                                            <div className="space-y-1">
-                                                <div className="flex items-center gap-1.5">
-                                                    <span className={`text-[8px] font-black px-1.5 py-0.2 rounded ${isChallenge ? 'bg-sky-500/10 text-sky-400 border border-sky-500/20' : 'bg-purple-500/10 text-purple-400 border border-purple-500/20'}`}>
-                                                        {isChallenge ? '挑戦' : '防衛'}
-                                                    </span>
-                                                    <span className={`text-[9px] font-black px-1.5 py-0.2 rounded ${isWin ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}`}>
-                                                        {isWin ? '勝利' : '敗北'}
-                                                    </span>
-                                                    <span className="text-xs font-bold text-slate-200">{log.opponent_name}</span>
-                                                </div>
-                                                <p className="text-[9px] text-slate-400 font-mono">
-                                                    {dateStr} | レート変動: <span className={log.rate_change >= 0 ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold'}>{log.rate_change >= 0 ? `+${log.rate_change}` : log.rate_change} pts</span>
-                                                </p>
-                                            </div>
-
-                                            <button
-                                                disabled={loadingLogText}
-                                                onClick={() => handleViewBattleLogText(log.id)}
-                                                className="px-3 py-1.5 bg-[#15243d] hover:bg-[#1f3559] border border-[#264573] rounded-lg text-[10px] font-bold text-slate-200 active:scale-95 transition-all cursor-pointer"
-                                            >
-                                                ログ表示
-                                            </button>
-                                        </div>
-                                    );
-                                })}
-
-                                {battleLogs.length === 0 && !loading && (
-                                    <div className="text-center py-10 text-xs text-slate-500 italic">
-                                        バトル履歴はありません。
+                                {loading && battleLogs.length === 0 ? (
+                                    <div className="flex flex-col items-center justify-center py-20 space-y-3">
+                                        <RefreshCw className="animate-spin text-amber-500" size={24} />
+                                        <span className="text-xs text-slate-400">バトルログをロード中...</span>
                                     </div>
+                                ) : (
+                                    <>
+                                        {battleLogs.map((log, idx) => {
+                                            const dateStr = new Date(log.created_at).toLocaleString('ja-JP', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                                            const isWin = log.is_victory;
+                                            const isChallenge = log.battle_type === 'challenge';
+                                            
+                                            return (
+                                                <div
+                                                    key={log.id || idx}
+                                                    className="bg-[#0f1d35]/60 border border-[#20365b] rounded-xl p-3 flex items-center justify-between"
+                                                >
+                                                    <div className="space-y-1">
+                                                        <div className="flex items-center gap-1.5">
+                                                            <span className={`text-[8px] font-black px-1.5 py-0.2 rounded ${isChallenge ? 'bg-sky-500/10 text-sky-400 border border-sky-500/20' : 'bg-purple-500/10 text-purple-400 border border-purple-500/20'}`}>
+                                                                {isChallenge ? '挑戦' : '防衛'}
+                                                            </span>
+                                                            <span className={`text-[9px] font-black px-1.5 py-0.2 rounded ${isWin ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}`}>
+                                                                {isWin ? '勝利' : '敗北'}
+                                                            </span>
+                                                            <span className="text-xs font-bold text-slate-200">{log.opponent_name}</span>
+                                                        </div>
+                                                        <p className="text-[9px] text-slate-400 font-mono">
+                                                            {dateStr} | レート変動: <span className={log.rate_change >= 0 ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold'}>{log.rate_change >= 0 ? `+${log.rate_change}` : log.rate_change} pts</span>
+                                                        </p>
+                                                    </div>
+
+                                                    <button
+                                                        disabled={loadingLogText}
+                                                        onClick={() => handleViewBattleLogText(log.id)}
+                                                        className="px-3 py-1.5 bg-[#15243d] hover:bg-[#1f3559] border border-[#264573] rounded-lg text-[10px] font-bold text-slate-200 active:scale-95 transition-all cursor-pointer"
+                                                    >
+                                                        ログ表示
+                                                    </button>
+                                                </div>
+                                            );
+                                        })}
+
+                                        {battleLogs.length === 0 && !loading && (
+                                            <div className="text-center py-10 text-xs text-slate-500 italic">
+                                                バトル履歴はありません。
+                                            </div>
+                                        )}
+                                    </>
                                 )}
                             </div>
                         </div>
