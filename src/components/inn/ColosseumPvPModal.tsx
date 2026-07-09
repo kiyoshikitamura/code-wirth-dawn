@@ -578,6 +578,7 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
     // 初期マウント時の対戦相手フェッチ (バトル後の最新レート・CPを即時反映するため強制フェッチ)
     useEffect(() => {
         fetchOpponents(true);
+        syncStats();
     }, []);
 
     // 防衛パーティ未登録時のアラート自動起動
