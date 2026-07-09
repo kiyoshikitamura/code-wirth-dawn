@@ -8121,8 +8121,7 @@ export async function GET(req: Request) {
                 const g = shuffledGhosts[i % shuffledGhosts.length];
                 opponentsList.push({
                     ...g,
-                    equipped_items_snapshot: undefined,
-                    skill_deck_snapshot: undefined
+                    arena_rate: 1000
                 });
             }
         }

@@ -5,6 +5,7 @@ import { useGameStore } from '@/store/gameStore';
 import { getAuthHeaders } from '@/lib/authToken';
 import { soundManager } from '@/lib/soundManager';
 import { Swords, Trophy, X, RefreshCw, Shield, User, Zap, BookOpen, Clock, Award, ChevronRight } from 'lucide-react';
+import SimpleUserProfilePopup from '@/components/shared/SimpleUserProfilePopup';
 
 interface ColosseumPvPModalProps {
     onClose: () => void;
@@ -12,7 +13,6 @@ interface ColosseumPvPModalProps {
 
 // クライアント側での極小キャッシュ（モーダルを開き直した際の一瞬のチラつき防止）
 let localOpponentsCache: any[] = [];
-let localChallengerStatsCache: any = null;
 
 export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
     const [mounted, setMounted] = useState(false);
@@ -45,6 +45,9 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
     const [claimableRewards, setClaimableRewards] = useState<any[]>([]);
     const [showRewardModal, setShowRewardModal] = useState<boolean>(false);
 
+    // User Profile Popup
+    const [viewingProfileUserId, setViewingProfileUserId] = useState<string | null>(null);
+
     // UI States
     const [loading, setLoading] = useState(false);
     const [updatingDefense, setUpdatingDefense] = useState(false);
@@ -62,6 +65,38 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
             setPortalTarget(document.body);
         }
     }, []);
+
+    // 現在のシーズン期間算出（水曜日 18:00 切り替え）
+    const getCurrentSeasonPeriod = () => {
+        const now = new Date();
+        const jstOffset = 9 * 60 * 60 * 1000;
+        const jstNow = new Date(now.getTime() + jstOffset);
+
+        // 前回の水曜日 18:00
+        const prevWed = new Date(jstNow);
+        const currentDay = jstNow.getUTCDay(); // 0:日, 3:水
+        let daysToSubtract = currentDay - 3;
+        if (daysToSubtract < 0) daysToSubtract += 7;
+        
+        prevWed.setUTCDate(jstNow.getUTCDate() - daysToSubtract);
+        prevWed.setUTCHours(9, 0, 0, 0); // JST 18:00 -> UTC 9:00
+
+        if (prevWed.getTime() > jstNow.getTime()) {
+            prevWed.setUTCDate(prevWed.getUTCDate() - 7);
+        }
+
+        // 次回の水曜日 18:00
+        const nextWed = new Date(prevWed);
+        nextWed.setUTCDate(prevWed.getUTCDate() + 7);
+
+        // UTCからローカル時間に戻して整形
+        const formatJST = (d: Date) => {
+            const l = new Date(d.getTime() - jstOffset);
+            return `${l.getFullYear()}/${(l.getMonth()+1).toString().padStart(2,'0')}/${l.getDate().toString().padStart(2,'0')} 18:00`;
+        };
+
+        return `${formatJST(prevWed)} 〜 ${formatJST(nextWed)}`;
+    };
 
     // 1. CPとアリーナレートの超軽量同期 (sync-stats)
     const syncStats = async () => {
@@ -178,10 +213,17 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
 
     // 5. 特定対戦相手の装備・スキル詳細を遅延ロード (Lazy Load)
     const loadOpponentDetail = async (oppId: string, opponentObj: any) => {
-        setLoadingDetail(true);
+        setErrorMsg(null);
         setSelectedOpponent(opponentObj);
         setSelectedOpponentDetail(null);
-        setErrorMsg(null);
+
+        // ゴースト（NPC）の場合はAPIコールの必要がなく、一覧に含まれているプリセット詳細データをそのままマージする
+        if (oppId.startsWith('ghost_')) {
+            setSelectedOpponentDetail(opponentObj);
+            return;
+        }
+
+        setLoadingDetail(true);
         try {
             const authHeaders = await getAuthHeaders();
             const res = await fetch(`/api/pvp/opponent-detail?user_id=${oppId}`, {
@@ -214,7 +256,7 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
             return;
         }
 
-        setLoading(true);
+        setLoading(true); // 連打禁止のためローディング化
         setErrorMsg(null);
         soundManager?.playSE('se_item_get');
 
@@ -228,7 +270,7 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                 const data = await res.json();
                 setCP(data.new_cp);
                 setSuccessMsg('コロシアムポイントを10回復しました！');
-                fetchUserProfile(); // ゲームストアのゴールド同期
+                fetchUserProfile(); // ゴールド等同期
                 setTimeout(() => setSuccessMsg(null), 3000);
             } else {
                 const data = await res.json();
@@ -258,7 +300,7 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
 
             if (res.ok) {
                 const data = await res.json();
-                setSuccessMsg(data.message || '現在のパーティ構成で防衛登録を更新しました！');
+                setSuccessMsg(data.message || '現在のパーティ状況で防衛登録を更新しました！');
                 setChallengerScore(data.score || challengerScore);
                 setChallengerRank(data.rank || challengerRank);
                 setHasDefenseParty(true);
@@ -314,9 +356,10 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
         }
     };
 
-    // 10. 未受け取り報酬のチェック
+    // 10. 未受け取り報酬のチェック (モーダル表示)
     const checkClaimableRewards = async () => {
         setErrorMsg(null);
+        setLoading(true);
         try {
             const authHeaders = await getAuthHeaders();
             const res = await fetch('/api/pvp/claim-rewards', {
@@ -327,9 +370,15 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                 const data = await res.json();
                 setClaimableRewards(data.rewards || []);
                 setShowRewardModal(true);
+            } else {
+                const data = await res.json();
+                setErrorMsg(data.error || '報酬データの取得に失敗しました。');
             }
         } catch (err) {
             console.error('[PvP Check Reward] Error:', err);
+            setErrorMsg('通信エラーが発生しました。');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -396,7 +445,7 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                 setSelectedOpponent(null);
                 setSelectedOpponentDetail(null);
                 
-                // PvPバトル仮想クエストに遷移
+                // PvPクエストへ遷移
                 router.push(`/quest/${data.quest_id}`);
             } else {
                 const data = await res.json();
@@ -467,9 +516,18 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                     </button>
                 </div>
 
-                {/* CP Bar & Top Profile Info */}
+                {/* Top Profile Info & Season & CP & Defense Deck (Always Visible) */}
                 <div className="px-6 py-4 bg-[#0e192c] border-b border-[#1e345b]/60 flex flex-col gap-3">
-                    <div className="flex justify-between items-center">
+                    
+                    {/* Season Info */}
+                    <div className="text-left">
+                        <span className="text-[9px] text-[#5586d5] uppercase font-bold tracking-wider block">CURRENT SEASON</span>
+                        <span className="text-xs text-slate-300 font-mono font-medium block">
+                            {getCurrentSeasonPeriod()}
+                        </span>
+                    </div>
+
+                    <div className="flex justify-between items-center mt-1">
                         <div className="flex items-center gap-2">
                             <span className="text-[10px] bg-amber-500/20 text-amber-400 border border-amber-500/30 px-1.5 py-0.5 rounded font-black">
                                 {challengerRank} RANK
@@ -482,8 +540,8 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                         </div>
                     </div>
 
-                    {/* CP Display */}
-                    <div className="flex items-center justify-between px-4 py-2.5 bg-[#12223f]/50 border border-[#213a65]/50 rounded-xl">
+                    {/* CP Bar */}
+                    <div className="flex items-center justify-between px-4 py-2 bg-[#12223f]/50 border border-[#213a65]/50 rounded-xl">
                         <div className="flex items-center gap-1.5">
                             <Clock size={13} className="text-blue-300" />
                             <span className="text-[11px] text-blue-200 font-bold">CP:</span>
@@ -495,12 +553,32 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                             </span>
                         </div>
                         <button
-                            disabled={cp >= 6 || gold < 5000}
+                            disabled={loading || cp >= 6 || gold < 5000}
                             onClick={handleRecoverCP}
-                            className="px-2.5 py-1 bg-amber-500/10 hover:bg-amber-500/20 disabled:opacity-30 disabled:pointer-events-none border border-amber-500/30 hover:border-amber-500/50 rounded-lg text-[10px] font-black text-amber-400 transition-all active:scale-95 shrink-0"
+                            className="px-2.5 py-1 bg-amber-500/10 hover:bg-amber-500/20 disabled:opacity-30 disabled:pointer-events-none border border-amber-500/30 hover:border-amber-500/50 rounded-lg text-[10px] font-black text-amber-400 transition-all active:scale-95 shrink-0 cursor-pointer"
                             title="ゴールド5,000Gを消費してCPを10回復します"
                         >
-                            +10 CP (5k G)
+                            +10 CP (5,000G)
+                        </button>
+                    </div>
+
+                    {/* Defense Deck Operations (Always Visible) */}
+                    <div className="grid grid-cols-2 gap-2 mt-1">
+                        <button
+                            disabled={updatingDefense || loading}
+                            onClick={handleUpdateDefense}
+                            className="flex items-center justify-center gap-1.5 py-2 bg-[#15243d] hover:bg-[#1f3559] border border-[#264573] rounded-xl text-[11px] font-bold text-slate-200 active:scale-95 disabled:opacity-50 transition-all cursor-pointer"
+                        >
+                            <RefreshCw size={11} className={updatingDefense ? 'animate-spin' : ''} />
+                            防衛登録を更新
+                        </button>
+                        <button
+                            disabled={!hasDefenseParty || loading}
+                            onClick={handleViewMyDefense}
+                            className="flex items-center justify-center gap-1.5 py-2 bg-[#15243d] hover:bg-[#1f3559] border border-[#264573] rounded-xl text-[11px] font-bold text-slate-200 active:scale-95 disabled:opacity-50 transition-all cursor-pointer"
+                        >
+                            <Shield size={11} />
+                            防衛構成を確認
                         </button>
                     </div>
                 </div>
@@ -551,34 +629,6 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                     {tab === 'opponents' && (
                         <div className="space-y-4 text-left">
                             <div className="flex items-center justify-between">
-                                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">防衛デッキ設定</span>
-                                <span className={`text-[9px] font-black px-1.5 py-0.5 rounded ${hasDefenseParty ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}`}>
-                                    {hasDefenseParty ? '防衛登録済' : '防衛未登録'}
-                                </span>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-2">
-                                <button
-                                    disabled={updatingDefense}
-                                    onClick={handleUpdateDefense}
-                                    className="flex items-center justify-center gap-1.5 py-2.5 bg-[#15243d] hover:bg-[#1f3559] border border-[#264573] rounded-xl text-xs font-bold text-slate-200 active:scale-95 disabled:opacity-50 transition-all cursor-pointer"
-                                >
-                                    <RefreshCw size={12} className={updatingDefense ? 'animate-spin' : ''} />
-                                    防衛登録を更新
-                                </button>
-                                <button
-                                    disabled={!hasDefenseParty}
-                                    onClick={handleViewMyDefense}
-                                    className="flex items-center justify-center gap-1.5 py-2.5 bg-[#15243d] hover:bg-[#1f3559] border border-[#264573] rounded-xl text-xs font-bold text-slate-200 active:scale-95 disabled:opacity-50 transition-all cursor-pointer"
-                                >
-                                    <Shield size={12} />
-                                    防衛構成を確認
-                                </button>
-                            </div>
-
-                            <div className="border-t border-[#1e345b]/50 my-3" />
-
-                            <div className="flex items-center justify-between">
                                 <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">対戦相手マッチング</span>
                                 <button
                                     disabled={loading}
@@ -594,11 +644,14 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                                 {opponents.map((opponent, idx) => (
                                     <div
                                         key={(opponent.user_id || 'opt') + '_' + idx}
-                                        className="bg-[#0f1d35]/70 border border-[#20365b] rounded-xl p-3 flex items-center justify-between transition-all"
+                                        className="bg-[#0f1d35]/70 border border-[#20365b] rounded-xl p-3 flex items-center justify-between transition-all animate-in fade-in duration-200"
                                     >
                                         <div className="space-y-1.5 min-w-0 pr-4">
                                             <div className="flex items-center gap-2">
-                                                <div className="w-8 h-8 rounded-full border border-slate-700 bg-[#070e1e] flex items-center justify-center overflow-hidden shrink-0">
+                                                <div 
+                                                    onClick={() => !opponent.is_ghost && setViewingProfileUserId(opponent.user_id)}
+                                                    className={`w-8 h-8 rounded-full border border-slate-700 bg-[#070e1e] flex items-center justify-center overflow-hidden shrink-0 ${!opponent.is_ghost ? 'cursor-pointer hover:border-amber-400' : ''}`}
+                                                >
                                                     {opponent.avatar_url ? (
                                                         <img src={opponent.avatar_url} alt="" className="w-full h-full object-cover" />
                                                     ) : (
@@ -607,8 +660,13 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                                                 </div>
                                                 <div className="min-w-0 text-left">
                                                     <h4 className="text-xs font-bold text-slate-100 truncate flex items-center gap-1.5">
-                                                        {opponent.user_name}
-                                                        <span className="text-[9px] text-amber-400 font-black">
+                                                        <span 
+                                                            onClick={() => !opponent.is_ghost && setViewingProfileUserId(opponent.user_id)}
+                                                            className={!opponent.is_ghost ? 'cursor-pointer hover:text-amber-400 hover:underline' : ''}
+                                                        >
+                                                            {opponent.user_name}
+                                                        </span>
+                                                        <span className="text-[9px] bg-amber-500/10 text-amber-400 px-1 py-0.2 rounded font-black border border-amber-500/20">
                                                             {opponent.defense_rank}
                                                         </span>
                                                         {opponent.is_ghost && (
@@ -616,7 +674,7 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                                                         )}
                                                     </h4>
                                                     <p className="text-[10px] text-slate-400 font-mono">
-                                                        レート: {opponent.arena_rate ?? 1000} pts | スコア: {opponent.battle_score} CS
+                                                        レート: {opponent.arena_rate ?? 1000} pts
                                                     </p>
                                                 </div>
                                             </div>
@@ -634,7 +692,7 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                                         <button
                                             disabled={loading}
                                             onClick={() => loadOpponentDetail(opponent.user_id, opponent)}
-                                            className="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs rounded-xl active:scale-95 transition-all shadow-md shadow-amber-500/10 shrink-0"
+                                            className="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs rounded-xl active:scale-95 transition-all shadow-md shadow-amber-500/10 shrink-0 cursor-pointer"
                                         >
                                             挑戦する
                                         </button>
@@ -670,23 +728,27 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                                 </div>
                                 <div className="text-right">
                                     <span className="text-[9px] text-slate-400 block font-mono">
-                                        更新: {rankingLastUpdated || '未取得'}
+                                        最終同期: {rankingLastUpdated || '未取得'}
                                     </span>
-                                    <button
-                                        onClick={checkClaimableRewards}
-                                        className="text-[9px] font-bold text-amber-400 hover:text-amber-300 underline block mt-0.5"
-                                    >
-                                        報酬の獲得/確認
-                                    </button>
                                 </div>
                             </div>
+
+                            {/* 大きく押しやすい報酬確認/受け取りボタン */}
+                            <button
+                                onClick={checkClaimableRewards}
+                                disabled={loading}
+                                className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs rounded-xl active:scale-95 transition-all shadow-md shadow-amber-500/15 flex items-center justify-center gap-1.5 cursor-pointer"
+                            >
+                                <Award size={14} />
+                                アリーナ報酬の確認・受け取り
+                            </button>
 
                             {/* My Ranking Status (上部固定) */}
                             {myRankingStatus && (
                                 <div className="bg-gradient-to-r from-[#1b3152]/70 to-[#0e1c33]/70 border-2 border-amber-500/40 rounded-xl p-3 flex items-center justify-between shadow-md">
                                     <div className="flex items-center gap-2">
-                                        <span className="text-sm font-black text-amber-400 font-mono w-7 text-center shrink-0">
-                                            #{myRankingStatus.rank}
+                                        <span className="text-xs font-black text-amber-400 font-mono w-10 text-center shrink-0">
+                                            {myRankingStatus.rank}位
                                         </span>
                                         <div className="w-8 h-8 rounded-full border border-amber-500/30 bg-[#070e1e] flex items-center justify-center overflow-hidden shrink-0">
                                             {myRankingStatus.avatar_url ? (
@@ -711,18 +773,28 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                                 </div>
                             )}
 
+                            {/* 可読性のための明確な区切り線 */}
+                            <div className="relative flex py-1 items-center">
+                                <div className="flex-grow border-t border-[#1e345b]/60"></div>
+                                <span className="flex-shrink mx-4 text-[9px] text-[#5586d5] uppercase font-black tracking-wider">RANKINGS</span>
+                                <div className="flex-grow border-t border-[#1e345b]/60"></div>
+                            </div>
+
                             {/* Top 50 List */}
-                            <div className="space-y-1.5 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
+                            <div className="space-y-1.5 max-h-[260px] overflow-y-auto pr-1 custom-scrollbar">
                                 {rankingList.map((player) => (
                                     <div
                                         key={player.user_id}
                                         className={`p-2.5 border rounded-lg flex items-center justify-between transition-all ${player.user_id === userProfile?.id ? 'bg-[#1b3152]/40 border-amber-500/30' : 'bg-[#0f1d35]/40 border-[#1e345b]/50'}`}
                                     >
                                         <div className="flex items-center gap-2">
-                                            <span className="text-xs font-black text-slate-400 font-mono w-6 text-center">
-                                                {player.rank}
+                                            <span className="text-xs font-black text-slate-400 font-mono w-9 text-center">
+                                                {player.rank}位
                                             </span>
-                                            <div className="w-7 h-7 rounded-full border border-slate-700 bg-black/40 flex items-center justify-center overflow-hidden">
+                                            <div 
+                                                onClick={() => setViewingProfileUserId(player.user_id)}
+                                                className="w-7 h-7 rounded-full border border-slate-700 bg-black/40 flex items-center justify-center overflow-hidden cursor-pointer hover:border-amber-400 shrink-0"
+                                            >
                                                 {player.avatar_url ? (
                                                     <img src={player.avatar_url} alt="" className="w-full h-full object-cover" />
                                                 ) : (
@@ -730,15 +802,18 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                                                 )}
                                             </div>
                                             <div className="text-left">
-                                                <h5 className="text-xs font-bold text-slate-200 truncate">
+                                                <h5 
+                                                    onClick={() => setViewingProfileUserId(player.user_id)}
+                                                    className="text-xs font-bold text-slate-200 truncate cursor-pointer hover:text-amber-400 hover:underline"
+                                                >
                                                     {player.user_name}
                                                 </h5>
-                                                <span className="text-[9px] text-slate-400 block">
+                                                <span className="text-[9px] text-slate-400 block font-mono">
                                                     Lv.{player.level} | {player.job_class}
                                                 </span>
                                             </div>
                                         </div>
-                                        <span className="text-xs font-bold text-slate-300 font-mono">
+                                        <span className="text-xs font-bold text-slate-300 font-mono shrink-0">
                                             {player.arena_rate} pts
                                         </span>
                                     </div>
@@ -746,7 +821,7 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
 
                                 {rankingList.length === 0 && !loading && (
                                     <div className="text-center py-10 text-xs text-slate-500">
-                                        ランキング情報がまだありません。
+                                        ランキングデータはありません。
                                     </div>
                                 )}
                             </div>
@@ -780,7 +855,7 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                                                     <span className="text-xs font-bold text-slate-200">{log.opponent_name}</span>
                                                 </div>
                                                 <p className="text-[9px] text-slate-400 font-mono">
-                                                    {dateStr} | 獲得: <span className={log.rate_change >= 0 ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold'}>{log.rate_change >= 0 ? `+${log.rate_change}` : log.rate_change} pts</span>
+                                                    {dateStr} | レート変動: <span className={log.rate_change >= 0 ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold'}>{log.rate_change >= 0 ? `+${log.rate_change}` : log.rate_change} pts</span>
                                                 </p>
                                             </div>
 
@@ -807,12 +882,55 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                     {/* ──── TAB: RULES ──── */}
                     {tab === 'rules' && (
                         <div className="space-y-4 text-xs text-slate-300 leading-relaxed text-left max-h-[350px] overflow-y-auto pr-1 custom-scrollbar">
+                            
+                            {/* CPルール */}
                             <section className="space-y-1.5">
                                 <h4 className="text-amber-400 font-bold border-b border-[#1e345b] pb-1">✦ コロシアムポイント（CP）</h4>
-                                <p className="text-slate-400">アリーナに挑戦するには 1 挑戦につき 1 CP を消費します（防衛戦での消費はゼロ）。</p>
-                                <p className="text-slate-400">CPは 1 時間ごとに 1 自然回復し、最大 5 まで蓄積されます。また、ショップ等で 5,000 G を消費して一気に 10 CP 回復させることも可能です。超過回復は最大 16 まで可能ですが、16以上になる回復操作は実行できません。</p>
+                                <p className="text-slate-400">
+                                    アリーナに挑戦するには 1 挑戦につき <span className="text-amber-400 font-bold">1CP（コロシアムポイント）</span> を消費します（防衛戦での消費はゼロ）。
+                                </p>
+                                <p className="text-slate-400">
+                                    CPは <span className="text-amber-400 font-bold">1</span> 時間ごとに <span className="text-amber-400 font-bold">1</span> 自然回復し、最大 <span className="text-amber-400 font-bold">5</span> まで蓄積されます。また、ゴールドを <span className="text-amber-400 font-bold">5,000G</span> 消費して一気に <span className="text-amber-400 font-bold">10CP</span> 回復させることも可能です。超過回復は最大 <span className="text-amber-400 font-bold">15</span> まで可能ですが、<span className="text-amber-400 font-bold">16</span> 以上になる回復操作は実行できません。
+                                </p>
                             </section>
 
+                            {/* シーズン＆ランキング */}
+                            <section className="space-y-1.5">
+                                <h4 className="text-amber-400 font-bold border-b border-[#1e345b] pb-1">✦ シーズン＆ランキング</h4>
+                                <p className="text-slate-400">
+                                    アリーナは 1 週間ごとのシーズン制を採用しており、毎週水曜日 18:00 (JST) に新シーズンが始まりアリーナレートは全員一律で <span className="text-amber-400 font-bold">1,000</span> にリセットされます。
+                                </p>
+                                <p className="text-slate-400">
+                                    デイリーランキングは毎日 18:00 (JST) に切り替わります。それぞれ上位 <span className="text-amber-400 font-bold">10</span> 名に特別なゴールドやUR未鑑定品、魔術学院パック開封用の鍵が贈られます。報酬の確認や受取はランキングタブ右上の「報酬確認」から手動で行ってください。
+                                </p>
+                            </section>
+
+                            {/* ユーザーランク */}
+                            <section className="space-y-1.5">
+                                <h4 className="text-amber-400 font-bold border-b border-[#1e345b] pb-1">✦ ユーザーランク</h4>
+                                <p className="text-slate-400">
+                                    プレイヤーおよび同行メンバーの戦闘力評価合計（合計パーティCS評価）に基づき、アリーナでのマッチングランクがリアルタイムで決定されます。
+                                </p>
+                                <ul className="list-disc pl-4 text-slate-400 space-y-0.5">
+                                    <li><span className="text-amber-400 font-bold">S ランク</span>: 合計戦闘スコア <span className="text-amber-400 font-bold">5,500 CS</span> 以上</li>
+                                    <li><span className="text-amber-400 font-bold">A ランク</span>: 合計戦闘スコア <span className="text-amber-400 font-bold">3,000 CS</span> 以上</li>
+                                    <li><span className="text-amber-400 font-bold">B ランク</span>: 合計戦闘スコア <span className="text-amber-400 font-bold">1,500 CS</span> 以上</li>
+                                    <li><span className="text-amber-400 font-bold">C ランク</span>: 合計戦闘スコア <span className="text-amber-400 font-bold">1,500 CS</span> 未満</li>
+                                </ul>
+                            </section>
+
+                            {/* 防衛デッキと非同期戦 */}
+                            <section className="space-y-1.5">
+                                <h4 className="text-amber-400 font-bold border-b border-[#1e345b] pb-1">✦ 防衛デッキと非同期戦</h4>
+                                <p className="text-slate-400">
+                                    他のプレイヤーは、あなたが「防衛登録」した際のご自身のその時のパーティ状況（HP、ATK、DEF、装備、スキル）を基にした防衛パーティと戦います。
+                                </p>
+                                <p className="text-slate-400">
+                                    非同期防衛バトルの際、防衛側にはステータス補正（HP増加など）が自動的に適用されます。
+                                </p>
+                            </section>
+
+                            {/* アリーナレート増減テーブル */}
                             <section className="space-y-1.5">
                                 <h4 className="text-amber-400 font-bold border-b border-[#1e345b] pb-1">✦ アリーナレート増減テーブル</h4>
                                 <p className="text-slate-400">バトルでの勝敗および対戦相手とのランク（S〜C）の相性によって変動値がランダムに決まります。</p>
@@ -842,18 +960,6 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                                         </tr>
                                     </tbody>
                                 </table>
-                            </section>
-
-                            <section className="space-y-1.5">
-                                <h4 className="text-amber-400 font-bold border-b border-[#1e345b] pb-1">✦ 防衛デッキと非同期戦</h4>
-                                <p className="text-slate-400">他のプレイヤーは、あなたが「防衛登録」した際のスナップショット（その時のHP、ATK、DEF、装備、スキル）を基にした防衛パーティと戦います。</p>
-                                <p className="text-slate-400">非同期防衛バトルの際、防衛側にはHP等のステータス補正（HP増加など）が自動的に適用され、簡単には崩されない防衛戦となります。</p>
-                            </section>
-
-                            <section className="space-y-1.5">
-                                <h4 className="text-amber-400 font-bold border-b border-[#1e345b] pb-1">✦ シーズン＆ランキングリセット</h4>
-                                <p className="text-slate-400">アリーナは 1 週間ごとのシーズン制を採用しており、**毎週水曜日 18:00 (JST)** に新シーズンが始まりアリーナレートは全員一律で 1000 にリセットされます。</p>
-                                <p className="text-slate-400">デイリーランキングは毎日 **18:00 (JST)** に切り替わります。それぞれ上位10名に特別なゴールドやUR未鑑定品、魔術学院パック開封用の鍵が贈られます。受け取りはランキングタブ右上の「報酬確認」から手動で行ってください。</p>
                             </section>
                         </div>
                     )}
@@ -1020,7 +1126,7 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                                 <button
                                     disabled={loading || cp < 1}
                                     onClick={() => handleChallenge(selectedOpponent)}
-                                    className="px-5 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs rounded-xl active:scale-95 transition-all shadow-md shadow-amber-500/20 flex items-center justify-center gap-1.5"
+                                    className="px-5 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs rounded-xl active:scale-95 transition-all shadow-md shadow-amber-500/20 flex items-center justify-center gap-1.5 cursor-pointer"
                                 >
                                     <Swords size={12} />
                                     対戦を開始 (1 CP)
@@ -1100,7 +1206,7 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                                                     <span className="text-[9px] bg-amber-500/20 text-amber-400 px-1 py-0.2 rounded font-black mr-1.5">
                                                         {reward.reward_type === 'season' ? 'シーズン' : 'デイリー'}
                                                     </span>
-                                                    <span className="text-slate-300 font-bold">順位: #{reward.rank}</span>
+                                                    <span className="text-slate-300 font-bold">順位: {reward.rank}位</span>
                                                 </div>
                                                 <div className="text-right text-amber-400 font-bold space-y-0.5">
                                                     {reward.gold_reward > 0 && <div>+{reward.gold_reward.toLocaleString()} G</div>}
@@ -1126,7 +1232,7 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                                 <button
                                     disabled={loading}
                                     onClick={handleClaimRewards}
-                                    className="px-5 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs rounded-xl active:scale-95 transition-all shadow-lg shadow-amber-500/20 flex items-center justify-center"
+                                    className="px-5 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs rounded-xl active:scale-95 transition-all shadow-lg shadow-amber-500/20 flex items-center justify-center cursor-pointer"
                                 >
                                     {loading ? <RefreshCw className="animate-spin" size={12} /> : '一括で受け取る'}
                                 </button>
@@ -1134,6 +1240,15 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* ──── 外部コンポーネント: 他プレイヤーの自己紹介ポップアップ ──── */}
+            {viewingProfileUserId && (
+                <SimpleUserProfilePopup
+                    userId={viewingProfileUserId}
+                    onClose={() => setViewingProfileUserId(null)}
+                    callerUserId={userProfile?.id}
+                />
             )}
         </div>,
         portalTarget
