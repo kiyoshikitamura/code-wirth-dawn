@@ -628,6 +628,17 @@ async function performUpdate(isForceUgcReset: boolean) {
                 } else {
                     logs.push(`[PvPArenaUpdate] Successfully cleared all defense parties for the new season`);
                 }
+
+                // 6) 戦闘履歴ログを全リセット
+                const { error: clearBattleLogsErr } = await supabaseServer
+                    .from('pvp_battle_logs')
+                    .delete()
+                    .neq('id', 0);
+                if (clearBattleLogsErr) {
+                    logs.push(`[PvPArenaUpdate] Failed to clear battle logs: ${clearBattleLogsErr.message}`);
+                } else {
+                    logs.push(`[PvPArenaUpdate] Successfully cleared all battle logs for the new season`);
+                }
             }
 
             // D. 古い（30日以上前）履歴データの自動クリーンアップ

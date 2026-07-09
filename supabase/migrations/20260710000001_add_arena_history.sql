@@ -36,7 +36,7 @@ DROP POLICY IF EXISTS "Allow public select on pvp_daily_history" ON pvp_daily_hi
 CREATE POLICY "Allow public select on pvp_daily_history" ON pvp_daily_history
     FOR SELECT USING (true);
 
--- デイリー履歴アーカイブ用RPC (FK違反回避のためauth.usersに限定)
+-- デイリー履歴アーカイブ用RPC (レート1000以上の全アクティブユーザー対象)
 CREATE OR REPLACE FUNCTION archive_pvp_daily_history(p_date_str text)
 RETURNS void AS $$
 BEGIN
@@ -49,12 +49,12 @@ BEGIN
         up.arena_rate,
         ROW_NUMBER() OVER (ORDER BY up.arena_rate DESC) as rank
     FROM user_profiles up
-    WHERE up.arena_rate > 1000
+    WHERE up.arena_rate >= 1000
       AND up.id IN (SELECT id FROM auth.users);
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- シーズン履歴アーカイブ用RPC (FK違反回避のためauth.usersに限定)
+-- シーズン履歴アーカイブ用RPC (レート1000以上の全アクティブユーザー対象)
 CREATE OR REPLACE FUNCTION archive_pvp_season_history(p_season_id text)
 RETURNS void AS $$
 BEGIN
@@ -67,7 +67,7 @@ BEGIN
         up.arena_rate,
         ROW_NUMBER() OVER (ORDER BY up.arena_rate DESC) as rank
     FROM user_profiles up
-    WHERE up.arena_rate > 1000
+    WHERE up.arena_rate >= 1000
       AND up.id IN (SELECT id FROM auth.users);
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
