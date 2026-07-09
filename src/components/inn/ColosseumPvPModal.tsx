@@ -17,7 +17,8 @@ let localOpponentsCache: any[] = [];
 export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
     const [mounted, setMounted] = useState(false);
     const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
-    const [tab, setTab] = useState<'opponents' | 'ranking' | 'logs' | 'rules'>('opponents');
+    const [tab, setTab] = useState<'opponents' | 'logs' | 'rules'>('opponents');
+    const [showRankingSubModal, setShowRankingSubModal] = useState<boolean>(false);
 
     // API Stats
     const [cp, setCP] = useState<number>(5);
@@ -593,12 +594,17 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
 
     // タブ切り替え時のデータフェッチ
     useEffect(() => {
-        if (tab === 'ranking') {
-            fetchRanking(rankingType);
-        } else if (tab === 'logs') {
+        if (tab === 'logs') {
             fetchBattleLogs();
         }
-    }, [tab, rankingType]);
+    }, [tab]);
+
+    // ランキングサブモーダル展開時、またはランキング種別切り替え時のデータフェッチ
+    useEffect(() => {
+        if (showRankingSubModal) {
+            fetchRanking(rankingType);
+        }
+    }, [showRankingSubModal, rankingType]);
 
     // CP回復タイマーの進行
     useEffect(() => {
