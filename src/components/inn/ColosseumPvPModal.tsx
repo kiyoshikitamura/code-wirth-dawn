@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useGameStore } from '@/store/gameStore';
 import { getAuthHeaders } from '@/lib/authToken';
 import { soundManager } from '@/lib/soundManager';
-import { Swords, Trophy, X, RefreshCw, Shield, User, Zap, BookOpen, Clock, Award, History } from 'lucide-react';
+import { Swords, Trophy, X, RefreshCw, Shield, User, Zap, BookOpen, Clock, Award, History, AlertCircle } from 'lucide-react';
 import SimpleUserProfilePopup from '@/components/shared/SimpleUserProfilePopup';
 
 interface ColosseumPvPModalProps {
@@ -75,6 +75,9 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
     // 自動防衛登録アラート用ステート
     const [showAutoDefenseAlert, setShowAutoDefenseAlert] = useState(false);
     const [autoRegistering, setAutoRegistering] = useState(false);
+
+    // CP不足警告アラート用ステート
+    const [showCPErrorAlert, setShowCPErrorAlert] = useState(false);
 
     const router = useRouter();
     const { userProfile, gold, fetchUserProfile } = useGameStore();
@@ -533,7 +536,7 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
     // 12. 対戦開始処理
     const handleChallenge = async (opponent: any) => {
         if (cp < 1) {
-            setErrorMsg('コロシアムポイント(CP)が不足しています。');
+            setShowCPErrorAlert(true);
             return;
         }
         if (userProfile?.current_quest_id) {
@@ -1063,6 +1066,35 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
         );
     };
 
+    // CP不足警告アラートポップアップ
+    const renderCPErrorAlert = () => {
+        if (!showCPErrorAlert) return null;
+
+        return (
+            <div className="absolute inset-0 z-50 flex items-center justify-center p-4 bg-[#050b14]/90 backdrop-blur-sm animate-in fade-in duration-200">
+                <div className="relative w-full max-w-sm bg-[#0c1628]/98 border-2 border-red-500/50 rounded-2xl overflow-hidden shadow-[0_0_50px_rgba(239,68,68,0.3)] flex flex-col p-6 space-y-4">
+                    <div className="flex flex-col items-center text-center space-y-2.5">
+                        <div className="w-12 h-12 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-400">
+                            <AlertCircle size={24} className="animate-pulse" />
+                        </div>
+                        <h3 className="text-base font-black text-slate-100 tracking-wider">CP不足</h3>
+                        <p className="text-xs text-slate-300 leading-relaxed font-sans">
+                            コロシアムポイント(CP)が不足しています。<br />
+                            対人戦に挑戦するには 1 CP が必要です。
+                        </p>
+                    </div>
+
+                    <button
+                        onClick={() => setShowCPErrorAlert(false)}
+                        className="w-full py-2.5 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-400 hover:to-red-500 text-slate-950 font-black text-xs rounded-xl active:scale-95 transition-all shadow-lg cursor-pointer"
+                    >
+                        閉じる
+                    </button>
+                </div>
+            </div>
+        );
+    };
+
     if (!mounted || !portalTarget) return null;
 
     return createPortal(
@@ -1115,7 +1147,11 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                                 {syncing ? (
                                     <RefreshCw className="animate-spin text-amber-500 w-3 h-3 mx-1 shrink-0" />
                                 ) : (
-                                    <span className={`font-mono font-bold ${cp >= 6 ? 'text-rose-500 animate-pulse' : 'text-slate-200'}`}>
+                                    <span className={`font-mono font-bold ${
+                                        cp === 0 ? 'text-red-500 font-black' :
+                                        cp >= 6 ? 'text-rose-500 animate-pulse' : 
+                                        'text-slate-200'
+                                    }`}>
                                         {cp}/5
                                     </span>
                                 )}
@@ -2002,6 +2038,9 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
 
             {/* 自動防衛登録確認アラート */}
             {renderAutoDefenseAlert()}
+
+            {/* CP不足警告アラート */}
+            {renderCPErrorAlert()}
 
             {/* 防衛確認サブモーダル */}
             {renderDefenseModal()}

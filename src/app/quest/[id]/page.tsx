@@ -8,7 +8,7 @@ import ScenarioEngine from '@/components/quest/ScenarioEngine';
 import { Scenario, Enemy } from '@/types/game';
 import { supabase } from '@/lib/supabase';
 import { getAuthToken, getAuthHeaders } from '@/lib/authToken';
-import { ArrowLeft, Skull } from 'lucide-react';
+import { ArrowLeft, Skull, Award, AlertCircle } from 'lucide-react';
 import { getAssetUrl } from '@/config/assets';
 import QuestResultModal from '@/components/quest/QuestResultModal';
 import BattleView from '@/components/battle/BattleView';
@@ -939,6 +939,14 @@ export default function QuestPage() {
     const prefetchStartedRef = useRef(false);
     const successNodeIdRef = useRef<string | null>(null);
 
+    // PvPアリーナ結果表示用ステート
+    const [pvpResultData, setPvpResultData] = useState<{
+        isVictory: boolean;
+        ratingChange: number;
+        rating: number;
+        opponentName: string;
+    } | null>(null);
+
     // シナリオやクエストIDが変わったタイミングでプレフェッチ状態をリセット
     useEffect(() => {
         setPrefetchedResult(null);
@@ -1786,15 +1794,32 @@ export default function QuestPage() {
 
                 if (completeRes.ok) {
                     const pvpResult = await completeRes.json();
-                    alert(`戦闘終了！ ${isVictory ? '勝利しました！' : '敗北しました。'}\nレート変動: ${pvpResult.rating_change >= 0 ? '+' : ''}${pvpResult.rating_change} (現在: ${pvpResult.rating})`);
+                    setPvpResultData({
+                        isVictory,
+                        ratingChange: pvpResult.rating_change,
+                        rating: pvpResult.rating,
+                        opponentName
+                    });
+                } else {
+                    const err = await completeRes.json().catch(() => ({}));
+                    setPvpResultData({
+                        isVictory,
+                        ratingChange: 0,
+                        rating: 1000,
+                        opponentName: `${opponentName} (判定失敗: ${err.error || '無効なレスポンス'})`
+                    });
                 }
-            } catch (e) {
+            } catch (e: any) {
                 console.error('[PvP Complete] Failed to send pvp completion:', e);
+                setPvpResultData({
+                    isVictory,
+                    ratingChange: 0,
+                    rating: 1000,
+                    opponentName: `${opponentName} (通信エラー: ${e.message || '不明'})`
+                });
             }
 
-            // クエスト状態をクリアして宿屋に戻る
-            useQuestState.getState().resetQuest();
-            router.push('/inn');
+            setViewMode('scenario');
             return;
         }
 
@@ -2100,6 +2125,69 @@ export default function QuestPage() {
                             router.push('/inn');
                         }}
                     />
+                )}
+
+                {/* PvP Arena Result Overlay */}
+                {pvpResultData && (
+                    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
+                        <div className={`relative w-full max-w-sm bg-[#0c1628]/98 border-2 rounded-2xl overflow-hidden shadow-2xl flex flex-col p-6 space-y-4 ${
+                            pvpResultData.isVictory ? 'border-amber-500/50 shadow-[0_0_50px_rgba(245,158,11,0.25)]' : 'border-red-900/50 shadow-[0_0_50px_rgba(239,68,68,0.15)]'
+                        }`}>
+                            <div className="flex flex-col items-center text-center space-y-3.5">
+                                <div className={`w-14 h-14 rounded-full flex items-center justify-center border ${
+                                    pvpResultData.isVictory ? 'bg-amber-500/10 border-amber-500/30 text-amber-400' : 'bg-red-500/10 border-red-500/30 text-red-400'
+                                }`}>
+                                    {pvpResultData.isVictory ? <Award size={28} className="animate-bounce" /> : <AlertCircle size={28} />}
+                                </div>
+                                
+                                <div>
+                                    <span className={`text-[10px] uppercase tracking-widest font-black px-2 py-0.5 rounded-full ${
+                                        pvpResultData.isVictory ? 'bg-amber-500/20 text-amber-400' : 'bg-red-500/20 text-red-400'
+                                    }`}>
+                                        {pvpResultData.isVictory ? 'VICTORY' : 'DEFEAT'}
+                                    </span>
+                                </div>
+
+                                <h3 className="text-lg font-black text-slate-100 tracking-wider">
+                                    {pvpResultData.opponentName} 戦 終了
+                                </h3>
+
+                                <div className="w-full bg-[#11203b]/40 border border-[#1e345b] rounded-xl p-4 font-mono space-y-2">
+                                    <div className="flex justify-between items-center text-xs">
+                                        <span className="text-slate-400">勝敗結果:</span>
+                                        <span className={pvpResultData.isVictory ? 'text-amber-400 font-bold' : 'text-red-400 font-bold'}>
+                                            {pvpResultData.isVictory ? '勝利' : '敗北'}
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-xs">
+                                        <span className="text-slate-400">アリーナレート変動:</span>
+                                        <span className={`font-bold ${pvpResultData.ratingChange >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                                            {pvpResultData.ratingChange >= 0 ? '+' : ''}{pvpResultData.ratingChange} pts
+                                        </span>
+                                    </div>
+                                    <div className="h-px bg-[#1e345b]" />
+                                    <div className="flex justify-between items-center text-xs">
+                                        <span className="text-slate-400">現在のレート:</span>
+                                        <span className="text-slate-200 font-black">{pvpResultData.rating} pts</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button
+                                onClick={async () => {
+                                    useQuestState.getState().resetQuest();
+                                    router.push('/inn');
+                                }}
+                                className={`w-full py-3 text-xs font-black rounded-xl active:scale-95 transition-all shadow-lg cursor-pointer flex items-center justify-center gap-1.5 ${
+                                    pvpResultData.isVictory 
+                                        ? 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950' 
+                                        : 'bg-gradient-to-r from-slate-700 to-slate-800 hover:from-slate-600 hover:to-slate-700 text-slate-200'
+                                }`}
+                            >
+                                宿屋に戻る
+                            </button>
+                        </div>
+                    </div>
                 )}
             </div>
         </div>
