@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createAuthClient } from '@/lib/supabase-auth';
+import { supabaseServer } from '@/lib/supabase-admin';
 import { calculateCurrentCP } from '@/lib/arena';
 
 export const dynamic = 'force-dynamic';
@@ -12,8 +13,8 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        // 1. CPとレートのみをピンポイントで取得 (JOINなし)
-        const { data: profile, error } = await client
+        // 1. CPとレートのみをピンポイントで取得 (JOINなし) - 特権クライアントで確実にロードする
+        const { data: profile, error } = await supabaseServer
             .from('user_profiles')
             .select('colosseum_cp, cp_last_recovered_at, arena_rate')
             .eq('id', user.id)
@@ -44,7 +45,7 @@ export async function GET(req: Request) {
             const newRecoveredTime = new Date(lastTime + recoveredPoints * interval);
             finalLastRecoveredAt = newRecoveredTime.toISOString();
 
-            await client
+            await supabaseServer
                 .from('user_profiles')
                 .update({
                     colosseum_cp: finalCP,
