@@ -111,24 +111,28 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
         return `${formatJST(prevWed)} 〜 ${formatJST(nextWed)}`;
     };
 
-    // 現在のデイリーランキング期間算出 (6時間切り替え)
+    // 現在のデイリーランキング期間算出 (毎日18:00切り替えの24時間)
     const getDailyPeriodStr = () => {
         const jstOffset = 9 * 60 * 60 * 1000;
         const now = new Date();
         const jstNow = new Date(now.getTime() + jstOffset);
 
+        // jstNowのUTCHoursは既にJSTの時を指している (17:30 などの場合は 17)
         const hour = jstNow.getUTCHours();
-        const cycleStartHour = Math.floor(hour / 6) * 6;
         
         const start = new Date(jstNow);
-        start.setUTCHours(cycleStartHour, 0, 0, 0);
+        if (hour < 18) {
+            // 18:00 未満の場合、サイクル開始は「前日の 18:00」
+            start.setUTCDate(jstNow.getUTCDate() - 1);
+        }
+        start.setUTCHours(18, 0, 0, 0);
 
         const end = new Date(start);
-        end.setUTCHours(cycleStartHour + 6, 0, 0, 0);
+        end.setUTCDate(start.getUTCDate() + 1);
 
         const format = (d: Date) => {
             const l = new Date(d.getTime() - jstOffset);
-            return `${l.getFullYear()}/${(l.getMonth()+1).toString().padStart(2,'0')}/${l.getDate().toString().padStart(2,'0')} ${l.getHours().toString().padStart(2,'0')}:00`;
+            return `${l.getFullYear()}/${(l.getMonth()+1).toString().padStart(2,'0')}/${l.getDate().toString().padStart(2,'0')} 18:00`;
         };
 
         return `${format(start)} 〜 ${format(end)}`;
