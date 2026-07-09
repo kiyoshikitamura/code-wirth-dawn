@@ -35,7 +35,7 @@ import HistoryArchiveModal from '@/components/inn/HistoryArchiveModal';
 import OnboardingAcademyModal from '@/components/inn/OnboardingAcademyModal';
 import GuestRegisterPromoModal from '@/components/inn/GuestRegisterPromoModal';
 import StarterPackPromoModal from '@/components/inn/StarterPackPromoModal';
-import RiftPromoModal from '@/components/inn/RiftPromoModal';
+import DiscordPromoModal from '@/components/inn/DiscordPromoModal';
 import CollectionModal from '@/components/collection/CollectionModal';
 import QuestLogModal from '@/components/collection/QuestLogModal';
 import RankingModal from '@/components/collection/RankingModal';
@@ -156,7 +156,7 @@ function InnPageInner() {
     // 新規: プロモーションモーダルの表示ステート
     const [showGuestRegisterPromo, setShowGuestRegisterPromo] = useState(false);
     const [showStarterPackPromo, setShowStarterPackPromo] = useState(false);
-    const [showRiftPromo, setShowRiftPromo] = useState(false);
+    const [showDiscordPromo, setShowDiscordPromo] = useState(false);
 
     React.useEffect(() => {
         if (typeof window !== 'undefined') {
@@ -362,16 +362,16 @@ function InnPageInner() {
             }
         }
 
-        // 5. 狭間の迷宮プロモモーダル表示制御 (Lv4以上、未表示、かつ他のプロモが非表示の場合)
-        if (userProfile && (userProfile.level || 1) >= 4 && !showGuestRegisterPromo && !showStarterPackPromo && typeof window !== 'undefined') {
+        // 5. プレイヤーコミュニティ（Discord）プロモモーダル表示制御 (全ユーザー、未表示、かつ他のプロモが非表示の場合)
+        if (userProfile && !showGuestRegisterPromo && !showStarterPackPromo && typeof window !== 'undefined') {
             try {
-                const riftPromoShown = localStorage.getItem('wirth_dawn_rift_promo_shown');
-                if (!riftPromoShown) {
-                    localStorage.setItem('wirth_dawn_rift_promo_shown', 'true');
-                    setShowRiftPromo(true);
+                const discordPromoShown = localStorage.getItem('wirth_dawn_discord_promo_shown');
+                if (!discordPromoShown) {
+                    localStorage.setItem('wirth_dawn_discord_promo_shown', 'true');
+                    setShowDiscordPromo(true);
                 }
             } catch (err) {
-                console.warn('[InnPage] localStorage access failed for rift promo:', err);
+                console.warn('[InnPage] localStorage access failed for discord promo:', err);
             }
         }
     }, [completedQuests, userProfile, searchParams, initialLoadComplete, showGuestRegisterPromo, showStarterPackPromo]);
@@ -427,7 +427,7 @@ function InnPageInner() {
         showTutorial ||
         showGuestRegisterPromo ||
         showStarterPackPromo ||
-        showRiftPromo ||
+        showDiscordPromo ||
         restLoading ||
         traveling
     );
@@ -786,9 +786,9 @@ function InnPageInner() {
                 />
             )}
 
-            {/* Rift Promo Modal */}
-            {showRiftPromo && (
-                <RiftPromoModal onClose={() => setShowRiftPromo(false)} />
+            {/* Discord Promo Modal */}
+            {showDiscordPromo && (
+                <DiscordPromoModal onClose={() => setShowDiscordPromo(false)} />
             )}
 
             {/* NPC Dialog */}
