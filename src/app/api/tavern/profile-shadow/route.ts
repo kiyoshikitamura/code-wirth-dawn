@@ -12,7 +12,7 @@ interface CacheEntry {
     expiresAt: number;
 }
 const shadowCache = new Map<string, CacheEntry>();
-const CACHE_TTL_MS = 3 * 60 * 1000; // 3分間キャッシュ
+const CACHE_TTL_MS = 2 * 60 * 1000; // 2分間キャッシュに変更 (ユーザー指示)
 
 export async function GET(req: Request) {
     try {
@@ -51,7 +51,7 @@ export async function GET(req: Request) {
                     { shadow: cached.shadow },
                     {
                         headers: {
-                            'Cache-Control': 'public, max-age=180, s-maxage=180, stale-while-revalidate=60',
+                            'Cache-Control': 'public, max-age=120, s-maxage=120, stale-while-revalidate=60',
                             'X-Cache': 'HIT'
                         }
                     }
@@ -88,12 +88,12 @@ export async function GET(req: Request) {
                 }
             );
         } else {
-            // 他人の場合はCDNエッジキャッシュを有効化
+            // 他人の場合はCDNエッジキャッシュを2分間有効化
             return NextResponse.json(
                 { shadow },
                 {
                     headers: {
-                        'Cache-Control': 'public, max-age=180, s-maxage=180, stale-while-revalidate=60',
+                        'Cache-Control': 'public, max-age=120, s-maxage=120, stale-while-revalidate=60',
                         'X-Cache': 'MISS'
                     }
                 }
