@@ -37,24 +37,28 @@ export default function ColosseumModal({ onClose }: ColosseumModalProps) {
             }
         }
 
-        setMode('pve');
+        if (isPreview) {
+            setMode('select');
 
-        // コロシアムに入場したタイミングでの防衛パーティ自動登録は本番除外に伴いオミット
-        // const autoRegisterDefense = async () => {
-        //     try {
-        //         const authHeaders = await getAuthHeaders();
-        //         await fetch('/api/pvp/defense', {
-        //             method: 'POST',
-        //             headers: {
-        //                 ...authHeaders
-        //             }
-        //         });
-        //         console.log('[Colosseum] Auto registered/updated PvP defense party.');
-        //     } catch (e) {
-        //         console.warn('[Colosseum] Auto defense registration failed:', e);
-        //     }
-        // };
-        // autoRegisterDefense();
+            // プレビュー環境のみ、コロシアムに入場したタイミングで防衛パーティを自動登録/更新
+            const autoRegisterDefense = async () => {
+                try {
+                    const authHeaders = await getAuthHeaders();
+                    await fetch('/api/pvp/defense', {
+                        method: 'POST',
+                        headers: {
+                            ...authHeaders
+                        }
+                    });
+                    console.log('[Colosseum] Auto registered/updated PvP defense party.');
+                } catch (e) {
+                    console.warn('[Colosseum] Auto defense registration failed:', e);
+                }
+            };
+            autoRegisterDefense();
+        } else {
+            setMode('pve');
+        }
     }, []);
 
     const router = useRouter();
