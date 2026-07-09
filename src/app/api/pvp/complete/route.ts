@@ -120,33 +120,24 @@ export async function POST(req: Request) {
                 .eq('id', opponent_id);
         }
 
-        // 6. バトルログの非同期バックグラウンド書き込み (API応答時間の劇的短縮)
-        // 攻撃側視点（challenge）と、ゴーストでなければ防衛側視点（defense）の2つのログを書き込む
-        const logPromise = (async () => {
-            try {
-                // 攻撃側ログ
-                await supabaseServer
-                    .from('pvp_battle_logs')
-                    .insert({
-                        attacker_user_id: userId,
-                        defender_user_id: isGhost ? '00000000-0000-0000-0000-000000000000' : opponent_id,
-                        is_attacker_victory: is_victory,
-                        attacker_rate_change: attackerChange,
-                        defender_rate_change: defenderChange,
-                        battle_type: 'challenge',
-                        text_log: text_log || ''
-                    });
+        // 6. バトルログの書き込み
+        try {
+            // 攻撃側ログ
+            await supabaseServer
+                .from('pvp_battle_logs')
+                .insert({
+                    attacker_user_id: userId,
+                    defender_user_id: isGhost ? '00000000-0000-0000-0000-000000000000' : opponent_id,
+                    is_attacker_victory: is_victory,
+                    attacker_rate_change: attackerChange,
+                    defender_rate_change: defenderChange,
+                    battle_type: 'challenge',
+                    text_log: text_log || ''
+                });
 
-                console.log('[PvP Complete] Async battle logs inserted successfully.');
-            } catch (err) {
-                console.error('[PvP Complete] Async log insert error:', err);
-            }
-        })();
-
-        // Vercel サーバー側でレスポンス返却後に非同期プロセスが打ち切られるのを防ぐため、
-        // 開発環境および本番環境のサーバーランタイムで非同期で待機（Next.js の waitUntil が無いため Promise のまま実行）
-        if (typeof process !== 'undefined') {
-            process.nextTick(() => logPromise);
+            console.log('[PvP Complete] Battle log inserted successfully.');
+        } catch (err) {
+            console.error('[PvP Complete] Log insert error:', err);
         }
 
         return NextResponse.json({
