@@ -8048,6 +8048,10 @@ export async function GET(req: Request) {
         // 2. 対戦相手選出（同ランク優先2枠、残りは全体/レート近接からランダム）
         // 負荷軽減のため、軽量なカラム情報のみを取得 (snapshot_dataを除外するために、取得後に必要な部分のみにマップ)
         
+        // 重複排除のための seenUserIds セット (自分自身を除外)
+        const seenUserIds = new Set<string>();
+        seenUserIds.add(userId);
+
         // フェーズ1: 同ランク優先枠 (最大2枠)
         const { data: sameRankOpponents } = await supabaseServer
             .from('pvp_defense_parties')
@@ -8059,12 +8063,17 @@ export async function GET(req: Request) {
         const chosenSameRank: any[] = [];
         if (sameRankOpponents && sameRankOpponents.length > 0) {
             const shuffled = [...sameRankOpponents].sort(() => Math.random() - 0.5);
-            chosenSameRank.push(...shuffled.slice(0, 2));
+            for (const opp of shuffled) {
+                if (chosenSameRank.length >= 2) break;
+                if (!seenUserIds.has(opp.user_id)) {
+                    chosenSameRank.push(opp);
+                    seenUserIds.add(opp.user_id);
+                }
+            }
         }
 
         // フェーズ2: レンジランダム枠 (残りの枠)
         const slotsNeeded = 5 - chosenSameRank.length;
-        const excludedUserIds = [userId, ...chosenSameRank.map(o => o.user_id)];
 
         // 自分のレート近接レンジからインデックススキャンで引く (全件スキャン Seq Scan 回避)
         const { data: rangeOpponents } = await supabaseServer
@@ -8074,10 +8083,15 @@ export async function GET(req: Request) {
             .limit(30);
 
         const chosenOthers: any[] = [];
-        if (rangeOpponents) {
-            const filtered = rangeOpponents.filter(o => !excludedUserIds.includes(o.user_id));
-            const shuffled = filtered.sort(() => Math.random() - 0.5);
-            chosenOthers.push(...shuffled.slice(0, slotsNeeded));
+        if (rangeOpponents && slotsNeeded > 0) {
+            const shuffled = [...rangeOpponents].sort(() => Math.random() - 0.5);
+            for (const opp of shuffled) {
+                if (chosenOthers.length >= slotsNeeded) break;
+                if (!seenUserIds.has(opp.user_id)) {
+                    chosenOthers.push(opp);
+                    seenUserIds.add(opp.user_id);
+                }
+            }
         }
 
         // マージして一覧用の軽量フォーマットに整形 (重い snapshot_data 内部の装備・スキル詳細は除外)
@@ -8112,17 +8126,23 @@ export async function GET(req: Request) {
             };
         });
 
-        // 3. 不足分をゴーストデータで補填 (最大5件)
+        // 3. 不足分をゴーストデータで補填 (最大5件、同じゴーストNPCの重複も seenUserIds で完全遮断)
         const ghostCountNeeded = 5 - opponentsList.length;
         if (ghostCountNeeded > 0) {
             const ghostPool = GHOST_PRESETS[rankClass] || GHOST_PRESETS.C;
             const shuffledGhosts = [...ghostPool].sort(() => Math.random() - 0.5);
-            for (let i = 0; i < ghostCountNeeded && shuffledGhosts.length > 0; i++) {
-                const g = shuffledGhosts[i % shuffledGhosts.length];
-                opponentsList.push({
-                    ...g,
-                    arena_rate: 1000
-                });
+            
+            let ghostAdded = 0;
+            for (const g of shuffledGhosts) {
+                if (ghostAdded >= ghostCountNeeded) break;
+                if (!seenUserIds.has(g.user_id)) {
+                    opponentsList.push({
+                        ...g,
+                        arena_rate: 1000
+                    });
+                    seenUserIds.add(g.user_id);
+                    ghostAdded++;
+                }
             }
         }
 

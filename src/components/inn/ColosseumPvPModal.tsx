@@ -1137,49 +1137,92 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                                                                             <span className="font-bold text-sky-400">{m.def?.toLocaleString() || 10}</span>
                                                                         </div>
                                                                     </div>
+                                                                    {/* 詳細展開部分 (装備・スキル) */}
+                                                                    {isExpanded && (() => {
+                                                                        // 装備配列を安全に抽出
+                                                                        let memberEquippedItems: any[] = [];
+                                                                        if (m.equipped_items_snapshot && Array.isArray(m.equipped_items_snapshot)) {
+                                                                            memberEquippedItems = m.equipped_items_snapshot;
+                                                                        } else {
+                                                                            let snapData = m.snapshot_data;
+                                                                            if (typeof snapData === 'string') {
+                                                                                try {
+                                                                                    snapData = JSON.parse(snapData);
+                                                                                } catch (e) {
+                                                                                    snapData = null;
+                                                                                }
+                                                                            }
+                                                                            if (snapData && Array.isArray(snapData.equipped_items)) {
+                                                                                memberEquippedItems = snapData.equipped_items;
+                                                                            } else if (m.equipped_items && Array.isArray(m.equipped_items)) {
+                                                                                memberEquippedItems = m.equipped_items;
+                                                                            }
+                                                                        }
+
+                                                                        // スキル配列を安全に抽出
+                                                                        let memberSkills: any[] = [];
+                                                                        if (m.signature_deck_snapshot && Array.isArray(m.signature_deck_snapshot)) {
+                                                                            memberSkills = m.signature_deck_snapshot;
+                                                                        } else {
+                                                                            let snapData = m.snapshot_data;
+                                                                            if (typeof snapData === 'string') {
+                                                                                try {
+                                                                                    snapData = JSON.parse(snapData);
+                                                                                } catch (e) {
+                                                                                    snapData = null;
+                                                                                }
+                                                                            }
+                                                                            if (snapData && Array.isArray(snapData.signature_deck_snapshot)) {
+                                                                                memberSkills = snapData.signature_deck_snapshot;
+                                                                            } else if (snapData && Array.isArray(snapData.deck)) {
+                                                                                memberSkills = snapData.deck.map((id: any) => ({ name: `カード #${id}` }));
+                                                                            } else if (m.inject_cards && Array.isArray(m.inject_cards)) {
+                                                                                memberSkills = m.inject_cards.map((id: any) => ({ name: `スキル #${id}` }));
+                                                                            }
+                                                                        }
+
+                                                                        return (
+                                                                            <div className="px-3 pb-3 pt-1 border-t border-[#20365b]/50 bg-[#0c1626]/80 text-[10px] space-y-2 animate-in slide-in-from-top-2 duration-150">
+                                                                                {/* 装備 */}
+                                                                                <div className="space-y-1">
+                                                                                    <span className="text-[9px] text-amber-500 font-bold block">🛡️ 装備武具:</span>
+                                                                                    {memberEquippedItems && memberEquippedItems.length > 0 ? (
+                                                                                        <div className="flex flex-wrap gap-1">
+                                                                                            {memberEquippedItems.map((g: any, gi: number) => (
+                                                                                                <span key={gi} className="text-[8px] bg-[#1a2d4c] text-slate-300 border border-[#2c4772]/60 px-1.5 py-0.2 rounded">
+                                                                                                    {g.name}
+                                                                                                </span>
+                                                                                            ))}
+                                                                                        </div>
+                                                                                    ) : (
+                                                                                        <span className="text-[9px] text-slate-500 italic block">装備なし</span>
+                                                                                    )}
+                                                                                </div>
+
+                                                                                {/* スキル */}
+                                                                                <div className="space-y-1">
+                                                                                    <span className="text-[9px] text-amber-500 font-bold block">🔮 所持スキル:</span>
+                                                                                    {memberSkills && memberSkills.length > 0 ? (
+                                                                                        <div className="flex flex-wrap gap-1">
+                                                                                            {memberSkills.map((s: any, si: number) => (
+                                                                                                <span key={si} className="text-[8px] bg-[#1d1f35] text-amber-300 border border-amber-500/20 px-1.5 py-0.2 rounded">
+                                                                                                    {s.name}
+                                                                                                </span>
+                                                                                            ))}
+                                                                                        </div>
+                                                                                    ) : (
+                                                                                        <span className="text-[9px] text-slate-500 italic block">初期スキル構成</span>
+                                                                                    )}
+                                                                                </div>
+                                                                            </div>
+                                                                        );
+                                                                    })()}
                                                                     {/* 矢印表示 */}
                                                                     <span className="text-slate-500 text-xs font-bold font-mono pl-1">
                                                                         {isExpanded ? '▲' : '▼'}
                                                                     </span>
                                                                 </div>
                                                             </div>
-
-                                                            {/* 詳細展開部分 (装備・スキル) */}
-                                                            {isExpanded && (
-                                                                <div className="px-3 pb-3 pt-1 border-t border-[#20365b]/50 bg-[#0c1626]/80 text-[10px] space-y-2 animate-in slide-in-from-top-2 duration-150">
-                                                                    {/* 装備 */}
-                                                                    <div className="space-y-1">
-                                                                        <span className="text-[9px] text-amber-500 font-bold block">🛡️ 装備武具:</span>
-                                                                        {m.equipped_items_snapshot && m.equipped_items_snapshot.length > 0 ? (
-                                                                            <div className="flex flex-wrap gap-1">
-                                                                                {m.equipped_items_snapshot.map((g: any, gi: number) => (
-                                                                                    <span key={gi} className="text-[8px] bg-[#1a2d4c] text-slate-300 border border-[#2c4772]/60 px-1.5 py-0.2 rounded">
-                                                                                        {g.name}
-                                                                                    </span>
-                                                                                ))}
-                                                                            </div>
-                                                                        ) : (
-                                                                            <span className="text-[9px] text-slate-500 italic block">装備なし</span>
-                                                                        )}
-                                                                    </div>
-
-                                                                    {/* スキル */}
-                                                                    <div className="space-y-1">
-                                                                        <span className="text-[9px] text-amber-500 font-bold block">🔮 所持スキル:</span>
-                                                                        {m.signature_deck_snapshot && m.signature_deck_snapshot.length > 0 ? (
-                                                                            <div className="flex flex-wrap gap-1">
-                                                                                {m.signature_deck_snapshot.map((s: any, si: number) => (
-                                                                                    <span key={si} className="text-[8px] bg-[#1d1f35] text-amber-300 border border-amber-500/20 px-1.5 py-0.2 rounded">
-                                                                                        {s.name}
-                                                                                    </span>
-                                                                                ))}
-                                                                            </div>
-                                                                        ) : (
-                                                                            <span className="text-[9px] text-slate-500 italic block">初期スキル構成</span>
-                                                                        )}
-                                                                    </div>
-                                                                </div>
-                                                            )}
                                                         </div>
                                                     );
                                                 })}
