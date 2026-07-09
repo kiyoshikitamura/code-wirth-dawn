@@ -617,6 +617,17 @@ async function performUpdate(isForceUgcReset: boolean) {
                 } else {
                     logs.push(`[PvPArenaUpdate] Successfully reset user arena rates to 1000`);
                 }
+
+                // 5) 防衛パーティを全リセット (全ユーザーの防衛データを削除し、シーズン初回に再登録させる)
+                const { error: clearDefenseErr } = await supabaseServer
+                    .from('pvp_defense_parties')
+                    .delete()
+                    .neq('user_id', '00000000-0000-0000-0000-000000000000');
+                if (clearDefenseErr) {
+                    logs.push(`[PvPArenaUpdate] Failed to clear defense parties: ${clearDefenseErr.message}`);
+                } else {
+                    logs.push(`[PvPArenaUpdate] Successfully cleared all defense parties for the new season`);
+                }
             }
 
             // D. 古い（30日以上前）履歴データの自動クリーンアップ

@@ -72,6 +72,10 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
     const [loadingHistory, setLoadingHistory] = useState(false);
     const [historyTab, setHistoryTab] = useState<'season' | 'daily'>('season');
 
+    // 自動防衛登録アラート用ステート
+    const [showAutoDefenseAlert, setShowAutoDefenseAlert] = useState(false);
+    const [autoRegistering, setAutoRegistering] = useState(false);
+
     const router = useRouter();
     const { userProfile, gold, fetchUserProfile } = useGameStore();
 
@@ -576,6 +580,13 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
         fetchOpponents(true);
     }, []);
 
+    // 防衛パーティ未登録時のアラート自動起動
+    useEffect(() => {
+        if (initialFetchDone && !hasDefenseParty) {
+            setShowAutoDefenseAlert(true);
+        }
+    }, [initialFetchDone, hasDefenseParty]);
+
     // タブ切り替え時のデータフェッチ
     useEffect(() => {
         if (tab === 'ranking') {
@@ -1009,6 +1020,48 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
         );
     };
 
+    // 防衛パーティ自動登録確認アラート
+    const renderAutoDefenseAlert = () => {
+        if (!showAutoDefenseAlert) return null;
+
+        return (
+            <div className="absolute inset-0 z-50 flex items-center justify-center p-4 bg-[#050b14]/95 backdrop-blur-md animate-in fade-in duration-200">
+                <div className="relative w-full max-w-sm bg-[#0c1628]/98 border-2 border-amber-500/50 rounded-2xl overflow-hidden shadow-[0_0_50px_rgba(245,158,11,0.3)] flex flex-col p-6 space-y-4">
+                    <div className="flex flex-col items-center text-center space-y-2.5">
+                        <div className="w-12 h-12 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                            <Shield size={24} className="animate-pulse" />
+                        </div>
+                        <h3 className="text-base font-black text-slate-100 tracking-wider">防衛パーティ未登録</h3>
+                        <p className="text-xs text-slate-300 leading-relaxed font-sans">
+                            アリーナの防衛パーティが登録されていません。<br />
+                            対戦相手リストに選出されるよう、現在のパーティ構成で防衛登録を行います。
+                        </p>
+                    </div>
+
+                    <button
+                        disabled={autoRegistering}
+                        onClick={async () => {
+                            setAutoRegistering(true);
+                            await handleUpdateDefense();
+                            setShowAutoDefenseAlert(false);
+                            setAutoRegistering(false);
+                        }}
+                        className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs rounded-xl active:scale-95 transition-all shadow-lg cursor-pointer flex items-center justify-center gap-1.5"
+                    >
+                        {autoRegistering ? (
+                            <>
+                                <RefreshCw className="animate-spin" size={12} />
+                                登録処理中...
+                            </>
+                        ) : (
+                            '現在のパーティで登録する'
+                        )}
+                    </button>
+                </div>
+            </div>
+        );
+    };
+
     if (!mounted || !portalTarget) return null;
 
     return createPortal(
@@ -1184,9 +1237,6 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                                                         <span className="text-[9px] bg-amber-500/10 text-amber-400 px-1 py-0.2 rounded font-black border border-amber-500/20">
                                                             {opponent.defense_rank}
                                                         </span>
-                                                        {opponent.is_ghost && (
-                                                            <span className="text-[8px] bg-slate-800 text-slate-400 px-1 py-0.2 rounded font-mono">GHOST</span>
-                                                        )}
                                                     </h4>
                                                     <p className="text-[10px] text-slate-400 font-mono">
                                                         レート: {(opponent.arena_rate ?? 1000).toLocaleString()} pts
@@ -1948,6 +1998,9 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
 
             {/* 過去成績履歴確認サブモーダル */}
             {renderHistoryModal()}
+
+            {/* 自動防衛登録確認アラート */}
+            {renderAutoDefenseAlert()}
 
             {/* 防衛確認サブモーダル */}
             {renderDefenseModal()}
