@@ -915,10 +915,10 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                                     プレイヤーおよび同行メンバーの戦闘力評価合計（合計パーティCS評価）に基づき、アリーナでのマッチングランクがリアルタイムで決定されます。
                                 </p>
                                 <ul className="list-disc pl-4 text-slate-400 space-y-0.5 font-sans">
-                                    <li><span className="text-amber-300 font-bold">S ランク</span>: 合計戦闘スコア <span className="text-sky-400 font-bold">6,000 CS</span> 以上 (Lv15以上での5人パーティ等を想定)</li>
-                                    <li><span className="text-amber-300 font-bold">A ランク</span>: 合計戦闘スコア <span className="text-sky-400 font-bold">3,500 CS</span> 以上 (Lv10以上での5人パーティ等を想定)</li>
-                                    <li><span className="text-amber-300 font-bold">B ランク</span>: 合計戦闘スコア <span className="text-sky-400 font-bold">1,800 CS</span> 以上 (Lv5以上での5人パーティ等を想定)</li>
-                                    <li><span className="text-amber-300 font-bold">C ランク</span>: 合計戦闘スコア <span className="text-sky-400 font-bold">1,800 CS</span> 未満 (Bランク未満の構成)</li>
+                                    <li><span className="text-amber-300 font-bold">S ランク</span>: 合計戦闘スコア <span className="text-sky-400 font-bold">8,000 CS</span> 以上 (Lv15以上での5人パーティ等を想定)</li>
+                                    <li><span className="text-amber-300 font-bold">A ランク</span>: 合計戦闘スコア <span className="text-sky-400 font-bold">4,000 CS</span> 以上 (Lv10以上での5人パーティ等を想定)</li>
+                                    <li><span className="text-amber-300 font-bold">B ランク</span>: 合計戦闘スコア <span className="text-sky-400 font-bold">2,000 CS</span> 以上 (Lv5以上での5人パーティ等を想定)</li>
+                                    <li><span className="text-amber-300 font-bold">C ランク</span>: 合計戦闘スコア <span className="text-sky-400 font-bold">2,000 CS</span> 未満 (Bランク未満の構成)</li>
                                 </ul>
                             </section>
 

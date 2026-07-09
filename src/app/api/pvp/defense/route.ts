@@ -231,9 +231,9 @@ export async function POST(req: Request) {
         // 6. パーティ合計スコアとマッチングランク判定
         const totalScore = playerCS + membersCS;
         let rankClass: 'C' | 'B' | 'A' | 'S' = 'C';
-        if (totalScore >= 6000) rankClass = 'S';
-        else if (totalScore >= 3500) rankClass = 'A';
-        else if (totalScore >= 1800) rankClass = 'B';
+        if (totalScore >= 8000) rankClass = 'S';
+        else if (totalScore >= 4000) rankClass = 'A';
+        else if (totalScore >= 2000) rankClass = 'B';
 
         const newSnapshot = {
             user_id: userId,

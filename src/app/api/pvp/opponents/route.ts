@@ -8039,9 +8039,9 @@ export async function GET(req: Request) {
 
         const totalScore = playerCS + membersCS;
         let rankClass: 'C' | 'B' | 'A' | 'S' = 'C';
-        if (totalScore >= 6000) rankClass = 'S';
-        else if (totalScore >= 3500) rankClass = 'A';
-        else if (totalScore >= 1800) rankClass = 'B';
+        if (totalScore >= 8000) rankClass = 'S';
+        else if (totalScore >= 4000) rankClass = 'A';
+        else if (totalScore >= 2000) rankClass = 'B';
 
         const myRate = profile.arena_rate ?? 1000;
 
