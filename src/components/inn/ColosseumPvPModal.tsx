@@ -1119,35 +1119,45 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                 <div className="px-6 py-4 bg-[#0e192c] border-b border-[#1e345b]/60 flex flex-col gap-2.5">
                     
                     {/* Season Info (先頭に王冠を配置、浮遊カット) */}
-                    <div className="bg-[#12223f]/80 px-4 py-2.5 border border-[#213a65] rounded-xl text-left flex items-center gap-2 shadow-inner">
-                        <Trophy size={16} className="text-amber-400 shrink-0" />
+                    <div className="bg-[#12223f]/80 px-4 py-2 border border-[#213a65] rounded-xl text-left flex items-center gap-2 shadow-inner">
+                        <Trophy size={14} className="text-amber-400 shrink-0" />
                         <div>
-                            <span className="text-[9px] text-[#5586d5] uppercase font-bold tracking-wider block">CURRENT SEASON</span>
-                            <span className="text-xs text-amber-300 font-mono font-bold block leading-none mt-0.5">
+                            <span className="text-[8px] text-[#5586d5] uppercase font-bold tracking-wider block">CURRENT SEASON</span>
+                            <span className="text-[10px] sm:text-xs text-amber-300 font-mono font-bold block leading-none mt-0.5 whitespace-nowrap">
                                 {getCurrentSeasonPeriod()}
                             </span>
                         </div>
                     </div>
 
-                    {/* ユーザー名＆ランク、CP回復、防衛（インラインで1行に格納） */}
-                    <div className="flex items-center justify-between gap-2 bg-[#09111c]/90 border border-slate-800/80 px-4 py-2 rounded-xl">
-                        {/* 左：ユーザー名 ＆ ランク */}
-                        <div className="flex items-center gap-1.5 min-w-0">
-                            <span className="text-sm font-black text-slate-100 truncate">{userProfile?.name}</span>
-                            <span className="text-[9px] bg-amber-500/20 text-amber-400 border border-amber-500/30 px-1.5 py-0.2 rounded font-black shrink-0">
-                                {challengerRank} RANK
-                            </span>
+                    {/* ユーザー情報（2行にスプリットしてモバイルでも余裕のある配置へ） */}
+                    <div className="flex flex-col gap-2 bg-[#09111c]/90 border border-slate-800/80 p-3 rounded-xl">
+                        {/* 1行目: ユーザーネーム & RANK ＆ 防衛パーティボタン */}
+                        <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-1.5 min-w-0">
+                                <span className="text-xs font-black text-slate-100 truncate max-w-[120px] sm:max-w-[180px]">
+                                    {userProfile?.name}
+                                </span>
+                                <span className="text-[8px] bg-amber-500/20 text-amber-400 border border-amber-500/30 px-1 py-0.2 rounded font-black shrink-0">
+                                    {challengerRank} RANK
+                                </span>
+                            </div>
+                            
+                            <button
+                                onClick={handleOpenDefenseModal}
+                                className="px-2 py-1 bg-[#1a2d4c] hover:bg-[#28436e] border border-[#2d4b7c] rounded-md text-[9px] font-black text-slate-200 active:scale-95 transition-all cursor-pointer shrink-0"
+                            >
+                                防衛パーティ
+                            </button>
                         </div>
 
-                        {/* 右：CP ＆ 防衛 (一括格納) */}
-                        <div className="flex items-center gap-2 shrink-0 text-[10px]">
-                            {/* CP & 回復 */}
-                            <div className="flex items-center gap-1 bg-[#12223f]/50 border border-[#213a65]/40 px-2 py-0.5 rounded-md min-w-[70px] justify-between">
-                                <span className="text-slate-400 font-bold">CP:</span>
+                        {/* 2行目: CP ＆ 回復ボタン (若干大きくする) */}
+                        <div className="flex items-center gap-2 border-t border-slate-800/40 pt-1.5">
+                            <div className="flex items-center justify-between bg-[#12223f]/50 border border-[#213a65]/40 px-2 py-1 rounded-md min-w-[70px] justify-between">
+                                <span className="text-slate-400 font-bold text-[9px]">CP:</span>
                                 {syncing ? (
-                                    <RefreshCw className="animate-spin text-amber-500 w-3 h-3 mx-1 shrink-0" />
+                                    <RefreshCw className="animate-spin text-amber-500 w-2.5 h-2.5" />
                                 ) : (
-                                    <span className={`font-mono font-bold ${
+                                    <span className={`font-mono font-bold text-[10px] ${
                                         cp === 0 ? 'text-red-500 font-black' :
                                         cp >= 6 ? 'text-rose-500 animate-pulse' : 
                                         'text-slate-200'
@@ -1155,36 +1165,30 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                                         {cp}/5
                                     </span>
                                 )}
-                                <button
-                                    disabled={loading || cp >= 6 || gold < 5000}
-                                    onClick={handleRecoverCP}
-                                    className="ml-1 px-1.5 py-0.2 bg-[#1a2d4c] hover:bg-[#28436e] border border-[#2d4b7c] rounded text-[8px] font-black text-amber-400 cursor-pointer"
-                                >
-                                    回復
-                                </button>
                             </div>
 
-                             {/* 防衛パーティ確認サブモーダル起動ボタン */}
-                             <button
-                                 onClick={handleOpenDefenseModal}
-                                 className="px-2.5 py-1 bg-[#1a2d4c] hover:bg-[#28436e] border border-[#2d4b7c] rounded-md text-[9px] font-black text-slate-200 cursor-pointer"
-                             >
-                                 防衛パーティ
-                             </button>
+                            <button
+                                disabled={loading || cp >= 6 || gold < 5000}
+                                onClick={handleRecoverCP}
+                                className="flex-1 py-1 bg-gradient-to-r from-amber-500/90 to-amber-600/90 hover:from-amber-400 hover:to-amber-500 text-slate-950 disabled:from-slate-800 disabled:to-slate-800 disabled:text-slate-500 border border-amber-500/30 disabled:border-slate-700/50 rounded-md text-[9px] font-black tracking-wider transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1"
+                            >
+                                <Zap size={8} />
+                                CP回復 (5k G)
+                            </button>
                         </div>
                     </div>
 
-                    {/* アリーナレート (コロンを削除、フォントを太く目立たせる) */}
-                    <div className="text-center bg-[#070e1c]/40 border border-[#1b2f51]/40 rounded-xl py-2.5 flex items-center justify-center gap-3 min-h-[58px]">
-                        <span className="text-xs text-slate-200 font-extrabold tracking-widest uppercase">アリーナレート</span>
+                    {/* アリーナレート (モバイル用にサイズを縮小してコンパクトに) */}
+                    <div className="text-center bg-[#070e1c]/40 border border-[#1b2f51]/40 rounded-xl py-1.5 flex items-center justify-center gap-2 min-h-[42px]">
+                        <span className="text-[10px] text-slate-300 font-bold tracking-widest uppercase">アリーナレート</span>
                         {syncing ? (
-                            <RefreshCw className="animate-spin text-amber-500 w-6 h-6 mx-4" />
+                            <RefreshCw className="animate-spin text-amber-500 w-4 h-4 mx-4" />
                         ) : (
-                            <span className="text-3xl font-black text-amber-400 font-mono tracking-wider">
+                            <span className="text-lg font-black text-amber-400 font-mono tracking-wider">
                                 {arenaRate.toLocaleString()}
                             </span>
                         )}
-                        <span className="text-xs text-slate-400 font-mono">pts</span>
+                        <span className="text-[10px] text-slate-400 font-mono">pts</span>
                     </div>
                 </div>
 

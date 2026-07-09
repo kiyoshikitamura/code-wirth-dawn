@@ -175,7 +175,7 @@ export default function ColosseumModal({ onClose }: ColosseumModalProps) {
                                 <Trophy size={40} className="text-amber-500/80 mb-3 group-hover:animate-bounce" />
                                 <span className="text-base font-black text-slate-100">ボス戦</span>
                                 <p className="text-[10px] text-slate-400 mt-2 leading-relaxed font-medium">
-                                    難易度別の勝ち抜き戦<br />モンスターエネミーに挑む
+                                    難易度別の勝ち抜き戦でモンスターに挑む
                                 </p>
                             </button>
                         </div>
