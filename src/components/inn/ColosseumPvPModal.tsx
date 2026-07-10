@@ -219,6 +219,7 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                 setChallengerRank(data.challenger_rank || 'C');
                 setArenaRate(data.challenger_rating || 1000);
                 setHasDefenseParty(!!data.has_defense_party);
+                setInitialFetchDone(true);
             } else {
                 const data = await res.json();
                 setErrorMsg(data.error || '対戦相手の取得に失敗しました。');
@@ -229,7 +230,6 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
         } finally {
             setLoading(false);
             setSyncing(false);
-            setInitialFetchDone(true);
         }
     };
 
