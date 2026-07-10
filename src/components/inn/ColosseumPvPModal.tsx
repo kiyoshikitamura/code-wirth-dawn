@@ -584,9 +584,41 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
         fetchOpponents(true);
         syncStats();
     }, []);
+    // 防衛パーティ未登録時のアラート自動起動 (シーズンごとに最初の1回のみ自動表示)
+    useEffect(() => {
+        if (initialFetchDone && !hasDefenseParty) {
+            try {
+                const now = new Date();
+                const jstOffset = 9 * 60 * 60 * 1000;
+                const jstNow = new Date(now.getTime() + jstOffset);
 
+                const prevWed = new Date(jstNow);
+                const currentDay = jstNow.getUTCDay();
+                let daysToSubtract = currentDay - 3;
+                if (daysToSubtract < 0) daysToSubtract += 7;
+                
+                prevWed.setUTCDate(jstNow.getUTCDate() - daysToSubtract);
+                prevWed.setUTCHours(9, 0, 0, 0);
 
+                if (prevWed.getTime() > jstNow.getTime()) {
+                    prevWed.setUTCDate(prevWed.getUTCDate() - 7);
+                }
 
+                const l = new Date(prevWed.getTime() - jstOffset);
+                const seasonId = `season_${l.getFullYear()}${(l.getMonth()+1).toString().padStart(2,'0')}${l.getDate().toString().padStart(2,'0')}`;
+
+                const storageKey = `dismissed_defense_alert_${seasonId}`;
+                const isDismissed = localStorage.getItem(storageKey);
+
+                if (!isDismissed) {
+                    setShowAutoDefenseAlert(true);
+                    localStorage.setItem(storageKey, 'true'); // 表示済みフラグをセット
+                }
+            } catch (e) {
+                console.warn('[Colosseum] Failed to evaluate auto defense alert storage key:', e);
+            }
+        }
+    }, [initialFetchDone, hasDefenseParty]);
     // タブ切り替え時のデータフェッチ
     useEffect(() => {
         if (tab === 'logs') {
