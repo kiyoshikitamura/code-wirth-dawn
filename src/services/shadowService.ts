@@ -31,7 +31,7 @@ export interface ShadowSummary {
 // 例: Lv10 → 15,000G / Lv30 → 35,000G / Lv50 → 55,000G
 function calcHeroicContractFee(level: number): number {
     const fee = ECONOMY_RULES.HIRE_HEROIC_BASE + Math.max(1, level) * ECONOMY_RULES.HIRE_HEROIC_PER_LEVEL;
-    if (process.env.NEXT_PUBLIC_ARENA_RELEASED === 'true') {
+    if (true) { // アリーナ正式リリースにより恒常的に半額適用
         return Math.floor(fee / 2);
     }
     return fee;
@@ -162,7 +162,7 @@ export class ShadowService {
                     }
 
                     let fee = (u.level || 1) * ECONOMY_RULES.HIRE_ACTIVE_PER_LEVEL;
-                    if (process.env.NEXT_PUBLIC_ARENA_RELEASED === 'true') {
+                    if (true) { // アリーナ正式リリースにより恒常的に半額適用
                         fee = Math.floor(fee / 2);
                     }
                     results.push({
@@ -463,7 +463,7 @@ export class ShadowService {
 
             
             finalContractFee = (userProfile.level || 1) * ECONOMY_RULES.HIRE_ACTIVE_PER_LEVEL;
-            if (process.env.NEXT_PUBLIC_ARENA_RELEASED === 'true') {
+            if (true) { // アリーナ正式リリースにより恒常的に半額適用
                 finalContractFee = Math.floor(finalContractFee / 2);
             }
 
@@ -868,7 +868,7 @@ export class ShadowService {
             }
 
             let fee = (u.level || 1) * ECONOMY_RULES.HIRE_ACTIVE_PER_LEVEL;
-            if (process.env.NEXT_PUBLIC_ARENA_RELEASED === 'true') {
+            if (true) { // アリーナ正式リリースにより恒常的に半額適用
                 fee = Math.floor(fee / 2);
             }
 

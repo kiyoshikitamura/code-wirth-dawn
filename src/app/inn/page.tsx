@@ -364,10 +364,9 @@ function InnPageInner() {
             }
         }
 
-        // 5. アリーナ解禁プロモモーダル表示制御 (アリーナ解禁時、Lv5以上、未表示、かつ他のプロモが非表示の場合)
+        // 5. アリーナ解禁プロモモーダル表示制御 (アリーナ正式リリースに伴い恒常的に解禁、Lv5以上、未表示、かつ他のプロモが非表示の場合)
         let hasShownArena = false;
         if (
-            process.env.NEXT_PUBLIC_ARENA_RELEASED === 'true' &&
             userProfile &&
             (userProfile.level || 1) >= 5 &&
             !showGuestRegisterPromo &&

@@ -137,37 +137,19 @@ export default function ColosseumModal({ onClose }: ColosseumModalProps) {
 
                         <div className="grid grid-cols-2 gap-4">
                             {/* Left: PvP */}
-                            {userProfile?.id === 'c1cf67dd-527a-497e-bf88-ce10c2cb516f' || userProfile?.id === '5ad434ec-763f-473e-939f-14a5e9e1cc93' || userProfile?.id === 'af2848d0-40f2-4f75-bd2b-ac633184107c' ? (
-                                <button
-                                    onClick={() => {
-                                        soundManager?.playSE('se_item_get');
-                                        setMode('pvp');
-                                    }}
-                                    className="flex flex-col items-center justify-start pt-7 pb-5 px-4 h-[170px] bg-[#0f1d35]/60 border border-[#20365b] hover:border-amber-500/50 hover:bg-[#152747] rounded-xl text-center transition-all group cursor-pointer shadow-lg hover:scale-105 active:scale-95"
-                                >
-                                    <Swords size={40} className="text-amber-400 mb-3 group-hover:animate-bounce" />
-                                    <span className="text-base font-black text-slate-100">対人戦</span>
-                                    <p className="text-[10px] text-slate-400 mt-2 leading-relaxed font-medium">
-                                        他ユーザーの防衛デッキと真剣勝負
-                                    </p>
-                                </button>
-                            ) : (
-                                <div
-                                    className="flex flex-col items-center justify-start pt-7 pb-5 px-4 h-[170px] bg-[#0c1322]/40 border border-[#1b2b48]/30 rounded-xl text-center opacity-40 select-none relative overflow-hidden"
-                                >
-                                    <Swords size={40} className="text-slate-500 mb-3" />
-                                    <span className="text-base font-black text-slate-400">対人戦 (準備中)</span>
-                                    <p className="text-[10px] text-slate-500 mt-2 leading-relaxed font-medium">
-                                        他ユーザーの防衛デッキと真剣勝負
-                                    </p>
-                                    <div className="absolute top-2 right-2 bg-[#1b2d4c] text-[8px] text-slate-300 font-bold px-1 py-0.5 rounded border border-[#2d4b7c]">
-                                        COMING SOON
-                                    </div>
-                                    <span className="text-[7px] text-slate-600 font-mono absolute bottom-1">
-                                        DEBUG ID: {userProfile?.id || 'none'}
-                                    </span>
-                                </div>
-                            )}
+                            <button
+                                onClick={() => {
+                                    soundManager?.playSE('se_item_get');
+                                    setMode('pvp');
+                                }}
+                                className="flex flex-col items-center justify-start pt-7 pb-5 px-4 h-[170px] bg-[#0f1d35]/60 border border-[#20365b] hover:border-amber-500/50 hover:bg-[#152747] rounded-xl text-center transition-all group cursor-pointer shadow-lg hover:scale-105 active:scale-95"
+                            >
+                                <Swords size={40} className="text-amber-400 mb-3 group-hover:animate-bounce" />
+                                <span className="text-base font-black text-slate-100">対人戦</span>
+                                <p className="text-[10px] text-slate-400 mt-2 leading-relaxed font-medium">
+                                    他ユーザーの防衛デッキと真剣勝負
+                                </p>
+                            </button>
 
                             {/* Right: PvE */}
                             <button
