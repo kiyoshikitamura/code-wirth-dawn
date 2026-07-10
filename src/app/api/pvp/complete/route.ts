@@ -47,8 +47,8 @@ function getRatingChanges(
             base = 15;
         }
         
-        const change = base + Math.floor((oppScore - myScore) / 100);
-        attackerChange = Math.max(1, change); // 最低+1を保証
+        const change = base + Math.floor((oppScore - myScore) / 200);
+        attackerChange = Math.max(5, change); // 最低+5を保証
         defenderChange = -attackerChange;      // ゼロサム
     } else {
         // アタッカー敗北時（＝ディフェンダー勝利）

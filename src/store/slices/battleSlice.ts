@@ -704,8 +704,13 @@ export const createBattleSlice = (
             updateProfileStatusHelper({ hp: finalHp }, userProfile.id || selectedProfileId);
         }
         
-        // スタンしていなければAP+5 (最大15)
-        let newAp = battleState.current_ap || 0;
+        // スタンしていなければAP+5 (最大15、NaN/マイナス値対策を徹底)
+        let currentAp = battleState.current_ap;
+        if (currentAp === undefined || currentAp === null || isNaN(currentAp)) {
+            currentAp = 0;
+        }
+        currentAp = Math.max(0, currentAp);
+        let newAp = currentAp;
         if (!wasStunned) {
             newAp = Math.min(15, newAp + 5);
         }
@@ -715,7 +720,11 @@ export const createBattleSlice = (
             if (pm.hp <= 0 || !pm.is_active) return pm;
             const pmEffects = pm.status_effects || [];
             const pmStunned = isStunned(pmEffects as StatusEffect[]);
-            let pmAp = pm.current_ap ?? 5;
+            let pmAp = pm.current_ap;
+            if (pmAp === undefined || pmAp === null || isNaN(pmAp)) {
+                pmAp = 5;
+            }
+            pmAp = Math.max(0, pmAp);
             if (!pmStunned) {
                 pmAp = Math.min(15, pmAp + 5);
             }
@@ -1192,7 +1201,7 @@ export const createBattleSlice = (
             set(state => ({
                 battleState: {
                     ...state.battleState,
-                    current_ap: (battleState.current_ap || 0) - finalApCost,
+                    current_ap: Math.max(0, (battleState.current_ap || 0) - finalApCost),
                     cardsPlayedThisTurn: (state.battleState.cardsPlayedThisTurn || 0) + 1,
                     lastPlayedCard: card.id !== '139' ? { ...card } : state.battleState.lastPlayedCard
                 }
@@ -2926,9 +2935,16 @@ export const createBattleSlice = (
                 enemies: currentEnemies,
                 enemy: isTargetDead ? (currentEnemies.find(e => e.hp > 0) || null) : finalTargetEnemy || null,
                 messages: newMessages,
-                isVictory: finalAllDead || state.battleState.isVictory
+                isVictory: finalAllDead || state.battleState.isVictory,
+                isDefeat: (get().userProfile?.hp || 0) <= 0 || state.battleState.isDefeat
             }
         }));
+        const playerHpNow = get().userProfile?.hp || 0;
+        if (playerHpNow <= 0) {
+            useSoundStore.getState().playSE('se_battle_lose');
+            const { selectedProfileId } = get();
+            updateProfileStatusHelper({ hp: 0 }, get().userProfile?.id || selectedProfileId);
+        }
         return true;
     },
 
