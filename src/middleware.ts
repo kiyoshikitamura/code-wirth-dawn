@@ -22,7 +22,8 @@ export async function middleware(request: NextRequest) {
     if (path.startsWith('/api/pvp')) {
         const userId = extractUserIdFromRequest(request);
         const ALLOWED_TEST_USERS = [
-            'c1cf67dd-527a-497e-bf88-ce10c2cb516f', // 本番テストユーザー
+            'c1cf67dd-527a-497e-bf88-ce10c2cb516f', // 本番テストユーザー (旧)
+            '5ad434ec-763f-473e-939f-14a5e9e1cc93', // 本番テストユーザー (新)
             'af2848d0-40f2-4f75-bd2b-ac633184107c'  // 開発・Previewテストユーザー
         ];
         if (!userId || !ALLOWED_TEST_USERS.includes(userId)) {

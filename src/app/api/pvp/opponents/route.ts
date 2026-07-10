@@ -8052,6 +8052,7 @@ export async function GET(req: Request) {
         const seenUserIds = new Set<string>();
         seenUserIds.add(userId);
         seenUserIds.add('c1cf67dd-527a-497e-bf88-ce10c2cb516f');
+        seenUserIds.add('5ad434ec-763f-473e-939f-14a5e9e1cc93');
 
         // フェーズ1: 同ランク優先枠 (最大2枠)
         const { data: sameRankOpponents } = await supabaseServer
@@ -8060,6 +8061,7 @@ export async function GET(req: Request) {
             .eq('defender_rank', rankClass)
             .neq('user_id', userId)
             .neq('user_id', 'c1cf67dd-527a-497e-bf88-ce10c2cb516f')
+            .neq('user_id', '5ad434ec-763f-473e-939f-14a5e9e1cc93')
             .limit(10); // 候補をいくつか取ってインメモリでランダム選択
 
         const chosenSameRank: any[] = [];
@@ -8083,6 +8085,7 @@ export async function GET(req: Request) {
             .select('user_id, defender_rank, updated_at, snapshot_data')
             .neq('user_id', userId)
             .neq('user_id', 'c1cf67dd-527a-497e-bf88-ce10c2cb516f')
+            .neq('user_id', '5ad434ec-763f-473e-939f-14a5e9e1cc93')
             .limit(30);
 
         const chosenOthers: any[] = [];

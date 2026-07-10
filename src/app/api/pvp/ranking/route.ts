@@ -54,6 +54,7 @@ export async function GET(req: Request) {
                 .from('user_profiles')
                 .select('id, name, avatar_url, level, job_class, arena_rate')
                 .neq('id', 'c1cf67dd-527a-497e-bf88-ce10c2cb516f')
+                .neq('id', '5ad434ec-763f-473e-939f-14a5e9e1cc93')
                 .order('arena_rate', { ascending: false })
                 .limit(50);
 
@@ -84,6 +85,7 @@ export async function GET(req: Request) {
             .from('user_profiles')
             .select('*', { count: 'exact', head: true })
             .neq('id', 'c1cf67dd-527a-497e-bf88-ce10c2cb516f')
+            .neq('id', '5ad434ec-763f-473e-939f-14a5e9e1cc93')
             .gt('arena_rate', myRate);
 
         const myCurrentRank = (higherRateCount ?? 0) + 1;

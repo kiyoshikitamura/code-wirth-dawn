@@ -150,7 +150,7 @@ export default function ColosseumModal({ onClose }: ColosseumModalProps) {
 
                         <div className="grid grid-cols-2 gap-4">
                             {/* Left: PvP */}
-                            {userProfile?.id === 'c1cf67dd-527a-497e-bf88-ce10c2cb516f' || userProfile?.id === 'af2848d0-40f2-4f75-bd2b-ac633184107c' ? (
+                            {userProfile?.id === 'c1cf67dd-527a-497e-bf88-ce10c2cb516f' || userProfile?.id === '5ad434ec-763f-473e-939f-14a5e9e1cc93' || userProfile?.id === 'af2848d0-40f2-4f75-bd2b-ac633184107c' ? (
                                 <button
                                     onClick={() => {
                                         soundManager?.playSE('se_item_get');
