@@ -76,14 +76,17 @@ export default function SimpleUserProfilePopup({
 
     if (!isOpen) return null;
 
-    const displayAvatar = avatarUrl || '/avatars/adventurer.jpg';
-    const displayName = epithet ? `${epithet} ${name}` : name;
-    const displayIntro = introduction || '自己紹介は設定されていません。';
+    const displayAvatar = shadow?.icon_url || avatarUrl || '/avatars/adventurer.jpg';
+    const displayName = shadow?.name || (epithet ? `${epithet} ${name}` : name);
+    const displayIntro = shadow?.introduction || introduction || '自己紹介は設定されていません。';
+    const displayLevel = shadow?.level || level || 1;
+    const displayAge = shadow?.age || age;
+    const displayTier = shadow?.subscription_tier || subscriptionTier || 'free';
 
     // 既にパーティに雇われているかの判定
     const isAlreadyHired = () => {
         return partyMembers.some((m: any) =>
-            m.source_user_id === userId || m.name === name
+            m.source_user_id === userId || m.name === (shadow?.name || name)
         );
     };
 
@@ -199,10 +202,10 @@ export default function SimpleUserProfilePopup({
     // アバターの外枠スタイル
     let frameStyle = "w-16 h-16 rounded-full overflow-hidden border-2 border-slate-700 bg-slate-800 shadow-md relative";
     let imgWrapperStyle = "w-full h-full";
-    if (subscriptionTier === 'premium') {
+    if (displayTier === 'premium') {
         frameStyle = "w-16 h-16 rounded-full overflow-hidden bg-gradient-to-r from-yellow-500 via-amber-400 to-yellow-600 p-[2px] shadow-lg shadow-yellow-500/20 relative";
         imgWrapperStyle = "w-full h-full rounded-full overflow-hidden bg-slate-900";
-    } else if (subscriptionTier === 'basic') {
+    } else if (displayTier === 'basic') {
         frameStyle = "w-16 h-16 rounded-full overflow-hidden bg-gradient-to-r from-blue-500 via-cyan-400 to-indigo-500 p-[2px] shadow-lg shadow-blue-500/20 relative";
         imgWrapperStyle = "w-full h-full rounded-full overflow-hidden bg-slate-900";
     }
@@ -230,7 +233,7 @@ export default function SimpleUserProfilePopup({
                         <div className={imgWrapperStyle}>
                             <img
                                 src={displayAvatar}
-                                alt={name}
+                                alt={displayName}
                                 className="w-full h-full object-cover"
                                 onError={(e) => {
                                     const target = e.target as HTMLImageElement;
@@ -247,15 +250,15 @@ export default function SimpleUserProfilePopup({
                             </p>
                         )}
                         <h4 className="text-slate-100 text-base font-black tracking-wide truncate">
-                            {name}
+                            {displayName}
                         </h4>
                         
                         <div className="flex items-center gap-2 mt-1">
                             <span className="text-[10px] font-bold text-slate-300 bg-slate-800/80 border border-slate-700/50 px-2 py-0.5 rounded font-mono">
-                                Lv.{level || 1} {shadow ? toJpJobClass(shadow.job_class) : '冒険者'}
+                                Lv.{displayLevel} {shadow ? toJpJobClass(shadow.job_class) : '冒険者'}
                             </span>
-                            {age !== undefined && (
-                                <span className="text-[10px] font-bold text-slate-400">{age}歳</span>
+                            {displayAge !== undefined && (
+                                <span className="text-[10px] font-bold text-slate-400">{displayAge}歳</span>
                             )}
                         </div>
 
