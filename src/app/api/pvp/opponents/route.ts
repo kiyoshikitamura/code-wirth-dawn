@@ -6,7 +6,7 @@ import { PartyService } from '@/services/partyService';
 
 export const dynamic = 'force-dynamic';
 
-// ─── NPCゴーストのプリセット定義 (C: 4種, B: 3種, A: 2種, S: ヴォルグ含む1種 計10種) ───
+// ─── NPCゴーストのプリセット定義 ───
 const GHOST_PRESETS: Record<string, any[]> = {
     "C": [
         {
@@ -45,7 +45,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                 { "id": "150", "name": "鉄の短剣", "type": "equipment", "effect_data": { "atk_bonus": 2 } }
             ],
             "skill_deck_snapshot": [
-                { "id": "1", "name": "攻撃", "type": "Basic", "ap_cost": 1, "power": 8 }
+                { "id": "1", "name": "強打", "type": "Skill", "ap_cost": 1, "power": 12 }
             ]
         },
         {
@@ -112,10 +112,10 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "max_hp": 95,
                     "atk": 11,
                     "def": 5,
-                    "inject_cards": [25],
+                    "inject_cards": [22],
                     "image_url": "/images/npcs/npc_roland_thief_luka.png",
                     "signature_deck_snapshot": [
-                        { "id": "25", "name": "不意打ち", "type": "Skill", "ap_cost": 2, "power": 25 }
+                        { "id": "22", "name": "クナイ投げ", "type": "Skill", "ap_cost": 1, "power": 15 }
                     ]
                 }
             ],
@@ -123,7 +123,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                 { "id": "152", "name": "見習いの杖", "type": "equipment", "effect_data": { "atk_bonus": 3 } }
             ],
             "skill_deck_snapshot": [
-                { "id": "8", "name": "アイスパイク", "type": "Magic", "ap_cost": 2, "power": 25 }
+                { "id": "66", "name": "氷槍", "type": "Magic", "ap_cost": 2, "power": 35 }
             ]
         },
         {
@@ -154,7 +154,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "inject_cards": [3],
                     "image_url": "/images/npcs/npc_roland_warrior_ike.png",
                     "signature_deck_snapshot": [
-                        { "id": "3", "name": "突き", "type": "Skill", "ap_cost": 1, "power": 12 }
+                        { "id": "3", "name": "突き", "type": "Skill", "ap_cost": 1, "power": 18 }
                     ]
                 }
             ],
@@ -162,7 +162,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                 { "id": "160", "name": "猟師の弓", "type": "equipment", "effect_data": { "atk_bonus": 6 } }
             ],
             "skill_deck_snapshot": [
-                { "id": "7", "name": "火の矢", "type": "Skill", "ap_cost": 2, "power": 20 }
+                { "id": "7", "name": "集中", "type": "Support", "ap_cost": 2, "power": 0 }
             ]
         }
     ],
@@ -195,7 +195,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "inject_cards": [15],
                     "image_url": "/images/npcs/npc_roland_paladin_leo.png",
                     "signature_deck_snapshot": [
-                        { "id": "15", "name": "聖壁", "type": "Defense", "ap_cost": 2, "power": 20 }
+                        { "id": "15", "name": "聖壁", "type": "Defense", "ap_cost": 3, "power": 20 }
                     ]
                 }
             ],
@@ -203,8 +203,8 @@ const GHOST_PRESETS: Record<string, any[]> = {
                 { "id": "182", "name": "ブロードソード", "type": "equipment", "effect_data": { "atk_bonus": 8, "def_bonus": 3 } }
             ],
             "skill_deck_snapshot": [
-                { "id": "4", "name": "強打", "type": "Skill", "ap_cost": 1, "power": 15 },
-                { "id": "15", "name": "聖壁", "type": "Defense", "ap_cost": 2, "power": 20 }
+                { "id": "1", "name": "強打", "type": "Skill", "ap_cost": 1, "power": 12 },
+                { "id": "15", "name": "聖壁", "type": "Defense", "ap_cost": 3, "power": 20 }
             ]
         },
         {
@@ -232,10 +232,10 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "max_hp": 190,
                     "atk": 20,
                     "def": 14,
-                    "inject_cards": [30],
+                    "inject_cards": [16],
                     "image_url": "/images/npcs/npc_roland_thief_luka.png",
                     "signature_deck_snapshot": [
-                        { "id": "30", "name": "砂の罠", "type": "Skill", "ap_cost": 2, "power": 15 }
+                        { "id": "16", "name": "砂の罠", "type": "Support", "ap_cost": 1, "power": 0 }
                     ]
                 }
             ],
@@ -244,7 +244,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
             ],
             "skill_deck_snapshot": [
                 { "id": "67", "name": "雷撃", "type": "Magic", "ap_cost": 3, "power": 45 },
-                { "id": "30", "name": "砂の罠", "type": "Skill", "ap_cost": 2, "power": 15 }
+                { "id": "16", "name": "砂の罠", "type": "Support", "ap_cost": 1, "power": 0 }
             ]
         },
         {
@@ -275,7 +275,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "inject_cards": [3],
                     "image_url": "/images/npcs/npc_roland_warrior_ike.png",
                     "signature_deck_snapshot": [
-                        { "id": "3", "name": "突き", "type": "Skill", "ap_cost": 1, "power": 15 }
+                        { "id": "3", "name": "突き", "type": "Skill", "ap_cost": 1, "power": 18 }
                     ]
                 }
             ],
@@ -283,7 +283,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                 { "id": "186", "name": "ルーンシールド", "type": "equipment", "effect_data": { "def_bonus": 12 } }
             ],
             "skill_deck_snapshot": [
-                { "id": "9", "name": "ヒーリング", "type": "Heal", "ap_cost": 3, "power": 60 }
+                { "id": "14", "name": "治癒", "type": "Heal", "ap_cost": 2, "power": 80 }
             ]
         }
     ],
@@ -331,7 +331,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "inject_cards": [6],
                     "image_url": "/images/npcs/npc_roland_warrior_ike.png",
                     "signature_deck_snapshot": [
-                        { "id": "6", "name": "シールドバッシュ", "type": "Skill", "ap_cost": 2, "power": 15 }
+                        { "id": "6", "name": "シールドバッシュ", "type": "Defense", "ap_cost": 2, "power": 10 }
                     ]
                 }
             ],
@@ -371,7 +371,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "inject_cards": [35],
                     "image_url": "/images/npcs/npc_roland_guard_rookie.png",
                     "signature_deck_snapshot": [
-                        { "id": "35", "name": "絶対防御", "type": "Defense", "ap_cost": 2, "power": 50 }
+                        { "id": "35", "name": "絶対防御", "type": "Defense", "ap_cost": 4, "power": 50 }
                     ]
                 },
                 {
@@ -386,7 +386,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "inject_cards": [13],
                     "image_url": "/images/npcs/npc_roland_elena.png",
                     "signature_deck_snapshot": [
-                        { "id": "13", "name": "祈り", "type": "Heal", "ap_cost": 2, "power": 35 }
+                        { "id": "13", "name": "祈り", "type": "Heal", "ap_cost": 2, "power": 30 }
                     ]
                 }
             ],
@@ -394,7 +394,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                 { "id": "195", "name": "ドラグーンランス", "type": "equipment", "effect_data": { "atk_bonus": 22 } }
             ],
             "skill_deck_snapshot": [
-                { "id": "5", "name": "岩砕き", "type": "Skill", "ap_cost": 2, "power": 25 }
+                { "id": "45", "name": "岩砕き", "type": "Skill", "ap_cost": 4, "power": 55 }
             ]
         }
     ],
@@ -419,7 +419,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                 { "id": "180", "name": "竜殺しの大剣", "type": "equipment", "effect_data": { "atk_bonus": 15, "def_bonus": 5 } }
             ],
             "skill_deck_snapshot": [
-                { "id": "4", "name": "強打", "type": "Skill", "ap_cost": 1, "power": 12 },
+                { "id": "1", "name": "強打", "type": "Skill", "ap_cost": 1, "power": 12 },
                 { "id": "28", "name": "鉄布衫", "type": "Defense", "ap_cost": 3, "power": 30 }
             ]
         }
