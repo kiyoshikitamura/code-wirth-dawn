@@ -49,10 +49,10 @@ export async function GET(req: Request) {
 
         // 3. キャッシュ期限切れの場合のみ、DB集計を走らせて更新
         if (isExpired) {
-            // DB負荷軽減のため、インデックスを利用した上位50名のみのソートスキャン (本番テストユーザーは除外)
+            // DB負荷軽減のため、インデックスを利用した上位50名のみのソートスキャン (本番テストユーザーは除外、防衛デッキ登録ありのユーザーのみに限定)
             const { data: topPlayers, error: fetchErr } = await supabaseServer
                 .from('user_profiles')
-                .select('id, name, avatar_url, level, job_class, arena_rate')
+                .select('id, name, avatar_url, level, job_class, arena_rate, pvp_defense_parties!inner(user_id)')
                 .neq('id', 'c1cf67dd-527a-497e-bf88-ce10c2cb516f')
                 .neq('id', '5ad434ec-763f-473e-939f-14a5e9e1cc93')
                 .order('arena_rate', { ascending: false })
@@ -80,10 +80,10 @@ export async function GET(req: Request) {
             }
         }
 
-        // 4. 自分自身のリアルタイム順位を COUNT クエリで高速特定 (本番テストユーザーを除外してカウント)
+        // 4. 自分自身のリアルタイム順位を COUNT クエリで高速特定 (本番テストユーザーを除外、防衛デッキ登録ありのユーザーのみに限定してカウント)
         const { count: higherRateCount } = await supabaseServer
             .from('user_profiles')
-            .select('*', { count: 'exact', head: true })
+            .select('id, pvp_defense_parties!inner(user_id)', { count: 'exact', head: true })
             .neq('id', 'c1cf67dd-527a-497e-bf88-ce10c2cb516f')
             .neq('id', '5ad434ec-763f-473e-939f-14a5e9e1cc93')
             .gt('arena_rate', myRate);
