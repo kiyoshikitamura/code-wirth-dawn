@@ -36,6 +36,7 @@ import OnboardingAcademyModal from '@/components/inn/OnboardingAcademyModal';
 import GuestRegisterPromoModal from '@/components/inn/GuestRegisterPromoModal';
 import StarterPackPromoModal from '@/components/inn/StarterPackPromoModal';
 import DiscordPromoModal from '@/components/inn/DiscordPromoModal';
+import ArenaPromoModal from '@/components/inn/ArenaPromoModal';
 import CollectionModal from '@/components/collection/CollectionModal';
 import QuestLogModal from '@/components/collection/QuestLogModal';
 import RankingModal from '@/components/collection/RankingModal';
@@ -157,6 +158,7 @@ function InnPageInner() {
     const [showGuestRegisterPromo, setShowGuestRegisterPromo] = useState(false);
     const [showStarterPackPromo, setShowStarterPackPromo] = useState(false);
     const [showDiscordPromo, setShowDiscordPromo] = useState(false);
+    const [showArenaPromo, setShowArenaPromo] = useState(false);
 
     React.useEffect(() => {
         if (typeof window !== 'undefined') {
@@ -362,8 +364,30 @@ function InnPageInner() {
             }
         }
 
-        // 5. プレイヤーコミュニティ（Discord）プロモモーダル表示制御 (全ユーザー、未表示、かつ他のプロモが非表示の場合)
-        if (userProfile && !showGuestRegisterPromo && !showStarterPackPromo && typeof window !== 'undefined') {
+        // 5. アリーナ解禁プロモモーダル表示制御 (アリーナ解禁時、Lv5以上、未表示、かつ他のプロモが非表示の場合)
+        let hasShownArena = false;
+        if (
+            process.env.NEXT_PUBLIC_ARENA_RELEASED === 'true' &&
+            userProfile &&
+            (userProfile.level || 1) >= 5 &&
+            !showGuestRegisterPromo &&
+            !showStarterPackPromo &&
+            typeof window !== 'undefined'
+        ) {
+            try {
+                const arenaPromoShown = localStorage.getItem('wirth_dawn_arena_promo_shown');
+                if (!arenaPromoShown) {
+                    localStorage.setItem('wirth_dawn_arena_promo_shown', 'true');
+                    setShowArenaPromo(true);
+                    hasShownArena = true;
+                }
+            } catch (err) {
+                console.warn('[InnPage] localStorage access failed for arena promo:', err);
+            }
+        }
+
+        // 6. プレイヤーコミュニティ（Discord）プロモモーダル表示制御 (全ユーザー、未表示、かつ他のプロモが非表示の場合)
+        if (userProfile && !showGuestRegisterPromo && !showStarterPackPromo && !showArenaPromo && !hasShownArena && typeof window !== 'undefined') {
             try {
                 const discordPromoShown = localStorage.getItem('wirth_dawn_discord_promo_shown');
                 if (!discordPromoShown) {
@@ -374,7 +398,7 @@ function InnPageInner() {
                 console.warn('[InnPage] localStorage access failed for discord promo:', err);
             }
         }
-    }, [completedQuests, userProfile, searchParams, initialLoadComplete, showGuestRegisterPromo, showStarterPackPromo]);
+    }, [completedQuests, userProfile, searchParams, initialLoadComplete, showGuestRegisterPromo, showStarterPackPromo, showArenaPromo]);
 
     React.useEffect(() => {
         if (showTavern) {
@@ -428,6 +452,7 @@ function InnPageInner() {
         showGuestRegisterPromo ||
         showStarterPackPromo ||
         showDiscordPromo ||
+        showArenaPromo ||
         restLoading ||
         traveling
     );
@@ -789,6 +814,11 @@ function InnPageInner() {
             {/* Discord Promo Modal */}
             {showDiscordPromo && (
                 <DiscordPromoModal onClose={() => setShowDiscordPromo(false)} />
+            )}
+
+            {/* Arena Release Promo Modal */}
+            {showArenaPromo && (
+                <ArenaPromoModal onClose={() => setShowArenaPromo(false)} />
             )}
 
             {/* NPC Dialog */}

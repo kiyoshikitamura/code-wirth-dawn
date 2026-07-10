@@ -46,14 +46,8 @@ export default function ColosseumModal({ onClose }: ColosseumModalProps) {
             }
         }
 
-        // 3. テストユーザーのチェック（本番環境でも、テストユーザーならアリーナ選択画面に進める）
-        const isTestUser = userProfile?.id === 'c1cf67dd-527a-497e-bf88-ce10c2cb516f' || userProfile?.id === '5ad434ec-763f-473e-939f-14a5e9e1cc93';
-
-        if (isPreview || isTestUser) {
-            setMode('select');
-        } else {
-            setMode('pve');
-        }
+        // 3. アリーナ正式リリース：全ユーザーがアリーナ（対人戦）とボス戦を選択可能
+        setMode('select');
     }, [userProfile, mode]);
 
     const [selectedDiff, setSelectedDiff] = useState<'easy' | 'normal' | 'hard' | null>(null);

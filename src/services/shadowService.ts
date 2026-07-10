@@ -30,7 +30,11 @@ export interface ShadowSummary {
 // 5,000G（BaseFee）+ Level × 1,000G（Modifier）
 // 例: Lv10 → 15,000G / Lv30 → 35,000G / Lv50 → 55,000G
 function calcHeroicContractFee(level: number): number {
-    return ECONOMY_RULES.HIRE_HEROIC_BASE + Math.max(1, level) * ECONOMY_RULES.HIRE_HEROIC_PER_LEVEL;
+    const fee = ECONOMY_RULES.HIRE_HEROIC_BASE + Math.max(1, level) * ECONOMY_RULES.HIRE_HEROIC_PER_LEVEL;
+    if (process.env.NEXT_PUBLIC_ARENA_RELEASED === 'true') {
+        return Math.floor(fee / 2);
+    }
+    return fee;
 }
 
 // タスク2: ロイヤリティ分配率（英霊）
@@ -157,7 +161,10 @@ export class ShadowService {
                         }
                     }
 
-                    const fee = (u.level || 1) * ECONOMY_RULES.HIRE_ACTIVE_PER_LEVEL;
+                    let fee = (u.level || 1) * ECONOMY_RULES.HIRE_ACTIVE_PER_LEVEL;
+                    if (process.env.NEXT_PUBLIC_ARENA_RELEASED === 'true') {
+                        fee = Math.floor(fee / 2);
+                    }
                     results.push({
                         profile_id: u.id,
                         name: u.name || 'Unknown Adventurer',
@@ -456,6 +463,9 @@ export class ShadowService {
 
             
             finalContractFee = (userProfile.level || 1) * ECONOMY_RULES.HIRE_ACTIVE_PER_LEVEL;
+            if (process.env.NEXT_PUBLIC_ARENA_RELEASED === 'true') {
+                finalContractFee = Math.floor(finalContractFee / 2);
+            }
 
             // 装備品のステータスボーナスと戦闘開始バフを集計
             const { data: equipped } = await this.supabase
@@ -857,7 +867,10 @@ export class ShadowService {
                 resolvedCardIds = equippedSkills.map((s: any) => s.skills?.cards?.id).filter(Boolean);
             }
 
-            const fee = (u.level || 1) * ECONOMY_RULES.HIRE_ACTIVE_PER_LEVEL;
+            let fee = (u.level || 1) * ECONOMY_RULES.HIRE_ACTIVE_PER_LEVEL;
+            if (process.env.NEXT_PUBLIC_ARENA_RELEASED === 'true') {
+                fee = Math.floor(fee / 2);
+            }
 
             return {
                 profile_id: u.id,
