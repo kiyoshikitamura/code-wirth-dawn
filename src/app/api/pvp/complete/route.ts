@@ -5,7 +5,26 @@ import { supabaseServer } from '@/lib/supabase-admin';
 
 export const dynamic = 'force-dynamic';
 
-function getRatingChanges(myRank: string, oppRank: string, isVictory: boolean): { attackerChange: number; defenderChange: number } {
+const GHOST_SCORES: Record<string, { score: number; rank: string }> = {
+    "ghost_c_1": { score: 950, rank: "C" },
+    "ghost_c_2": { score: 1100, rank: "C" },
+    "ghost_c_3": { score: 1250, rank: "C" },
+    "ghost_c_4": { score: 1400, rank: "C" },
+    "ghost_b_1": { score: 2400, rank: "B" },
+    "ghost_b_2": { score: 2600, rank: "B" },
+    "ghost_b_3": { score: 2800, rank: "B" },
+    "ghost_a_1": { score: 4200, rank: "A" },
+    "ghost_a_2": { score: 4500, rank: "A" },
+    "ghost_s_1": { score: 6800, rank: "S" },
+};
+
+function getRatingChanges(
+    myRank: string,
+    oppRank: string,
+    myScore: number,
+    oppScore: number,
+    isVictory: boolean
+): { attackerChange: number; defenderChange: number } {
     const rankWeights: Record<string, number> = { 'S': 4, 'A': 3, 'B': 2, 'C': 1 };
     const myWeight = rankWeights[myRank] || 1;
     const oppWeight = rankWeights[oppRank] || 1;
@@ -13,33 +32,41 @@ function getRatingChanges(myRank: string, oppRank: string, isVictory: boolean): 
     let attackerChange = 0;
     let defenderChange = 0;
 
-    if (myWeight < oppWeight) {
-        // 格上相手
-        if (isVictory) {
-            attackerChange = Math.floor(Math.random() * (50 - 30 + 1)) + 30; // +30〜50
-            defenderChange = -(Math.floor(Math.random() * (50 - 30 + 1)) + 30); // 相手は格下に負けたので -30〜50
+    if (isVictory) {
+        // アタッカー勝利時
+        let base = 15;
+        if (myWeight < oppWeight) {
+            // 格上相手
+            base = 25;
+        } else if (myWeight === oppWeight) {
+            // 同等
+            base = 15;
         } else {
-            attackerChange = -(Math.floor(Math.random() * (10 - 1 + 1)) + 1); // -1〜10
-            defenderChange = Math.floor(Math.random() * (10 - 1 + 1)) + 1; // 相手は格上に勝ったので +1〜10
+            // 格下相手
+            base = 15;
         }
-    } else if (myWeight === oppWeight) {
-        // 同格
-        if (isVictory) {
-            attackerChange = Math.floor(Math.random() * (25 - 10 + 1)) + 10; // +10〜25
-            defenderChange = -(Math.floor(Math.random() * (25 - 10 + 1)) + 10); // -10〜25
-        } else {
-            attackerChange = -(Math.floor(Math.random() * (25 - 10 + 1)) + 10); // -10〜25
-            defenderChange = Math.floor(Math.random() * (25 - 10 + 1)) + 10; // +10〜25
-        }
+        
+        const change = base + Math.floor((oppScore - myScore) / 100);
+        attackerChange = Math.max(1, change); // 最低+1を保証
+        defenderChange = -attackerChange;      // ゼロサム
     } else {
-        // 格下相手
-        if (isVictory) {
-            attackerChange = Math.floor(Math.random() * (10 - 1 + 1)) + 1; // +1〜10
-            defenderChange = -(Math.floor(Math.random() * (10 - 1 + 1)) + 1); // -1〜10
+        // アタッカー敗北時（＝ディフェンダー勝利）
+        // ディフェンダーから見てアタッカーの立場をもとに計算
+        let base = 15;
+        if (oppWeight < myWeight) {
+            // ディフェンダーから見てアタッカーは「格上」
+            base = 25;
+        } else if (oppWeight === myWeight) {
+            // 同等
+            base = 15;
         } else {
-            attackerChange = -(Math.floor(Math.random() * (50 - 30 + 1)) + 30); // -30〜50
-            defenderChange = Math.floor(Math.random() * (50 - 30 + 1)) + 30; // 相手は格上に勝ったので +30〜50
+            // ディフェンダーから見てアタッカーは「格下」
+            base = 15;
         }
+        
+        const change = base + Math.floor((myScore - oppScore) / 100);
+        defenderChange = Math.max(1, change); // 最低+1を保証
+        attackerChange = -defenderChange;      // ゼロサム
     }
 
     return { attackerChange, defenderChange };
@@ -55,7 +82,7 @@ export async function POST(req: Request) {
         }
 
         const userId = user.id;
-        const { is_victory, opponent_id, opponent_name, text_log, battle_logs, my_rank, opponent_rank } = await req.json();
+        const { is_victory, opponent_id, opponent_name, text_log, battle_logs } = await req.json();
 
         let textLogStr = '';
         if (text_log) {
@@ -79,10 +106,33 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: '自身のプロフィールが見つかりません。' }, { status: 404 });
         }
 
-        // 2. 対戦相手のアリーナレートの取得（ゴーストでなければ）
+        // 2. 挑戦者（自分自身）の戦闘評価スコアとランクの取得
+        const { data: myDefense } = await supabaseServer
+            .from('pvp_defense_parties')
+            .select('defender_rank, snapshot_data')
+            .eq('user_id', userId)
+            .maybeSingle();
+
+        let myRank = 'C';
+        let myScore = 1000;
+        if (myDefense) {
+            myRank = myDefense.defender_rank || 'C';
+            if (myDefense.snapshot_data) {
+                myScore = (myDefense.snapshot_data as any).battle_score || 1000;
+            }
+        }
+
+        // 3. 対戦相手のアリーナレートおよび戦闘評価とランクの取得
         let oppRate = 1000;
+        let oppRank = 'C';
+        let oppScore = 1000;
         const isGhost = opponent_id.startsWith('ghost_');
-        if (!isGhost) {
+        
+        if (isGhost) {
+            const ghostInfo = GHOST_SCORES[opponent_id] || { score: 1000, rank: 'C' };
+            oppRank = ghostInfo.rank;
+            oppScore = ghostInfo.score;
+        } else {
             const { data: oppProfile } = await supabaseServer
                 .from('user_profiles')
                 .select('arena_rate')
@@ -91,12 +141,26 @@ export async function POST(req: Request) {
             if (oppProfile) {
                 oppRate = oppProfile.arena_rate ?? 1000;
             }
+
+            const { data: oppDefense } = await supabaseServer
+                .from('pvp_defense_parties')
+                .select('defender_rank, snapshot_data')
+                .eq('user_id', opponent_id)
+                .maybeSingle();
+            if (oppDefense) {
+                oppRank = oppDefense.defender_rank || 'C';
+                if (oppDefense.snapshot_data) {
+                    oppScore = (oppDefense.snapshot_data as any).battle_score || 1000;
+                }
+            }
         }
 
-        // 3. 自分と相手のランク比較によるレート増減値の決定
+        // 4. 新計算式によるレート増減値の決定
         const { attackerChange, defenderChange } = getRatingChanges(
-            my_rank || 'C',
-            opponent_rank || 'C',
+            myRank,
+            oppRank,
+            myScore,
+            oppScore,
             is_victory
         );
 
