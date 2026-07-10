@@ -207,7 +207,8 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
             const authHeaders = await getAuthHeaders();
             const res = await fetch('/api/pvp/opponents', {
                 method: 'GET',
-                headers: { ...authHeaders }
+                headers: { ...authHeaders },
+                cache: 'no-store'
             });
 
             if (res.ok) {

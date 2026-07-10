@@ -639,6 +639,10 @@ export async function GET(req: Request) {
             challenger_rating: myRate,
             has_defense_party: !!defensePartyCheck?.data,
             opponents: opponentsList
+        }, {
+            headers: {
+                'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate'
+            }
         });
 
     } catch (err: any) {
