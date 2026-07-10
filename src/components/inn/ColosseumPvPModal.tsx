@@ -585,12 +585,7 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
         syncStats();
     }, []);
 
-    // 防衛パーティ未登録時のアラート自動起動
-    useEffect(() => {
-        if (initialFetchDone && !hasDefenseParty) {
-            setShowAutoDefenseAlert(true);
-        }
-    }, [initialFetchDone, hasDefenseParty]);
+
 
     // タブ切り替え時のデータフェッチ
     useEffect(() => {

@@ -90,7 +90,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
         {
             "user_id": "ghost_c_3",
             "user_name": "魔術師ロビン",
-            "avatar_url": "/images/npcs/npc_guest_mage.png",
+            "avatar_url": "/images/npcs/npc_roland_scholar.png",
             "battle_score": 1250,
             "defense_rank": "C",
             "is_ghost": true,
@@ -210,7 +210,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
         {
             "user_id": "ghost_b_2",
             "user_name": "風のシルフ",
-            "avatar_url": "/images/npcs/npc_guest_mage.png",
+            "avatar_url": "/images/npcs/npc_yato_onmyoji.png",
             "battle_score": 2600,
             "defense_rank": "B",
             "is_ghost": true,
@@ -314,7 +314,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "atk": 32,
                     "def": 14,
                     "inject_cards": [65],
-                    "image_url": "/images/npcs/npc_guest_mage.png",
+                    "image_url": "/images/npcs/npc_roland_scholar.png",
                     "signature_deck_snapshot": [
                         { "id": "65", "name": "火球", "type": "Magic", "ap_cost": 2, "power": 40 }
                     ]
