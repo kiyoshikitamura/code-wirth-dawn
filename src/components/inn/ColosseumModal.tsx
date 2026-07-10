@@ -37,10 +37,13 @@ export default function ColosseumModal({ onClose }: ColosseumModalProps) {
             }
         }
 
-        if (isPreview) {
+        // 3. テストユーザーのチェック（本番環境でも、テストユーザーならアリーナ選択画面に進める）
+        const isTestUser = userProfile?.id === 'c1cf67dd-527a-497e-bf88-ce10c2cb516f' || userProfile?.id === '5ad434ec-763f-473e-939f-14a5e9e1cc93';
+
+        if (isPreview || isTestUser) {
             setMode('select');
 
-            // プレビュー環境のみ、コロシアムに入場したタイミングで防衛パーティを自動登録/更新
+            // コロシアムに入場したタイミングで防衛パーティを自動登録/更新
             const autoRegisterDefense = async () => {
                 try {
                     const authHeaders = await getAuthHeaders();
@@ -59,7 +62,7 @@ export default function ColosseumModal({ onClose }: ColosseumModalProps) {
         } else {
             setMode('pve');
         }
-    }, []);
+    }, [userProfile]);
 
     const router = useRouter();
     const { userProfile, gold, fetchUserProfile } = useGameStore();
