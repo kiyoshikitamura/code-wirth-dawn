@@ -1981,8 +1981,8 @@ export const createBattleSlice = (
                     case 'ruin_pact': {
                         const otherHandCards = nextHand.filter(c => c.id !== card.id);
                         const count = otherHandCards.length;
-                        nextHand = [];
                         if (count > 0) {
+                            nextHand = [];
                             set(state => ({
                                 battleState: {
                                     ...state.battleState,
@@ -2003,6 +2003,7 @@ export const createBattleSlice = (
                             damage = 0;
                             logMsg = `${card.name}！ 手札 ${count} 枚を除外し、破滅の魔弾をばら撒く！\n` + logs.join('\n');
                         } else {
+                            nextHand = nextHand.filter(c => c.id !== card.id);
                             logMsg = `${card.name}を使用したが、手札に他のカードがなかった。`;
                         }
                         break;
