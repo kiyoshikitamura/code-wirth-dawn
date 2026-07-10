@@ -13,7 +13,7 @@ import { Enemy } from '@/types/game';
 import StatusEffectBadges from './StatusEffectBadges';
 import { getCardEffectInfo } from '@/lib/cardEffects';
 import { getAuthToken } from '@/lib/authToken';
-import { soundManager } from '@/lib/soundManager';
+import { useSoundStore } from '@/store/soundStore';
 
 interface BattleViewProps {
     onBattleEnd: (result: 'win' | 'lose' | 'escape') => void;
@@ -226,7 +226,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                     else if (/治癒|回復|ヒール|エンゼル|天使|キュア/g.test(skillName)) seToPlay = 'se_heal';
                     else if (/壁|防御|護り|結界|アーマー|バリア|盾|バフ/g.test(skillName)) seToPlay = 'se_buff';
                     else if (/挑発|デバフ/g.test(skillName)) seToPlay = 'se_debuff';
-                    soundManager?.playSE(seToPlay);
+                    useSoundStore.getState().playSE(seToPlay);
 
                     const isStrong = /終焉|暗黒|雷撃|魂|石化|咆哮|神罰|極|超|真|神|絶|暴君/g.test(skillName);
                     if (isStrong) {
@@ -249,7 +249,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                     else if (/治癒|回復|ヒール|エンゼル|天使|キュア/g.test(skillName)) seToPlay = 'se_heal';
                     else if (/壁|防御|護り|結界|アーマー|バリア|盾|バフ/g.test(skillName)) seToPlay = 'se_buff';
                     else if (/挑発|デバフ/g.test(skillName)) seToPlay = 'se_debuff';
-                    soundManager?.playSE(seToPlay);
+                    useSoundStore.getState().playSE(seToPlay);
 
                     const isStrong = /終焉|暗黒|雷撃|魂|石化|咆哮|神罰|極|超|真|神|絶|暴君/g.test(skillName);
                     if (isStrong) {

@@ -12,6 +12,9 @@ interface SoundState {
     seEnabled: boolean;
     toggleBgm: () => void;
     toggleSe: () => void;
+    playSE: (key: string) => void;
+    playBgm: (key: string) => void;
+    playSEForCardEffect: (effectType: string, isMagic?: boolean) => void;
 }
 
 export const useSoundStore = create<SoundState>()(
@@ -31,6 +34,30 @@ export const useSoundStore = create<SoundState>()(
                 soundManager?.setSeEnabled(next);
                 set({ seEnabled: next });
             },
+
+            playSE: (key: string) => {
+                try {
+                    soundManager?.playSE(key);
+                } catch (e) {
+                    console.warn('[useSoundStore] playSE error:', e);
+                }
+            },
+
+            playBgm: (key: string) => {
+                try {
+                    soundManager?.playBgm(key).catch(() => {});
+                } catch (e) {
+                    console.warn('[useSoundStore] playBgm error:', e);
+                }
+            },
+
+            playSEForCardEffect: (effectType: string, isMagic?: boolean) => {
+                try {
+                    soundManager?.playSEForCardEffect(effectType, isMagic);
+                } catch (e) {
+                    console.warn('[useSoundStore] playSEForCardEffect error:', e);
+                }
+            }
         }),
         {
             name: 'wirth-dawn-sound-settings',

@@ -138,6 +138,17 @@ export function useBattleTypewriter(initialHp?: number | null, onMessageStart?: 
         setIsTypingDone(true);
     }, [activeMessage]);
 
+    // セーフティ・Watchdogタイマー：タイピング状態が6秒以上停滞した場合の強制救済 (フリーズ防止)
+    useEffect(() => {
+        if (!isTypingDone || activeMessage) {
+            const timeoutId = setTimeout(() => {
+                console.warn('[Watchdog] Typing deadlock detected! Force flushing queue...');
+                flushQueue();
+            }, 6000);
+            return () => clearTimeout(timeoutId);
+        }
+    }, [isTypingDone, activeMessage, flushQueue]);
+
     return {
         displayedLogs,
         activeMessage,

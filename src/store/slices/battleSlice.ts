@@ -10,7 +10,8 @@ import { getPassiveLabel, aggregateBattlePassives } from '@/lib/passiveEffects';
 import { getEnemySkill, loadEnemySkillsFromDB } from '@/lib/enemySkills';
 import { useQuestState } from '../useQuestState';
 import { GROWTH_RULES } from '@/constants/game_rules';
-import { soundManager, CARD_EFFECT_SE_MAP } from '@/lib/soundManager';
+import { CARD_EFFECT_SE_MAP } from '@/lib/soundManager';
+import { useSoundStore } from '../soundStore';
 import { getEffectiveAtk, getEffectiveDef, getEffectiveMaxHp } from './profileSlice';
 import { getAuthHeaders } from '@/lib/authToken';
 import type { GameState } from '../types';
@@ -526,8 +527,7 @@ export const createBattleSlice = (
         get().dealHand();
 
         // バトルで使用されるSEの事前ロードを実行 (v34.9: 走査対象を shuffledDeck に拡張)
-        if (soundManager) {
-            const sm = soundManager;
+        try {
             const seToPreload = new Set<string>(['se_hit', 'se_attack', 'se_magic', 'se_heal', 'se_buff', 'se_debuff', 'se_taunt']);
             
             // 山札に入るすべての初期カード (shuffledDeck) に対して SE をプリロード
@@ -538,7 +538,12 @@ export const createBattleSlice = (
             });
             
             // バックグラウンドでプリロード（バトル開始自体をブロックしない）
-            Promise.all(Array.from(seToPreload).map(key => sm.preloadSE(key))).catch(console.error);
+            const soundMgr = typeof window !== 'undefined' ? (require('@/lib/soundManager').soundManager) : null;
+            if (soundMgr) {
+                Promise.all(Array.from(seToPreload).map((key: string) => soundMgr.preloadSE(key))).catch(console.error);
+            }
+        } catch (e) {
+            console.warn('[battleSlice] preloadSE failed:', e);
         }
 
         // バトルBGM: 通常はbgm_battleを使用。ボスBGMはシナリオパラメータで明示指定時のみ。
@@ -608,7 +613,7 @@ export const createBattleSlice = (
         const allEnemiesDead = (battleState.enemies || []).every(e => e.hp <= 0);
 
         if (currentTurn > 30) {
-            soundManager?.playSE('se_battle_lose');
+            useSoundStore.getState().playSE('se_battle_lose');
             set(state => ({
                 battleState: {
                     ...state.battleState,
@@ -631,7 +636,7 @@ export const createBattleSlice = (
         }));
 
         if (allEnemiesDead) {
-            soundManager?.playSE('se_battle_win');
+            useSoundStore.getState().playSE('se_battle_win');
             set(state => ({
                 battleState: {
                     ...state.battleState,
@@ -718,7 +723,7 @@ export const createBattleSlice = (
         }));
         
         if (isDeadFromDoT) {
-            soundManager?.playSE('se_battle_lose');
+            useSoundStore.getState().playSE('se_battle_lose');
             return;
         }
 
@@ -1113,7 +1118,7 @@ export const createBattleSlice = (
         }));
 
         if (isPlayerDead) {
-            soundManager?.playSE('se_battle_lose');
+            useSoundStore.getState().playSE('se_battle_lose');
             const { selectedProfileId } = get();
             updateProfileStatusHelper({ hp: 0 }, get().userProfile?.id || selectedProfileId);
         }
@@ -1279,7 +1284,7 @@ export const createBattleSlice = (
             }
 
             effectInfo = getCardEffectInfo(card);
-            soundManager?.playSEForCardEffect(effectInfo.effectType, card.type === 'Magic');
+            useSoundStore.getState().playSEForCardEffect(effectInfo.effectType, card.type === 'Magic');
 
             // Soul Boost check
             let damageMultiplier = 1;
@@ -2259,7 +2264,7 @@ export const createBattleSlice = (
                         nextHand = nextHand.filter(c => c.id !== card.id);
                         nextDiscardPile = [...nextDiscardPile, card];
                         logMsg = `${card.name}を使用！ 戦闘から離脱した！`;
-                        soundManager?.playSE('se_escape');
+                        useSoundStore.getState().playSE('se_escape');
                         set(state => ({
                             hand: nextHand,
                             discardPile: nextDiscardPile,
@@ -4214,7 +4219,7 @@ export const createBattleSlice = (
         const finalAllEnemiesDead = updatedEnemies.every(e => e.hp <= 0);
 
         if (finalAllEnemiesDead) {
-            soundManager?.playSE('se_battle_win');
+            useSoundStore.getState().playSE('se_battle_win');
             const { selectedScenario } = get();
             const finalMessages = [...newMessages, '敵パーティが力尽きた！ 勝利！'];
             const isQuestBattle = useQuestState.getState().isInQuest;
@@ -4315,7 +4320,7 @@ export const createBattleSlice = (
                 }
             }
 
-            soundManager?.playSE('se_battle_lose');
+            useSoundStore.getState().playSE('se_battle_lose');
             set(state => ({
                 userProfile: newUserProfile,
                 battleState: { ...state.battleState, isDefeat: true, player_effects: currentPlayerEffects, messages: newMessages }
