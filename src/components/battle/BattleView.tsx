@@ -218,6 +218,15 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                 } else if (isPartyMemberAction) {
                     // 味方お供NPCのスキルカットイン (画面下部・緑色系)
                     setPartyActiveSkill(skillName);
+                    
+                    // スキル名から適したSEを鳴らす
+                    let seToPlay = 'se_attack';
+                    if (/雷撃|雷電|ファイア|フレイム|ブレス|魔|氷|風|土|炎|水|ダーク|ライト|メテオ/g.test(skillName)) seToPlay = 'se_magic';
+                    else if (/治癒|回復|ヒール|エンゼル|天使|キュア/g.test(skillName)) seToPlay = 'se_heal';
+                    else if (/壁|防御|護り|結界|アーマー|バリア|盾|バフ/g.test(skillName)) seToPlay = 'se_buff';
+                    else if (/挑発|デバフ/g.test(skillName)) seToPlay = 'se_debuff';
+                    soundManager?.playSE(seToPlay);
+
                     const isStrong = /終焉|暗黒|雷撃|魂|石化|咆哮|神罰|極|超|真|神|絶|暴君/g.test(skillName);
                     if (isStrong) {
                         setIsStrongPartyActive(true);
@@ -232,6 +241,15 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                 } else {
                     // 敵エネミースキル警告カットイン (画面中央・赤系)
                     setEnemyActiveSkill(skillName);
+
+                    // スキル名から適したSEを鳴らす
+                    let seToPlay = 'se_attack';
+                    if (/雷撃|雷電|ファイア|フレイム|ブレス|魔|氷|風|土|炎|水|ダーク|ライト|メテオ/g.test(skillName)) seToPlay = 'se_magic';
+                    else if (/治癒|回復|ヒール|エンゼル|天使|キュア/g.test(skillName)) seToPlay = 'se_heal';
+                    else if (/壁|防御|護り|結界|アーマー|バリア|盾|バフ/g.test(skillName)) seToPlay = 'se_buff';
+                    else if (/挑発|デバフ/g.test(skillName)) seToPlay = 'se_debuff';
+                    soundManager?.playSE(seToPlay);
+
                     const isStrong = /終焉|暗黒|雷撃|魂|石化|咆哮|神罰|極|超|真|神|絶|暴君/g.test(skillName);
                     if (isStrong) {
                         setIsStrongEnemyActive(true);
@@ -303,11 +321,24 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
             // A. お供NPC/エネミーのスキル: 「[名前]の[スキル名]！」
             // 例: 「ハンスの斬撃！」「ガウェインの五星の加護！」
             // ※「魔術書:」で始まらない場合のみ、文頭の「の」より前をキャラクター名として除去します
-            if (!skillName && !msg.startsWith('魔術書:') && !msg.startsWith('魔導書:')) {
+            if (!skillName && 
+                !msg.startsWith('魔術書:') && 
+                !msg.startsWith('魔導書:') && 
+                !msg.startsWith('禁書:') &&
+                !msg.includes('を使用') &&
+                !msg.includes('を発動') &&
+                !msg.includes('を服用') &&
+                !msg.includes('を詠唱')
+            ) {
                 const npcMatch = msg.match(/^([^\sの]+?)の([^\s！『』]{2,})！/);
                 if (npcMatch) {
-                    const name = npcMatch[2];
-                    skillName = name;
+                    const charName = npcMatch[1];
+                    const allCharaNames = [...npcNames, ...opponentNames];
+                    const isRealCharacter = allCharaNames.some(name => charName.includes(name) || name.includes(charName));
+                    if (isRealCharacter) {
+                        const name = npcMatch[2];
+                        skillName = name;
+                    }
                 }
             }
             
@@ -315,7 +346,7 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
             // 例: 「魔術書:雷電の連鎖！ 連鎖する紫電...」 ➔ 「魔術書:雷電の連鎖」
             // 例: 「瞑想を使用！」 ➔ 「瞑想」
             if (!skillName) {
-                const useMatch = msg.match(/^([✨⚠♥\s]*?)([^\s！『』]+?)(！|を使用|を発動|を服用|で|を[^\s]+?に使用)/);
+                const useMatch = msg.match(/^([✨⚠♥\s]*?)([^\s！『』]+?)(を使用|を発動|を服用|を[^\s]+?に使用|で|！)/);
                 if (useMatch) {
                     const name = useMatch[2];
                     skillName = name;
@@ -335,8 +366,8 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
                 // 装飾文字をクリンナップ
                 skillName = skillName.replace(/^[♥✨⚠\s]+/, '').trim();
                 
-                // 魔術書や魔導書のプレフィックスを除去してカットイン名を見やすくする
-                skillName = skillName.replace(/^(魔術書|魔導書):/, '');
+                // 魔術書や魔導書、禁書のプレフィックスを除去してカットイン名を見やすくする
+                skillName = skillName.replace(/^(魔術書|魔導書|禁書):/, '');
                 
                 // 厳格な除外キーワード判定
                 const EXCLUDE_KEYWORDS = [

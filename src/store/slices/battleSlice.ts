@@ -604,10 +604,10 @@ export const createBattleSlice = (
             }
         }
 
-        const nextTurn = battleState.turn + 1;
+        const currentTurn = battleState.turn;
         const allEnemiesDead = (battleState.enemies || []).every(e => e.hp <= 0);
 
-        if (nextTurn > 30) {
+        if (currentTurn > 30) {
             soundManager?.playSE('se_battle_lose');
             set(state => ({
                 battleState: {
@@ -621,11 +621,10 @@ export const createBattleSlice = (
             return;
         }
 
-        // ターン終了時はクリンナップを走らせず、ターン数のみ加算してNPCフェーズへ
+        // ターン終了時はクリンナップを走らせず、NPCフェーズへ
         set(state => ({
             battleState: {
                 ...state.battleState,
-                turn: nextTurn,
                 vitDamageTakenThisTurn: false,
                 battlePhase: 'npc_done',
             }
@@ -1280,7 +1279,7 @@ export const createBattleSlice = (
             }
 
             effectInfo = getCardEffectInfo(card);
-            soundManager?.playSEForCardEffect(effectInfo.effectType);
+            soundManager?.playSEForCardEffect(effectInfo.effectType, card.type === 'Magic');
 
             // Soul Boost check
             let damageMultiplier = 1;
@@ -3392,9 +3391,9 @@ export const createBattleSlice = (
                         '136': 'skill_uriel_flame',    // ファイアウェーブ (全体火炎)
                         '1': 'skill_attack',           // 攻撃
                         '3': 'skill_katana_slash',     // 突き
-                        '4': 'skill_heavy_blow',       // 強打
                         '5': 'skill_heavy_blow',       // 岩砕き
                         '6': 'skill_shield_bash',      // シールドバッシュ
+                        '67': 'skill_thunder_strike',  // 雷撃 (単体スタン)
                         '7': 'skill_arrow',            // 火の矢
                         '8': 'skill_thunder_strike',   // アイスパイク
                         '9': 'skill_boss_heal',        // ヒーリング
@@ -3746,6 +3745,98 @@ export const createBattleSlice = (
                         updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, lastUsedSkill: selectedSkillSlug } as any : e);
                         continue;
                     }
+
+                    // 14. 防御 (4) -> 自分に防御強化 (def_up, 2T, val: 10)
+                    if (cardIdStr === '4') {
+                        const effect: StatusEffect = { id: 'def_up', name: '防御強化', duration: 2, val: 10, type: 'buff' };
+                        const updatedEffects = [...(currentEnemyStatus.status_effects || []), effect];
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, status_effects: updatedEffects } : e);
+                        newMessages.push(`${enemy.name}の『防御』！ 身を低くして攻撃に備えた。`);
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, lastUsedSkill: selectedSkillSlug } as any : e);
+                        continue;
+                    }
+
+                    // 15. 鉄布衫 (28) -> 自分に鉄壁防御 (def_up_heavy, 3T, val: 30)
+                    if (cardIdStr === '28') {
+                        const effect: StatusEffect = { id: 'def_up_heavy', name: '鉄壁防御', duration: 3, val: 30, type: 'buff' };
+                        const updatedEffects = [...(currentEnemyStatus.status_effects || []), effect];
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, status_effects: updatedEffects } : e);
+                        newMessages.push(`${enemy.name}の『鉄布衫』！ 鋼のごとく体を鍛え上げ、鉄壁の防御を整えた。`);
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, lastUsedSkill: selectedSkillSlug } as any : e);
+                        continue;
+                    }
+
+                    // 16. 聖壁 (15) -> 敵全体に防御強化 (def_up, 2T, val: 20)
+                    if (cardIdStr === '15') {
+                        updatedEnemies = updatedEnemies.map(e => {
+                            if (e.hp <= 0) return e;
+                            const effect: StatusEffect = { id: 'def_up', name: '防御強化', duration: 2, val: 20, type: 'buff' };
+                            const updatedEffects = [...(e.status_effects || []), effect];
+                            return { ...e, status_effects: updatedEffects };
+                        });
+                        newMessages.push(`${enemy.name}の『聖壁』！ 敵全体の防御力を高めた。`);
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, lastUsedSkill: selectedSkillSlug } as any : e);
+                        continue;
+                    }
+
+                    // 17. 王の城壁 (31) -> 敵全体に大防御強化 (def_up, 3T, val: 50)
+                    if (cardIdStr === '31') {
+                        updatedEnemies = updatedEnemies.map(e => {
+                            if (e.hp <= 0) return e;
+                            const effect: StatusEffect = { id: 'def_up', name: '防御強化', duration: 3, val: 50, type: 'buff' };
+                            const updatedEffects = [...(e.status_effects || []), effect];
+                            return { ...e, status_effects: updatedEffects };
+                        });
+                        newMessages.push(`${enemy.name}の『王の城壁』！ 敵全体の防御力を大きく高めた。`);
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, lastUsedSkill: selectedSkillSlug } as any : e);
+                        continue;
+                    }
+
+                    // 18. 絶対防御 (35) -> 自分に超鉄壁防御 (def_up_heavy, 2T, val: 50)
+                    if (cardIdStr === '35') {
+                        const effect: StatusEffect = { id: 'def_up_heavy', name: '鉄壁防御', duration: 2, val: 50, type: 'buff' };
+                        const updatedEffects = [...(currentEnemyStatus.status_effects || []), effect];
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, status_effects: updatedEffects } : e);
+                        newMessages.push(`${enemy.name}の『絶対防御』！ 完璧な防御姿勢を取った。`);
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, lastUsedSkill: selectedSkillSlug } as any : e);
+                        continue;
+                    }
+
+                    // 19. 王室の盾 (50) -> 敵全体に防御強化 (def_up, 2T, val: 30)
+                    if (cardIdStr === '50') {
+                        updatedEnemies = updatedEnemies.map(e => {
+                            if (e.hp <= 0) return e;
+                            const effect: StatusEffect = { id: 'def_up', name: '防御強化', duration: 2, val: 30, type: 'buff' };
+                            const updatedEffects = [...(e.status_effects || []), effect];
+                            return { ...e, status_effects: updatedEffects };
+                        });
+                        newMessages.push(`${enemy.name}の『王室の盾』！ 盾を掲げて敵全体の防御力を高めた。`);
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, lastUsedSkill: selectedSkillSlug } as any : e);
+                        continue;
+                    }
+
+                    // 20. 龍の鱗 (51) -> 自分に防御強化 (def_up, 2T, val: 40)
+                    if (cardIdStr === '51') {
+                        const effect: StatusEffect = { id: 'def_up', name: '防御強化', duration: 2, val: 40, type: 'buff' };
+                        const updatedEffects = [...(currentEnemyStatus.status_effects || []), effect];
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, status_effects: updatedEffects } : e);
+                        newMessages.push(`${enemy.name}の『龍の鱗』！ 身体を硬質化させ防御を固めた。`);
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, lastUsedSkill: selectedSkillSlug } as any : e);
+                        continue;
+                    }
+
+                    // 21. 麒麟の結界 (84) -> 敵全体に大防御強化 (def_up, 3T, val: 50)
+                    if (cardIdStr === '84') {
+                        updatedEnemies = updatedEnemies.map(e => {
+                            if (e.hp <= 0) return e;
+                            const effect: StatusEffect = { id: 'def_up', name: '防御強化', duration: 3, val: 50, type: 'buff' };
+                            const updatedEffects = [...(e.status_effects || []), effect];
+                            return { ...e, status_effects: updatedEffects };
+                        });
+                        newMessages.push(`${enemy.name}の『麒麟の結界』！ 結界を張り敵全体の防御力を大きく高めた。`);
+                        updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, lastUsedSkill: selectedSkillSlug } as any : e);
+                        continue;
+                    }
                 }
 
                 // PvP敵お供の場合、ログのスキル名は元のカード名（ファイアウェーブ等）を維持し、
@@ -3894,8 +3985,9 @@ export const createBattleSlice = (
                 continue;
             }
 
-            // 敵お供NPCが「雷電の連鎖 (115)」を使用した場合、ヒット数を 3 に設定
+            // 敵お供NPCが「雷電の連鎖 (115)」または「雷撃 (67)」を使用した場合の連撃判定
             const isChainLightning = isPvPEnemy && chosenCard && String(chosenCard.id) === '115';
+            const isThunderStrike = isPvPEnemy && chosenCard && String(chosenCard.id) === '67';
             
             // 自身に double_cast バフがかかっているかチェック
             const hasDoubleCast = enemyStatusEffects.some(e => e.id === 'double_cast');
@@ -3906,7 +3998,7 @@ export const createBattleSlice = (
                 updatedEnemies = updatedEnemies.map(e => e.id === enemy.id ? { ...e, status_effects: updatedEffects } : e);
             }
 
-            const hitCount = isChainLightning ? 3 : 1;
+            const hitCount = isChainLightning ? 3 : (isThunderStrike ? 2 : 1);
             const castCount = hasDoubleCast ? 2 : 1;
             const totalHits = hitCount * castCount;
 
@@ -3921,8 +4013,8 @@ export const createBattleSlice = (
                 const finalEnemyCritRate = playerHasCritVul ? enemyCritRate + 0.15 : enemyCritRate; // 被クリティカルUP反映 (Bug W)
                 const variance = BATTLE_RULES.DAMAGE_VARIANCE_MIN + Math.random() * (BATTLE_RULES.DAMAGE_VARIANCE_MAX - BATTLE_RULES.DAMAGE_VARIANCE_MIN);
                 
-                // 雷電の連鎖の場合は1ヒットあたりの威力を0.4倍にする（3ヒットで合計1.2倍）
-                const baseAtkMultiplier = isChainLightning ? 0.4 : 1.0;
+                // 雷電の連鎖の場合は1ヒットあたりの威力を0.4倍、雷撃の場合は0.5倍にする（それぞれ合計1.2倍 / 1.0倍）
+                const baseAtkMultiplier = isChainLightning ? 0.4 : (isThunderStrike ? 0.5 : 1.0);
                 let variedAtk = enemyAtk * variance * baseAtkMultiplier;
                 
                 const isEnemyCrit = Math.random() < finalEnemyCritRate;

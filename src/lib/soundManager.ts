@@ -75,6 +75,7 @@ const SE_FILES: Record<string, string> = {
 export const CARD_EFFECT_SE_MAP: Record<string, string> = {
     attack:            'se_attack',
     aoe_attack:        'se_magic',
+    multi_attack:      'se_attack',
     heal:              'se_heal',
     buff_self:         'se_buff',
     buff_party:        'se_buff',
@@ -475,8 +476,11 @@ class SoundManager {
     }
 
     /** CardEffectType からSEを再生 */
-    playSEForCardEffect(effectType: string): void {
-        const seKey = CARD_EFFECT_SE_MAP[effectType];
+    playSEForCardEffect(effectType: string, isMagic?: boolean): void {
+        let seKey = CARD_EFFECT_SE_MAP[effectType];
+        if (effectType === 'multi_attack' && isMagic) {
+            seKey = 'se_magic';
+        }
         if (seKey) this.playSE(seKey);
     }
 

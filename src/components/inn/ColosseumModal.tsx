@@ -26,6 +26,12 @@ export default function ColosseumModal({ onClose }: ColosseumModalProps) {
             setPortalTarget(document.body);
         }
 
+        // 既にモードが設定済みの場合は、userProfileの再ロードでリセットされないようにガード
+        if (mode !== null) return;
+
+        // userProfileの非同期ロードが完了するのを待つ
+        if (!userProfile) return;
+
         // 1. 環境変数チェック
         let isPreview = process.env.NEXT_PUBLIC_VERCEL_ENV === 'preview' || process.env.NODE_ENV === 'development';
 
@@ -45,27 +51,10 @@ export default function ColosseumModal({ onClose }: ColosseumModalProps) {
 
         if (isPreview || isTestUser) {
             setMode('select');
-
-            // コロシアムに入場したタイミングで防衛パーティを自動登録/更新
-            const autoRegisterDefense = async () => {
-                try {
-                    const authHeaders = await getAuthHeaders();
-                    await fetch('/api/pvp/defense', {
-                        method: 'POST',
-                        headers: {
-                            ...authHeaders
-                        }
-                    });
-                    console.log('[Colosseum] Auto registered/updated PvP defense party.');
-                } catch (e) {
-                    console.warn('[Colosseum] Auto defense registration failed:', e);
-                }
-            };
-            autoRegisterDefense();
         } else {
             setMode('pve');
         }
-    }, [userProfile]);
+    }, [userProfile, mode]);
 
     const [selectedDiff, setSelectedDiff] = useState<'easy' | 'normal' | 'hard' | null>(null);
     const [loading, setLoading] = useState(false);

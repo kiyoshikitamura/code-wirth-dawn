@@ -241,25 +241,9 @@ export const createProfileSlice = (
     },
 
     addGold: async (amount) => {
-        const { gold, userProfile } = get();
+        const { gold } = get();
         const newGold = gold + amount;
         set({ gold: newGold });
-
-        if (userProfile?.id) {
-            try {
-                const res = await fetch('/api/debug/add-gold', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ userId: userProfile.id, amount })
-                });
-                if (res.ok) {
-                    const data = await res.json();
-                    set({ gold: data.new_gold });
-                }
-            } catch (e) {
-                console.error('Failed to add gold via API', e);
-            }
-        }
     },
 
     spendGold: (amount) => {

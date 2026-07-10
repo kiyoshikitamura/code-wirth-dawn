@@ -1224,7 +1224,7 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
         if (!showCPErrorAlert) return null;
 
         return (
-            <div className="absolute inset-0 z-50 flex items-center justify-center p-4 bg-[#050b14]/90 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="fixed inset-0 z-[100000] flex items-center justify-center p-4 bg-[#050b14]/90 backdrop-blur-sm animate-in fade-in duration-200">
                 <div className="relative w-full max-w-sm bg-[#0c1628]/98 border-2 border-red-500/50 rounded-2xl overflow-hidden shadow-[0_0_50px_rgba(239,68,68,0.3)] flex flex-col p-6 space-y-4">
                     <div className="flex flex-col items-center text-center space-y-2.5">
                         <div className="w-12 h-12 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-400">
@@ -1665,23 +1665,19 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
 
                         {/* Content */}
                         <div className="flex-1 overflow-y-auto p-5 space-y-4 custom-scrollbar text-left text-xs">
-                            {loadingDetail && (
+                            {loadingDetail ? (
                                 <div className="flex flex-col items-center justify-center py-20 space-y-2">
                                     <RefreshCw className="animate-spin text-amber-500" size={24} />
                                     <span className="text-slate-400">防衛データを同期中...</span>
                                 </div>
-                            )}
-
-                            {detailErrorMsg && (
+                            ) : detailErrorMsg ? (
                                 <div className="flex flex-col items-center justify-center py-16 space-y-3">
                                     <div className="p-3 bg-red-950/20 border border-red-500/30 rounded-xl text-red-400 text-center font-bold">
                                         {detailErrorMsg}
                                     </div>
                                     <p className="text-[10px] text-slate-500">※ご自身の防衛確認でこれが表示される場合は、まず「更新」を押して防衛登録を行ってください。</p>
                                 </div>
-                            )}
-
-                            {selectedOpponentDetail && (
+                            ) : selectedOpponentDetail ? (
                                 <div className="space-y-4 animate-in fade-in zoom-in-95 duration-200">
                                     
                                     {/* Leader info */}
@@ -1895,7 +1891,7 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                                         )}
                                     </div>
                                 </div>
-                            )}
+                            ) : null}
                         </div>
 
                         {/* Footer */}
@@ -1959,7 +1955,7 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
 
             {/* ──── RANKINGS REWARDS PREVIEW & CLAIM MODAL (UX: 即時スピナー対応) ──── */}
             {showRewardModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-150">
+                <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-150">
                     <div className="relative w-full max-w-md bg-[#0e1628]/95 border-2 border-amber-500/40 rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
                         
                         {/* Header */}
