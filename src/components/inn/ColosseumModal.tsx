@@ -13,6 +13,9 @@ interface ColosseumModalProps {
 }
 
 export default function ColosseumModal({ onClose }: ColosseumModalProps) {
+    const router = useRouter();
+    const { userProfile, gold, fetchUserProfile } = useGameStore();
+
     const [mounted, setMounted] = useState(false);
     const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
     const [mode, setMode] = useState<'select' | 'pve' | 'pvp' | null>(null);
@@ -64,8 +67,6 @@ export default function ColosseumModal({ onClose }: ColosseumModalProps) {
         }
     }, [userProfile]);
 
-    const router = useRouter();
-    const { userProfile, gold, fetchUserProfile } = useGameStore();
     const [selectedDiff, setSelectedDiff] = useState<'easy' | 'normal' | 'hard' | null>(null);
     const [loading, setLoading] = useState(false);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
