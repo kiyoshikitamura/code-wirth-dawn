@@ -1816,14 +1816,23 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                                                                 }}
                                                                 className="p-2.5 flex items-center justify-between font-mono cursor-pointer select-none"
                                                             >
-                                                                <div className="text-left col-span-3">
-                                                                    <h5 className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
-                                                                        {m.name}
-                                                                        <span className="text-[9px] bg-slate-800 text-slate-400 px-1 py-0.2 rounded font-black">
-                                                                            Lv.{m.level}
-                                                                        </span>
-                                                                    </h5>
-                                                                    <span className="text-[9px] text-slate-400 block">{m.job_class}</span>
+                                                                <div className="flex items-center gap-2 text-left min-w-0">
+                                                                    <div className="w-8 h-8 rounded-full border border-slate-700 bg-[#070e1e] flex items-center justify-center overflow-hidden shrink-0">
+                                                                        {m.icon_url || m.image_url || m.avatar_url ? (
+                                                                            <img src={m.icon_url || m.image_url || m.avatar_url || ''} alt="" className="w-full h-full object-cover animate-in fade-in" />
+                                                                        ) : (
+                                                                            <User size={14} className="text-slate-500" />
+                                                                        )}
+                                                                    </div>
+                                                                    <div className="min-w-0">
+                                                                        <h5 className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                                                                            <span className="truncate">{m.name}</span>
+                                                                            <span className="text-[9px] bg-slate-800 text-slate-400 px-1 py-0.2 rounded font-black shrink-0">
+                                                                                Lv.{m.level}
+                                                                            </span>
+                                                                        </h5>
+                                                                        <span className="text-[9px] text-slate-400 block">{m.job_class}</span>
+                                                                    </div>
                                                                 </div>
                                                                 <div className="flex items-center gap-3">
                                                                     <div className="flex gap-2.5 text-right text-[10px]">

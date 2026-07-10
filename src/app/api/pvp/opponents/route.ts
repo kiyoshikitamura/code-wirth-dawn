@@ -555,7 +555,10 @@ export async function GET(req: Request) {
                     hp: m.hp,
                     max_hp: m.max_hp,
                     atk: m.atk,
-                    def: m.def
+                    def: m.def,
+                    image_url: m.image_url || m.icon_url || m.avatar_url || null,
+                    icon_url: m.icon_url || m.image_url || m.avatar_url || null,
+                    avatar_url: m.avatar_url || m.icon_url || m.image_url || null
                 })),
                 equipped_items_snapshot: undefined,
                 skill_deck_snapshot: undefined,
