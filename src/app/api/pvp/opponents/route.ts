@@ -401,40 +401,20 @@ const GHOST_PRESETS: Record<string, any[]> = {
     "S": [
         {
             "user_id": "ghost_s_volg",
-            "user_name": "Melody",
-            "avatar_url": "https://auth.code-wirth-dawn.com/storage/v1/object/public/avatars/205fca0d-0bc0-41b9-9687-50a00743fd0c/avatar.png?t=1781922609040",
+            "user_name": "ヴォルグ",
+            "avatar_url": "/images/npcs/npc_guest_volg.png",
             "battle_score": 6800,
             "defense_rank": "S",
             "is_ghost": true,
             "player_snapshot": {
                 "level": 20,
-                "job_class": "Warrior",
-                "hp": 350,
-                "max_hp": 350,
+                "job_class": "Civilian",
+                "hp": 680,
+                "max_hp": 680,
                 "atk": 30,
                 "def": 30
             },
-            "party_members_snapshot": [
-                {
-                    "id": 1672,
-                    "name": "ヴォルグ",
-                    "job_class": "Civilian",
-                    "level": 1,
-                    "hp": 680,
-                    "max_hp": 680,
-                    "atk": 5,
-                    "def": 10,
-                    "inject_cards": [28, 29, 48, 25],
-                    "image_url": "/images/npcs/npc_guest_volg.png",
-                    "snapshot_data": {},
-                    "signature_deck_snapshot": [
-                        { "id": "28", "name": "鉄布衫", "type": "Defense", "ap_cost": 3, "power": 30 },
-                        { "id": "29", "name": "毒牙", "type": "Skill", "ap_cost": 2, "power": 15 },
-                        { "id": "48", "name": "鋼の皮膚", "type": "Defense", "ap_cost": 2, "power": 20 },
-                        { "id": "25", "name": "不意打ち", "type": "Skill", "ap_cost": 2, "power": 25 }
-                    ]
-                }
-            ],
+            "party_members_snapshot": [],
             "equipped_items_snapshot": [
                 { "id": "180", "name": "竜殺しの大剣", "type": "equipment", "effect_data": { "atk_bonus": 15, "def_bonus": 5 } }
             ],
