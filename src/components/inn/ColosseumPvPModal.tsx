@@ -384,6 +384,31 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                 setChallengerScore(data.score || challengerScore);
                 setChallengerRank(data.rank || challengerRank);
                 setHasDefenseParty(true);
+
+                // 登録成功時にのみ、自動警告ポップアップ非表示フラグを localStorage に書き込む
+                try {
+                    const now = new Date();
+                    const jstOffset = 9 * 60 * 60 * 1000;
+                    const jstNow = new Date(now.getTime() + jstOffset);
+
+                    const prevWed = new Date(jstNow);
+                    const currentDay = jstNow.getUTCDay();
+                    let daysToSubtract = currentDay - 3;
+                    if (daysToSubtract < 0) daysToSubtract += 7;
+                    prevWed.setUTCDate(jstNow.getUTCDate() - daysToSubtract);
+                    prevWed.setUTCHours(9, 0, 0, 0);
+
+                    if (prevWed.getTime() > jstNow.getTime()) {
+                        prevWed.setUTCDate(prevWed.getUTCDate() - 7);
+                    }
+
+                    const l = new Date(prevWed.getTime() - jstOffset);
+                    const seasonId = `season_${l.getFullYear()}${(l.getMonth()+1).toString().padStart(2,'0')}${l.getDate().toString().padStart(2,'0')}`;
+                    const storageKey = `dismissed_defense_alert_${seasonId}`;
+                    localStorage.setItem(storageKey, 'true');
+                } catch (e) {
+                    console.warn('[Colosseum] Failed to set auto defense alert storage key on success:', e);
+                }
                 // サブモーダルを開いている場合は、最新のスナップショットに更新
                 if (data.party) {
                     setDefensePartyData(data.party);
@@ -611,11 +636,16 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                 const seasonId = `season_${l.getFullYear()}${(l.getMonth()+1).toString().padStart(2,'0')}${l.getDate().toString().padStart(2,'0')}`;
 
                 const storageKey = `dismissed_defense_alert_${seasonId}`;
+                
+                // 未登録状態であれば、以前に誤って書き込まれた表示済みフラグを強制クリアして、再度ダイアログが出るようにする
+                if (!hasDefenseParty) {
+                    localStorage.removeItem(storageKey);
+                }
+
                 const isDismissed = localStorage.getItem(storageKey);
 
-                if (!isDismissed) {
+                if (!isDismissed && !hasDefenseParty) {
                     setShowAutoDefenseAlert(true);
-                    localStorage.setItem(storageKey, 'true'); // 表示済みフラグをセット
                 }
             } catch (e) {
                 console.warn('[Colosseum] Failed to evaluate auto defense alert storage key:', e);
