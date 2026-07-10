@@ -16,6 +16,7 @@ const GHOST_SCORES: Record<string, { score: number; rank: string }> = {
     "ghost_a_1": { score: 4200, rank: "A" },
     "ghost_a_2": { score: 4500, rank: "A" },
     "ghost_s_1": { score: 6800, rank: "S" },
+    "ghost_s_volg": { score: 6800, rank: "S" },
 };
 
 function getRatingChanges(
@@ -26,8 +27,8 @@ function getRatingChanges(
     isVictory: boolean
 ): { attackerChange: number; defenderChange: number } {
     const rankWeights: Record<string, number> = { 'S': 4, 'A': 3, 'B': 2, 'C': 1 };
-    const myWeight = rankWeights[myRank] || 1;
-    const oppWeight = rankWeights[oppRank] || 1;
+    const myWeight = rankWeights[myRank.toUpperCase()] || 1;
+    const oppWeight = rankWeights[oppRank.toUpperCase()] || 1;
 
     let attackerChange = 0;
     let defenderChange = 0;
