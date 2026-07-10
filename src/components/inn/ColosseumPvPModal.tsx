@@ -1304,30 +1304,38 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                         </div>
 
                         {/* 2行目: CP ＆ 回復ボタン (若干大きくする) */}
-                        <div className="flex items-center gap-2 border-t border-slate-800/40 pt-1.5">
-                            <div className="flex items-center justify-between bg-[#12223f]/50 border border-[#213a65]/40 px-2 py-1 rounded-md min-w-[70px] justify-between">
-                                <span className="text-slate-400 font-bold text-[9px]">CP:</span>
-                                {syncing ? (
-                                    <RefreshCw className="animate-spin text-amber-500 w-2.5 h-2.5" />
-                                ) : (
-                                    <span className={`font-mono font-bold text-[10px] ${
-                                        cp === 0 ? 'text-red-500 font-black' :
-                                        cp >= 6 ? 'text-rose-500 animate-pulse' : 
-                                        'text-slate-200'
-                                    }`}>
-                                        {cp}/5
-                                    </span>
-                                )}
-                            </div>
+                        <div className="flex flex-col gap-1 border-t border-slate-800/40 pt-1.5">
+                            <div className="flex items-center gap-2">
+                                <div className="flex items-center justify-between bg-[#12223f]/50 border border-[#213a65]/40 px-2 py-1 rounded-md min-w-[70px] justify-between">
+                                    <span className="text-slate-400 font-bold text-[9px]">CP:</span>
+                                    {syncing ? (
+                                        <RefreshCw className="animate-spin text-amber-500 w-2.5 h-2.5" />
+                                    ) : (
+                                        <span className={`font-mono font-bold text-[10px] ${
+                                            cp === 0 ? 'text-red-500 font-black' :
+                                            cp >= 6 ? 'text-rose-500 animate-pulse' : 
+                                            'text-slate-200'
+                                        }`}>
+                                            {cp}/5
+                                        </span>
+                                    )}
+                                </div>
 
-                            <button
-                                disabled={loading || cp >= 6 || gold < 5000}
-                                onClick={handleRecoverCP}
-                                className="flex-1 py-1 bg-gradient-to-r from-amber-500/90 to-amber-600/90 hover:from-amber-400 hover:to-amber-500 text-slate-950 disabled:from-slate-800 disabled:to-slate-800 disabled:text-slate-500 border border-amber-500/30 disabled:border-slate-700/50 rounded-md text-[9px] font-black tracking-wider transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1"
-                            >
-                                <Zap size={8} />
-                                CP回復 (5k G)
-                            </button>
+                                <button
+                                    disabled={loading || cp >= 6 || gold < 5000}
+                                    onClick={handleRecoverCP}
+                                    className="flex-1 py-1 bg-gradient-to-r from-amber-500/90 to-amber-600/90 hover:from-amber-400 hover:to-amber-500 text-slate-950 disabled:from-slate-800 disabled:to-slate-800 disabled:text-slate-500 border border-amber-500/30 disabled:border-slate-700/50 rounded-md text-[9px] font-black tracking-wider transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1"
+                                >
+                                    <Zap size={8} />
+                                    CP回復 (5k G)
+                                </button>
+                            </div>
+                            {/* CP回復タイムカウント */}
+                            {cp < 5 && nextCPTimeMs !== null && nextCPTimeMs > 0 && (
+                                <div className="text-[8px] text-slate-400/80 font-bold tracking-wider pl-1 mt-0.5 text-left">
+                                    次の回復まで: <span className="text-amber-400/90 font-mono font-black">{Math.ceil(nextCPTimeMs / 60000)}分</span>
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -1410,65 +1418,74 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                             </div>
 
                             <div className="space-y-2.5">
-                                {opponents.map((opponent, idx) => (
-                                    <div
-                                        key={(opponent.user_id || 'opt') + '_' + idx}
-                                        className="bg-[#0f1d35]/70 border border-[#20365b] rounded-xl p-3 flex items-center justify-between transition-all"
-                                    >
-                                        <div className="space-y-1.5 min-w-0 pr-4">
-                                            <div className="flex items-center gap-2">
-                                                <div 
-                                                    onClick={() => !opponent.is_ghost && setViewingProfileUserId(opponent.user_id)}
-                                                    className={`w-8 h-8 rounded-full border border-slate-700 bg-[#070e1e] flex items-center justify-center overflow-hidden shrink-0 ${!opponent.is_ghost ? 'cursor-pointer hover:border-amber-400' : ''}`}
-                                                >
-                                                    {opponent.avatar_url ? (
-                                                        <img src={opponent.avatar_url} alt="" className="w-full h-full object-cover" />
-                                                    ) : (
-                                                        <User size={14} className="text-slate-500" />
-                                                    )}
-                                                </div>
-                                                <div className="min-w-0 text-left">
-                                                    <h4 className="text-xs font-bold text-slate-100 truncate flex items-center gap-1.5">
-                                                        <span 
+                                {loading ? (
+                                    <div className="flex flex-col items-center justify-center py-12 gap-3 bg-[#0f1d35]/30 border border-[#20365b]/50 rounded-xl">
+                                        <div className="w-8 h-8 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
+                                        <p className="text-[10px] text-amber-400/70 font-mono tracking-widest animate-pulse">マッチング相手を探索中...</p>
+                                    </div>
+                                ) : (
+                                    <>
+                                        {opponents.map((opponent, idx) => (
+                                            <div
+                                                key={(opponent.user_id || 'opt') + '_' + idx}
+                                                className="bg-[#0f1d35]/70 border border-[#20365b] rounded-xl p-3 flex items-center justify-between transition-all"
+                                            >
+                                                <div className="space-y-1.5 min-w-0 pr-4">
+                                                    <div className="flex items-center gap-2">
+                                                        <div 
                                                             onClick={() => !opponent.is_ghost && setViewingProfileUserId(opponent.user_id)}
-                                                            className={!opponent.is_ghost ? 'cursor-pointer hover:text-amber-400' : ''}
+                                                            className={`w-8 h-8 rounded-full border border-slate-700 bg-[#070e1e] flex items-center justify-center overflow-hidden shrink-0 ${!opponent.is_ghost ? 'cursor-pointer hover:border-amber-400' : ''}`}
                                                         >
-                                                            {opponent.user_name}
-                                                        </span>
-                                                        <span className="text-[9px] bg-amber-500/10 text-amber-400 px-1 py-0.2 rounded font-black border border-amber-500/20">
-                                                            {opponent.defense_rank}
-                                                        </span>
-                                                    </h4>
-                                                    <p className="text-[10px] text-slate-400 font-mono">
-                                                        レート: {(opponent.arena_rate ?? 1000).toLocaleString()} pts
-                                                    </p>
+                                                            {opponent.avatar_url ? (
+                                                                <img src={opponent.avatar_url} alt="" className="w-full h-full object-cover" />
+                                                            ) : (
+                                                                <User size={14} className="text-slate-500" />
+                                                            )}
+                                                        </div>
+                                                        <div className="min-w-0 text-left">
+                                                            <h4 className="text-xs font-bold text-slate-100 truncate flex items-center gap-1.5">
+                                                                <span 
+                                                                    onClick={() => !opponent.is_ghost && setViewingProfileUserId(opponent.user_id)}
+                                                                    className={!opponent.is_ghost ? 'cursor-pointer hover:text-amber-400' : ''}
+                                                                >
+                                                                    {opponent.user_name}
+                                                                </span>
+                                                                <span className="text-[9px] bg-amber-500/10 text-amber-400 px-1 py-0.2 rounded font-black border border-amber-500/20">
+                                                                    {opponent.defense_rank}
+                                                                </span>
+                                                            </h4>
+                                                            <p className="text-[10px] text-slate-400 font-mono">
+                                                                レート: {(opponent.arena_rate ?? 1000).toLocaleString()} pts
+                                                            </p>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Party Members Mini Preview */}
+                                                    <div className="flex gap-1.5 items-center pl-10 overflow-x-auto no-scrollbar">
+                                                        {opponent.party_members_snapshot?.map((m: any, mi: number) => (
+                                                            <span key={mi} className="text-[8px] bg-[#1a2d4c] text-slate-300 border border-[#2c4772]/60 px-1.5 py-0.2 rounded whitespace-nowrap">
+                                                                {m.name}
+                                                            </span>
+                                                        ))}
+                                                    </div>
                                                 </div>
+
+                                                <button
+                                                    disabled={loading}
+                                                    onClick={() => loadOpponentDetail(opponent.user_id, opponent)}
+                                                    className="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs rounded-xl active:scale-95 transition-all shadow-md shadow-amber-500/10 shrink-0 cursor-pointer"
+                                                >
+                                                    挑戦する
+                                                </button>
                                             </div>
+                                        ))}
 
-                                            {/* Party Members Mini Preview */}
-                                            <div className="flex gap-1.5 items-center pl-10 overflow-x-auto no-scrollbar">
-                                                {opponent.party_members_snapshot?.map((m: any, mi: number) => (
-                                                    <span key={mi} className="text-[8px] bg-[#1a2d4c] text-slate-300 border border-[#2c4772]/60 px-1.5 py-0.2 rounded whitespace-nowrap">
-                                                        {m.name}
-                                                    </span>
-                                                ))}
+                                        {opponents.length === 0 && (
+                                            <div className="text-center py-10 text-xs text-slate-500 italic">
+                                                対戦相手が見つかりませんでした。
                                             </div>
-                                        </div>
-
-                                        <button
-                                            disabled={loading}
-                                            onClick={() => loadOpponentDetail(opponent.user_id, opponent)}
-                                            className="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs rounded-xl active:scale-95 transition-all shadow-md shadow-amber-500/10 shrink-0 cursor-pointer"
-                                        >
-                                            挑戦する
-                                        </button>
-                                    </div>
-                                ))}
-
-                                {opponents.length === 0 && !loading && (
-                                    <div className="text-center py-10 text-xs text-slate-500 italic">
-                                        対戦相手が見つかりませんでした。
-                                    </div>
+                                        )}
+                                    </>
                                 )}
                             </div>
                         </div>
@@ -1904,9 +1921,9 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                             </button>
                             {!selectedOpponent.is_my_defense && (
                                 <button
-                                    disabled={loading || cp < 1}
+                                    disabled={loading}
                                     onClick={() => handleChallenge(selectedOpponent)}
-                                    className="px-5 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs rounded-xl active:scale-95 transition-all shadow-md shadow-amber-500/20 flex items-center justify-center gap-1.5 cursor-pointer"
+                                    className="px-5 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs rounded-xl active:scale-95 transition-all shadow-md shadow-amber-500/20 flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
                                 >
                                     <Swords size={12} />
                                     対戦を開始 (1 CP)
