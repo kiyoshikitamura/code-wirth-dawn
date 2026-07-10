@@ -840,7 +840,8 @@ export class ShadowService {
                     if (item) {
                         equippedItemsList.push({
                             name: item.name,
-                            slot: eq.slot
+                            slot: eq.slot,
+                            effect_data: item.effect_data
                         });
                         const eff = item.effect_data;
                         if (eff) {

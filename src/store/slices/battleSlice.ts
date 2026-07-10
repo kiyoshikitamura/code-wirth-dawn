@@ -704,11 +704,26 @@ export const createBattleSlice = (
             updateProfileStatusHelper({ hp: finalHp }, userProfile.id || selectedProfileId);
         }
         
-        // スタンしていなければAP+5 (最大10)
+        // スタンしていなければAP+5 (最大15)
         let newAp = battleState.current_ap || 0;
         if (!wasStunned) {
-            newAp = Math.min(10, newAp + 5);
+            newAp = Math.min(15, newAp + 5);
         }
+
+        // 味方パーティメンバー（英霊）のAP回復 (生存しておりスタンしていなければAP+5, 最大15)
+        const updatedParty = (battleState.party || []).map(pm => {
+            if (pm.hp <= 0 || !pm.is_active) return pm;
+            const pmEffects = pm.status_effects || [];
+            const pmStunned = isStunned(pmEffects as StatusEffect[]);
+            let pmAp = pm.current_ap ?? 5;
+            if (!pmStunned) {
+                pmAp = Math.min(15, pmAp + 5);
+            }
+            return {
+                ...pm,
+                current_ap: pmAp
+            };
+        });
         
         // クリンナップ後のプレイヤー状態を先にセット
         set(state => ({
@@ -717,6 +732,7 @@ export const createBattleSlice = (
                 ...state.battleState,
                 player_effects: playerEffects,
                 current_ap: newAp,
+                party: updatedParty,
                 isDefeat: isDeadFromDoT ? true : state.battleState.isDefeat,
                 messages: [...state.battleState.messages, ...tickMessages]
             }
@@ -1692,6 +1708,7 @@ export const createBattleSlice = (
                         const hitsCount = 3;
                         let hitLogs: string[] = [];
                         let totalDmg = 0;
+                        let reflectDmgToPlayer = 0;
                         const hitTargetsMap: Record<string, number> = {};
                         for (let hit = 0; hit < hitsCount; hit++) {
                             let aliveEnemies = currentEnemies.filter(e => e.hp > 0);
@@ -1705,6 +1722,19 @@ export const createBattleSlice = (
                             hitTargetsMap[picked.id] = (hitTargetsMap[picked.id] || 0) + 1;
                             const critLabel = result.isCritical ? ' クリティカル！' : '';
                             hitLogs.push(`${picked.name}に ${result.damage} ダメージ${critLabel}`);
+
+                            const hasRevenge = picked.status_effects?.some((se: any) => se.id === 'revenge_shield' && se.duration > 0);
+                            if (hasRevenge && result.damage > 0) {
+                                reflectDmgToPlayer += result.damage;
+                                hitLogs.push(`  → (相手の報復の盾！ あなたに ${result.damage} ダメージ反射)`);
+                            }
+                        }
+                        if (reflectDmgToPlayer > 0) {
+                            const currentHp = get().userProfile?.hp || 0;
+                            const newHp = Math.max(0, currentHp - reflectDmgToPlayer);
+                            set(state => ({ userProfile: state.userProfile ? { ...state.userProfile, hp: newHp } : null }));
+                            if (newHp <= 0) hitLogs.push(`  → (あなたは反射ダメージで倒れた...)`);
+                            updateProfileStatusHelper({ hp: newHp }, get().userProfile?.id || null);
                         }
                         for (const enemyId of Object.keys(hitTargetsMap)) {
                             if (hitTargetsMap[enemyId] > 1) {
@@ -1724,6 +1754,7 @@ export const createBattleSlice = (
                         const hitsCount = 3;
                         let hitLogs: string[] = [];
                         let totalDmg = 0;
+                        let reflectDmgToPlayer = 0;
                         for (let hit = 0; hit < hitsCount; hit++) {
                             let aliveEnemies = currentEnemies.filter(e => e.hp > 0);
                             if (aliveEnemies.length === 0) break;
@@ -1739,6 +1770,12 @@ export const createBattleSlice = (
                             
                             const critLabel = result.isCritical ? ' クリティカル！' : '';
                             hitLogs.push(`${picked.name}に ${result.damage} ダメージ${critLabel}`);
+
+                            const hasRevenge = picked.status_effects?.some((se: any) => se.id === 'revenge_shield' && se.duration > 0);
+                            if (hasRevenge && result.damage > 0) {
+                                reflectDmgToPlayer += result.damage;
+                                hitLogs.push(`  → (相手の報復の盾！ あなたに ${result.damage} ダメージ反射)`);
+                            }
 
                             const playerHasDrainOnHit = currentPlayerEffects.some(se => se.id === 'drain_on_hit');
                             if (playerHasDrainOnHit && result.damage > 0) {
@@ -1760,6 +1797,13 @@ export const createBattleSlice = (
                                 currentEnemies = currentEnemies.map(e => e.id === picked.id ? { ...e, status_effects: stunEffects } : e);
                                 hitLogs.push(`  → (⚡ 怒りの腕輪の効果！ ${picked.name}をスタンさせた！)`);
                             }
+                        }
+                        if (reflectDmgToPlayer > 0) {
+                            const currentHp = get().userProfile?.hp || 0;
+                            const newHp = Math.max(0, currentHp - reflectDmgToPlayer);
+                            set(state => ({ userProfile: state.userProfile ? { ...state.userProfile, hp: newHp } : null }));
+                            if (newHp <= 0) hitLogs.push(`  → (あなたは反射ダメージで倒れた...)`);
+                            updateProfileStatusHelper({ hp: newHp }, get().userProfile?.id || null);
                         }
                         damage = 0;
                         logMsg = `${card.name}！ 連続して手裏剣を投擲！\n` + hitLogs.join('\n');
@@ -2377,6 +2421,7 @@ export const createBattleSlice = (
                         const hitsCount = baseId === '115' ? 3 : 2;
                         let hitLogs: string[] = [];
                         let totalDmg = 0;
+                        let reflectDmgToPlayer = 0;
                         const basePower = ((card.power ?? 0) / hitsCount) * damageMultiplier;
 
                         if (basePower > 0) {
@@ -2395,6 +2440,12 @@ export const createBattleSlice = (
 
                                 const critLabel = result.isCritical ? ' クリティカル！' : '';
                                 hitLogs.push(`${hit + 1}撃目: ${result.damage} ダメージ${critLabel}`);
+
+                                const hasRevenge = freshEnemy.status_effects?.some((se: any) => se.id === 'revenge_shield' && se.duration > 0);
+                                if (hasRevenge && result.damage > 0) {
+                                    reflectDmgToPlayer += result.damage;
+                                    hitLogs.push(`  → (相手の報復の盾！ あなたに ${result.damage} ダメージ反射)`);
+                                }
 
                                 // 連撃終了時（最後のヒット）に状態異常を付与する (雷撃等の効果適用用)
                                 if (hit === hitsCount - 1 && card.effect_id && card.effect_id !== 'none' && card.effect_id !== 'multi_hit') {
@@ -2421,6 +2472,13 @@ export const createBattleSlice = (
                                         updateProfileStatusHelper({ hp: newHp }, get().userProfile?.id || null);
                                     }
                                 }
+                            }
+                            if (reflectDmgToPlayer > 0) {
+                                const currentHp = get().userProfile?.hp || 0;
+                                const newHp = Math.max(0, currentHp - reflectDmgToPlayer);
+                                set(state => ({ userProfile: state.userProfile ? { ...state.userProfile, hp: newHp } : null }));
+                                if (newHp <= 0) hitLogs.push(`  → (あなたは反射ダメージで倒れた...)`);
+                                updateProfileStatusHelper({ hp: newHp }, get().userProfile?.id || null);
                             }
                             damage = 0;
                             const comboLabel = hitsCount === 3 ? '怒涛の3連撃！' : '怒涛の2連撃！';
@@ -2618,9 +2676,17 @@ export const createBattleSlice = (
                 const resistedEnemies: string[] = [];
                 const affectedEnemies: string[] = [];
                 const stunInfusedNames: string[] = [];
+                let reflectDmgToPlayer = 0;
+                const reflectMsgs: string[] = [];
+
                 currentEnemies = currentEnemies.map(e => {
                     if (isAoe && e.hp > 0) {
+                        const hasRevenge = e.status_effects?.some((se: any) => se.id === 'revenge_shield' && se.duration > 0);
                         let newHp = Math.max(0, e.hp - damage);
+                        if (hasRevenge && damage > 0) {
+                            reflectDmgToPlayer += damage;
+                            reflectMsgs.push(`相手の報復の盾の効果！ あなたに ${damage} ダメージが反射！`);
+                        }
                         let newEffects = (e.status_effects || []) as StatusEffect[];
                         
                         const playerHasStunInfuse = currentPlayerEffects.some(se => se.id === 'stun_infuse');
@@ -2645,7 +2711,12 @@ export const createBattleSlice = (
                         return { ...e, hp: newHp, status_effects: newEffects };
                     }
                     if (e.id === loopTargetEnemyId) {
+                        const hasRevenge = e.status_effects?.some((se: any) => se.id === 'revenge_shield' && se.duration > 0);
                         let newHp = Math.max(0, e.hp - damage);
+                        if (hasRevenge && damage > 0) {
+                            reflectDmgToPlayer += damage;
+                            reflectMsgs.push(`相手の報復の盾の効果！ あなたに ${damage} ダメージが反射！`);
+                        }
                         let newEffects = customTargetEffects !== null ? customTargetEffects : ((e.status_effects || []) as StatusEffect[]);
                         
                         const playerHasStunInfuse = currentPlayerEffects.some(se => se.id === 'stun_infuse');
@@ -2671,6 +2742,17 @@ export const createBattleSlice = (
                     }
                     return e;
                 });
+
+                if (reflectDmgToPlayer > 0) {
+                    const currentHp = get().userProfile?.hp || 0;
+                    const newHp = Math.max(0, currentHp - reflectDmgToPlayer);
+                    set(state => ({ userProfile: state.userProfile ? { ...state.userProfile, hp: newHp } : null }));
+                    newMessages.push(...reflectMsgs);
+                    if (newHp <= 0) {
+                        newMessages.push(`あなたは反射ダメージで倒れた...`);
+                    }
+                    updateProfileStatusHelper({ hp: newHp }, get().userProfile?.id || null);
+                }
 
                 const updatedTargetEnemy = currentEnemies.find(e => e.id === loopTargetEnemyId);
                 const loopIsTargetDead = updatedTargetEnemy ? updatedTargetEnemy.hp <= 0 : false;
@@ -2948,6 +3030,7 @@ export const createBattleSlice = (
 
                 if ((action.type === 'attack' || action.type === 'debuff') && action.damage) {
                     const isAoe = action.card?.target_type === 'all_enemies';
+                    let reflectDmgToMember = 0;
                     if (isAoe) {
                         trackedEnemies = trackedEnemies.map(e => {
                             if (e.hp > 0) {
@@ -2957,6 +3040,11 @@ export const createBattleSlice = (
                                 }
                                 if (newHp <= 0 && e.id !== currentTargetId) {
                                     newMessages.push(`${e.name}を倒した！`);
+                                }
+                                const hasRevenge = e.status_effects?.some((se: any) => se.id === 'revenge_shield' && se.duration > 0);
+                                if (hasRevenge && action.damage! > 0) {
+                                    reflectDmgToMember += action.damage!;
+                                    newMessages.push(`相手の報復の盾の効果！ ${member.name} に ${action.damage!} ダメージが反射！`);
                                 }
                                 return { ...e, hp: newHp };
                             }
@@ -2968,6 +3056,21 @@ export const createBattleSlice = (
                         trackedEnemies = trackedEnemies.map(e =>
                             e.id === currentTargetId ? { ...e, hp: enemyHp } : e
                         );
+                        const targetEnemy = trackedEnemies.find(e => e.id === currentTargetId);
+                        const hasRevenge = targetEnemy?.status_effects?.some((se: any) => se.id === 'revenge_shield' && se.duration > 0);
+                        if (hasRevenge && action.damage > 0) {
+                            reflectDmgToMember += action.damage;
+                            newMessages.push(`相手の報復の盾の効果！ ${member.name} に ${action.damage} ダメージが反射！`);
+                        }
+                    }
+
+                    if (reflectDmgToMember > 0) {
+                        const newDur = Math.max(0, (member.durability || 0) - reflectDmgToMember);
+                        member.durability = newDur;
+                        if (newDur <= 0) {
+                            member.is_active = false;
+                        }
+                        newMessages.push(`__party_sync:${member.id}:${newDur}`);
                     }
                 }
 

@@ -250,7 +250,8 @@ export class LifeCycleService {
                         if (item) {
                             equippedItemsList.push({
                                 slot: eq.slot,
-                                name: item.name
+                                name: item.name,
+                                effect_data: item.effect_data
                             });
                             const eff = item.effect_data;
                             if (eff) {
