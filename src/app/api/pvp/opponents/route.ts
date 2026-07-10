@@ -11,7 +11,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
     "C": [
         {
             "user_id": "ghost_c_1",
-            "user_name": "新米のレオ",
+            "user_name": "レオ",
             "avatar_url": "/images/npcs/npc_roland_paladin_leo.png",
             "battle_score": 950,
             "defense_rank": "C",
@@ -50,7 +50,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
         },
         {
             "user_id": "ghost_c_2",
-            "user_name": "放浪のサクラ",
+            "user_name": "サクラ",
             "avatar_url": "/images/npcs/npc_yato_miko_sakura.png",
             "battle_score": 1100,
             "defense_rank": "C",
@@ -89,7 +89,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
         },
         {
             "user_id": "ghost_c_3",
-            "user_name": "魔術師ロビン",
+            "user_name": "クロヴィス",
             "avatar_url": "/images/npcs/npc_roland_scholar.png",
             "battle_score": 1250,
             "defense_rank": "C",
@@ -105,7 +105,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
             "party_members_snapshot": [
                 {
                     "id": "ghost_c_3_m1",
-                    "name": "ルカ",
+                    "name": "アレン",
                     "job_class": "Thief",
                     "level": 6,
                     "hp": 95,
@@ -128,7 +128,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
         },
         {
             "user_id": "ghost_c_4",
-            "user_name": "狩人エマ",
+            "user_name": "サム",
             "avatar_url": "/images/npcs/npc_roland_hunter_sam.png",
             "battle_score": 1400,
             "defense_rank": "C",
@@ -144,7 +144,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
             "party_members_snapshot": [
                 {
                     "id": "ghost_c_4_m1",
-                    "name": "アイク",
+                    "name": "アレン",
                     "job_class": "Warrior",
                     "level": 7,
                     "hp": 140,
@@ -169,7 +169,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
     "B": [
         {
             "user_id": "ghost_b_1",
-            "user_name": "鋼のハルト",
+            "user_name": "アレン",
             "avatar_url": "/images/npcs/npc_free_adventurer_a.png",
             "battle_score": 2400,
             "defense_rank": "B",
@@ -185,7 +185,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
             "party_members_snapshot": [
                 {
                     "id": "ghost_b_1_m1",
-                    "name": "ガウェイン",
+                    "name": "レオ",
                     "job_class": "Paladin",
                     "level": 11,
                     "hp": 240,
@@ -209,7 +209,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
         },
         {
             "user_id": "ghost_b_2",
-            "user_name": "風のシルフ",
+            "user_name": "アベ",
             "avatar_url": "/images/npcs/npc_yato_onmyoji.png",
             "battle_score": 2600,
             "defense_rank": "B",
@@ -225,7 +225,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
             "party_members_snapshot": [
                 {
                     "id": "ghost_b_2_m1",
-                    "name": "シド",
+                    "name": "アレン",
                     "job_class": "Thief",
                     "level": 12,
                     "hp": 190,
@@ -249,7 +249,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
         },
         {
             "user_id": "ghost_b_3",
-            "user_name": "聖女サラ",
+            "user_name": "エレナ",
             "avatar_url": "/images/npcs/npc_roland_elena.png",
             "battle_score": 2800,
             "defense_rank": "B",
@@ -265,7 +265,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
             "party_members_snapshot": [
                 {
                     "id": "ghost_b_3_m1",
-                    "name": "アルス",
+                    "name": "アレン",
                     "job_class": "Warrior",
                     "level": 13,
                     "hp": 250,
@@ -290,7 +290,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
     "A": [
         {
             "user_id": "ghost_a_1",
-            "user_name": "賢者ユーリ",
+            "user_name": "サクラ",
             "avatar_url": "/images/npcs/npc_yato_miko_sakura.png",
             "battle_score": 4200,
             "defense_rank": "A",
@@ -306,7 +306,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
             "party_members_snapshot": [
                 {
                     "id": "ghost_a_1_m1",
-                    "name": "オズワルド",
+                    "name": "クロヴィス",
                     "job_class": "Mage",
                     "level": 17,
                     "hp": 240,
@@ -321,7 +321,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                 },
                 {
                     "id": "ghost_a_1_m2",
-                    "name": "ジーク",
+                    "name": "アレン",
                     "job_class": "Warrior",
                     "level": 17,
                     "hp": 310,
@@ -345,7 +345,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
         },
         {
             "user_id": "ghost_a_2",
-            "user_name": "竜騎士レオン",
+            "user_name": "レオ",
             "avatar_url": "/images/npcs/npc_roland_paladin_leo.png",
             "battle_score": 4500,
             "defense_rank": "A",
@@ -361,7 +361,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
             "party_members_snapshot": [
                 {
                     "id": "ghost_a_2_m1",
-                    "name": "カイン",
+                    "name": "ハンス",
                     "job_class": "Paladin",
                     "level": 19,
                     "hp": 360,
@@ -376,7 +376,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                 },
                 {
                     "id": "ghost_a_2_m2",
-                    "name": "ファラ",
+                    "name": "エレナ",
                     "job_class": "Priest",
                     "level": 19,
                     "hp": 280,
