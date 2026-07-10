@@ -611,10 +611,8 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
     
     // NEXT ボタンの押下可否: ログ再生中（isTypingDone=false）かつプレイヤーフェーズ外は不可
     // トランジション中、またはアクション実行中は不可
-    // 勝敗決定時は、ログが未完了であれば早送りのために常時押下を可能にする (フリーズ防止)
-    const canPressNext = (battleState.isVictory || battleState.isDefeat)
-        ? !isTypingDone
-        : ((battlePhase === 'player' || isTypingDone) && !isTransitioning && !isActioning);
+    const canPressNext = !battleState.isVictory && !battleState.isDefeat &&
+        (battlePhase === 'player' || isTypingDone) && !isTransitioning && !isActioning;
 
     const handleCardClick = async (index: number) => {
         if (!canInteract) return;
@@ -782,13 +780,6 @@ export default function BattleView({ onBattleEnd, battleTitle, bgImageUrl, disab
     // v15.0: NEXT ボタンのフェーズ分岐処理
     const handleNext = async () => {
         if (!canPressNext) return;
-
-        // 勝敗決定時は残ログの即時フラッシュ（早送り）のみを行い、速やかにリザルト画面を表示させる
-        if (battleState.isVictory || battleState.isDefeat) {
-            flushQueue();
-            return;
-        }
-
         if (battlePhase === 'player') {
             // プレイヤーフェーズ: 残ログを早送り → NPC フェーズ実行
             flushQueue();
