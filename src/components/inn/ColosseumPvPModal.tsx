@@ -1322,12 +1322,12 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                                 </div>
 
                                 <button
-                                    disabled={loading || cp >= 6 || gold < 5000}
+                                    disabled={loading}
                                     onClick={handleRecoverCP}
                                     className="flex-1 py-1 bg-gradient-to-r from-amber-500/90 to-amber-600/90 hover:from-amber-400 hover:to-amber-500 text-slate-950 disabled:from-slate-800 disabled:to-slate-800 disabled:text-slate-500 border border-amber-500/30 disabled:border-slate-700/50 rounded-md text-[9px] font-black tracking-wider transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1"
                                 >
                                     <Zap size={8} />
-                                    CP回復 (5k G)
+                                    CP回復 (5000G)
                                 </button>
                             </div>
                             {/* CP回復タイムカウント */}
