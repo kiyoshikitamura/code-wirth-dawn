@@ -249,7 +249,7 @@ export async function POST(req: Request) {
         });
 
         // 6. パーティ合計スコアとマッチングランク判定
-        const totalScore = playerCS + membersCS;
+        const totalScore = playerCS + Math.floor(membersCS * 0.3);
         let rankClass: 'C' | 'B' | 'A' | 'S' = 'C';
         if (totalScore >= 8000) rankClass = 'S';
         else if (totalScore >= 4000) rankClass = 'A';
