@@ -365,7 +365,7 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
     };
 
     // 7. 防衛パーティの更新 (差分更新検知対応)
-    const handleUpdateDefense = async () => {
+    const handleUpdateDefense = async (): Promise<boolean> => {
         setUpdatingDefense(true);
         setErrorMsg(null);
         setSuccessMsg(null);
@@ -398,13 +398,16 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                     }
                 }
                 setTimeout(() => setSuccessMsg(null), 4000);
+                return true;
             } else {
                 const data = await res.json();
                 setErrorMsg(data.error || '防衛登録の更新に失敗しました。');
+                return false;
             }
         } catch (err) {
             console.error('[PvP Defense Update] Error:', err);
             setErrorMsg('通信エラーが発生しました。');
+            return false;
         } finally {
             setUpdatingDefense(false);
         }
@@ -680,6 +683,16 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
 
                     {/* Content */}
                     <div className="px-6 py-4 max-h-[65vh] overflow-y-auto space-y-4 font-sans text-slate-300">
+                        {successMsg && (
+                            <div className="p-2.5 bg-emerald-950/20 border border-emerald-500/30 rounded-lg text-xs font-bold text-emerald-400 text-center animate-in fade-in zoom-in-95 duration-200">
+                                {successMsg}
+                            </div>
+                        )}
+                        {errorMsg && (
+                            <div className="p-2.5 bg-red-950/20 border border-red-500/30 rounded-lg text-xs font-bold text-red-400 text-center animate-in fade-in zoom-in-95 duration-200">
+                                {errorMsg}
+                            </div>
+                        )}
                         {loadingDefenseData ? (
                             <div className="flex flex-col items-center justify-center py-12 space-y-3">
                                 <RefreshCw className="animate-spin text-amber-500" size={24} />
@@ -1222,12 +1235,20 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                         </p>
                     </div>
 
+                    {errorMsg && (
+                        <div className="p-2.5 bg-red-950/20 border border-red-500/30 rounded-lg text-[10px] font-bold text-red-400 text-center w-full animate-in fade-in duration-200">
+                            {errorMsg}
+                        </div>
+                    )}
+
                     <button
                         disabled={autoRegistering}
                         onClick={async () => {
                             setAutoRegistering(true);
-                            await handleUpdateDefense();
-                            setShowAutoDefenseAlert(false);
+                            const success = await handleUpdateDefense();
+                            if (success) {
+                                setShowAutoDefenseAlert(false);
+                            }
                             setAutoRegistering(false);
                         }}
                         className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs rounded-xl active:scale-95 transition-all shadow-lg cursor-pointer flex items-center justify-center gap-1.5"
