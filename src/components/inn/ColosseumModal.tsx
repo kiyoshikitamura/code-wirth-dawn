@@ -176,6 +176,9 @@ export default function ColosseumModal({ onClose }: ColosseumModalProps) {
                                     <div className="absolute top-2 right-2 bg-[#1b2d4c] text-[8px] text-slate-300 font-bold px-1 py-0.5 rounded border border-[#2d4b7c]">
                                         COMING SOON
                                     </div>
+                                    <span className="text-[7px] text-slate-600 font-mono absolute bottom-1">
+                                        DEBUG ID: {userProfile?.id || 'none'}
+                                    </span>
                                 </div>
                             )}
 
