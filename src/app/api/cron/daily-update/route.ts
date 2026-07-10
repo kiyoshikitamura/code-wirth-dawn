@@ -552,6 +552,25 @@ async function performUpdate(isForceUgcReset: boolean) {
                 logs.push(`[PvPArenaUpdate] Failed to archive daily history: ${dailyErr.message}`);
             } else {
                 logs.push(`[PvPArenaUpdate] Successfully archived daily history for date: ${dateStr}`);
+
+                // デイリーアリーナ1位を噂話にシステム投稿
+                if (listData && listData.length > 0) {
+                    const topPlayer = listData[0];
+                    if (topPlayer.arena_rate >= 1000) {
+                        try {
+                            const { GossipService } = await import('@/services/gossipService');
+                            const gossipService = new GossipService(supabaseServer);
+                            await gossipService.postSystemMessage(
+                                `「本日のアリーナ・デイリーランキング第1位の栄冠は、冒険者『${topPlayer.user_name}』の頭上に輝いた。その比類なき強さを称えよ！」`,
+                                null,
+                                topPlayer.user_id
+                            );
+                            logs.push(`[PvPArenaUpdate] Posted daily PvP 1st gossip for user ${topPlayer.user_id}`);
+                        } catch (gossipErr: any) {
+                            logs.push(`[PvPArenaUpdate] Failed to post daily PvP gossip: ${gossipErr.message}`);
+                        }
+                    }
+                }
             }
 
             // C. シーズンリセット判定 (毎週水曜日 JST 18:00)
@@ -594,6 +613,25 @@ async function performUpdate(isForceUgcReset: boolean) {
                     logs.push(`[PvPArenaUpdate] Failed to archive season history: ${seasonErr.message}`);
                 } else {
                     logs.push(`[PvPArenaUpdate] Successfully archived season history for ID: ${seasonId}`);
+
+                    // シーズンアリーナ1位を噂話にシステム投稿
+                    if (topPlayersSeason && topPlayersSeason.length > 0) {
+                        const topPlayer = topPlayersSeason[0];
+                        if ((topPlayer.arena_rate ?? 1000) >= 1000) {
+                            try {
+                                const { GossipService } = await import('@/services/gossipService');
+                                const gossipService = new GossipService(supabaseServer);
+                                await gossipService.postSystemMessage(
+                                    `「アリーナ・今シーズンの絶対覇者は、冒険者『${topPlayer.name || '名もなき旅人'}』に決定した。数多の防衛を破り、最強の座を射止めた栄誉を歴史に刻もう！」`,
+                                    null,
+                                    topPlayer.id
+                                );
+                                logs.push(`[PvPArenaUpdate] Posted season PvP 1st gossip for user ${topPlayer.id}`);
+                            } catch (gossipErr: any) {
+                                logs.push(`[PvPArenaUpdate] Failed to post season PvP gossip: ${gossipErr.message}`);
+                            }
+                        }
+                    }
                 }
 
                 // 3) デイリー履歴のクリア (今シーズンのデイリー成績はシーズン切り替わりでクリアされる)

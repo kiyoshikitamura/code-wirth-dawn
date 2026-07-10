@@ -4,8 +4,11 @@ import { SupabaseClient } from '@supabase/supabase-js';
 // Cooldown duration in seconds
 const COOLDOWN_SECONDS = 10;
 
-// Excluded Kitamu account
-const EXCLUDED_KITAMU_USER_ID = 'c1cf67dd-527a-497e-bf88-ce10c2cb516f';
+// Excluded Kitamu accounts (both old and new IDs)
+const EXCLUDED_KITAMU_USER_IDS = [
+    'c1cf67dd-527a-497e-bf88-ce10c2cb516f', // 旧ID
+    '5ad434ec-763f-473e-939f-14a5e9e1cc93'  // 新ID
+];
 
 // Gemstone avatar for system account
 const SYSTEM_AVATAR_URL = '/images/icons/observer_gem.png';
@@ -30,8 +33,8 @@ export class GossipService {
         createdAt?: string
     ): Promise<{ success: boolean; error?: string }> {
         try {
-            // Exclude production Kitamu account from system notifications
-            if (targetUserId === EXCLUDED_KITAMU_USER_ID) {
+            // Exclude production Kitamu accounts from system notifications
+            if (targetUserId && EXCLUDED_KITAMU_USER_IDS.includes(targetUserId)) {
                 console.log(`[GossipService] Excluded Kitamu user ${targetUserId} from system post.`);
                 return { success: true };
             }
