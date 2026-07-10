@@ -13,6 +13,7 @@ import { Enemy } from '@/types/game';
 import StatusEffectBadges from './StatusEffectBadges';
 import { getCardEffectInfo } from '@/lib/cardEffects';
 import { getAuthToken } from '@/lib/authToken';
+import { soundManager } from '@/lib/soundManager';
 
 interface BattleViewProps {
     onBattleEnd: (result: 'win' | 'lose' | 'escape') => void;
