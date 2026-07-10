@@ -316,6 +316,28 @@ export const config = {
 
 // セッションクッキー（JWT）のアクセストークンから userId (sub) を抽出するヘルパー
 function extractUserIdFromRequest(request: NextRequest): string | null {
+    // 1. Authorization ヘッダー (Bearer Token) からの抽出を最優先する
+    const authHeader = request.headers.get('Authorization');
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+        const accessToken = authHeader.substring(7);
+        try {
+            const parts = accessToken.split('.');
+            if (parts.length === 3) {
+                const base64Url = parts[1];
+                let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                while (base64.length % 4) {
+                    base64 += '=';
+                }
+                const jsonPayload = atob(base64);
+                const payload = JSON.parse(jsonPayload);
+                return payload.sub || null;
+            }
+        } catch (e) {
+            // 静かにスルー
+        }
+    }
+
+    // 2. セッションクッキーからの抽出 (フォールバック)
     const allCookies = request.cookies.getAll();
     const authCookies = allCookies
         .filter(c => c.name.includes('auth-token'))
