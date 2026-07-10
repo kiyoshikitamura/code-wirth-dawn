@@ -637,8 +637,8 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
 
                 const storageKey = `dismissed_defense_alert_${seasonId}`;
                 
-                // 未登録状態であれば、以前に誤って書き込まれた表示済みフラグを強制クリアして、再度ダイアログが出るようにする
-                if (!hasDefenseParty) {
+                // 初期フェッチが完了し、かつ本当に未登録と確定した場合のみ、クリアする
+                if (initialFetchDone && !hasDefenseParty) {
                     localStorage.removeItem(storageKey);
                 }
 
