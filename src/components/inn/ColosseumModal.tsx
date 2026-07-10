@@ -31,7 +31,7 @@ export default function ColosseumModal({ onClose }: ColosseumModalProps) {
             const host = window.location.hostname;
             const isLocal = host === 'localhost' || host === '127.0.0.1';
             // 本番ドメイン以外の vercel.app サブドメイン（ブランチ毎のプレビュー用一時ドメインなど）をプレビューと見なす
-            const isVercelPreview = host.includes('.vercel.app') && host !== 'code-wirth-dawn.vercel.app';
+            const isVercelPreview = host.includes('.vercel.app') && host !== 'code-wirth-dawn.vercel.app' && host !== 'code-wirth-dawn.com';
             if (isLocal || isVercelPreview) {
                 isPreview = true;
             }
