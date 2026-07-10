@@ -113,7 +113,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "atk": 11,
                     "def": 5,
                     "inject_cards": [22],
-                    "image_url": "/images/npcs/npc_roland_thief_luka.png",
+                    "image_url": "/images/npcs/npc_free_adventurer_a.png",
                     "signature_deck_snapshot": [
                         { "id": "22", "name": "クナイ投げ", "type": "Skill", "ap_cost": 1, "power": 15 }
                     ]
@@ -129,7 +129,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
         {
             "user_id": "ghost_c_4",
             "user_name": "狩人エマ",
-            "avatar_url": "/images/npcs/npc_roland_hunter_emma.png",
+            "avatar_url": "/images/npcs/npc_roland_hunter_sam.png",
             "battle_score": 1400,
             "defense_rank": "C",
             "is_ghost": true,
@@ -152,7 +152,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "atk": 18,
                     "def": 11,
                     "inject_cards": [3],
-                    "image_url": "/images/npcs/npc_roland_warrior_ike.png",
+                    "image_url": "/images/npcs/npc_free_adventurer_a.png",
                     "signature_deck_snapshot": [
                         { "id": "3", "name": "突き", "type": "Skill", "ap_cost": 1, "power": 18 }
                     ]
@@ -170,7 +170,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
         {
             "user_id": "ghost_b_1",
             "user_name": "鋼のハルト",
-            "avatar_url": "/images/npcs/npc_roland_warrior_ike.png",
+            "avatar_url": "/images/npcs/npc_free_adventurer_a.png",
             "battle_score": 2400,
             "defense_rank": "B",
             "is_ghost": true,
@@ -233,7 +233,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "atk": 20,
                     "def": 14,
                     "inject_cards": [16],
-                    "image_url": "/images/npcs/npc_roland_thief_luka.png",
+                    "image_url": "/images/npcs/npc_free_adventurer_a.png",
                     "signature_deck_snapshot": [
                         { "id": "16", "name": "砂の罠", "type": "Support", "ap_cost": 1, "power": 0 }
                     ]
@@ -273,7 +273,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "atk": 26,
                     "def": 16,
                     "inject_cards": [3],
-                    "image_url": "/images/npcs/npc_roland_warrior_ike.png",
+                    "image_url": "/images/npcs/npc_free_adventurer_a.png",
                     "signature_deck_snapshot": [
                         { "id": "3", "name": "突き", "type": "Skill", "ap_cost": 1, "power": 18 }
                     ]
@@ -329,7 +329,7 @@ const GHOST_PRESETS: Record<string, any[]> = {
                     "atk": 30,
                     "def": 24,
                     "inject_cards": [6],
-                    "image_url": "/images/npcs/npc_roland_warrior_ike.png",
+                    "image_url": "/images/npcs/npc_free_adventurer_a.png",
                     "signature_deck_snapshot": [
                         { "id": "6", "name": "シールドバッシュ", "type": "Defense", "ap_cost": 2, "power": 10 }
                     ]
