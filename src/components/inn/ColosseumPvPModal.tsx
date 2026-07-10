@@ -633,12 +633,12 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
         }
     }, [showRankingSubModal, rankingType]);
 
-    // CP回復タイマーの進行
+    // CP回復タイマーの進行 (1秒ごとに1秒減算)
     useEffect(() => {
-        if (nextCPTimeMs === null) return;
         const timer = setInterval(() => {
             setNextCPTimeMs(prev => {
-                if (prev === null || prev <= 1000) {
+                if (prev === null) return null;
+                if (prev <= 1000) {
                     syncStats(); // 0になったら再取得
                     return null;
                 }
@@ -646,7 +646,7 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
             });
         }, 1000);
         return () => clearInterval(timer);
-    }, [nextCPTimeMs]);
+    }, []);
 
     const formatCPTime = (ms: number | null) => {
         if (ms === null || ms <= 0) return '';
@@ -1360,7 +1360,9 @@ export default function ColosseumPvPModal({ onClose }: ColosseumPvPModalProps) {
                             {/* CP回復タイムカウント */}
                             {cp < 5 && nextCPTimeMs !== null && nextCPTimeMs > 0 && (
                                 <div className="text-[8px] text-slate-400/80 font-bold tracking-wider pl-1 mt-0.5 text-left">
-                                    次の回復まで: <span className="text-amber-400/90 font-mono font-black">{Math.ceil(nextCPTimeMs / 60000)}分</span>
+                                    次の回復まで: <span className="text-amber-400/90 font-mono font-black">
+                                        {nextCPTimeMs >= 60000 ? `${Math.ceil(nextCPTimeMs / 60000)}分` : `${Math.floor(nextCPTimeMs / 1000)}秒`}
+                                    </span>
                                 </div>
                             )}
                         </div>
