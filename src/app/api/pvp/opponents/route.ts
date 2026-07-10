@@ -457,7 +457,7 @@ export async function GET(req: Request) {
         // 自身の防衛パーティ登録状態をチェック
         const defensePartyCheck = await supabaseServer
             .from('pvp_defense_parties')
-            .select('id')
+            .select('user_id')
             .eq('user_id', userId)
             .maybeSingle();
 
