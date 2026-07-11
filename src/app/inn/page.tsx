@@ -42,7 +42,6 @@ import QuestLogModal from '@/components/collection/QuestLogModal';
 import RankingModal from '@/components/collection/RankingModal';
 import ColosseumModal from '@/components/inn/ColosseumModal';
 import AcademyModal from '@/components/inn/AcademyModal';
-import BillingModal from '@/components/ui/BillingModal';
 
 // デバッグ系: 開発環境のみロード
 const QuestTestPanel = dynamic(() => import('@/components/debug/QuestTestPanel'), { ssr: false });
@@ -77,7 +76,6 @@ function InnPageInner() {
         showAcademy, setShowAcademy,
         showPrayer, setShowPrayer,
         showStatus, setShowStatus,
-        showBilling, setShowBilling,
         billingDialog, setBillingDialog,
         currentRewardDialog,
         resultOverlay, setResultOverlay,
@@ -172,7 +170,7 @@ function InnPageInner() {
             setVisitedSettings(localStorage.getItem('wirth_dawn_visited_settings') === 'true');
             setVisitedBilling(localStorage.getItem('wirth_dawn_visited_billing') === 'true');
         }
-    }, [showTavern, showShop, showAcademy, showStatus, showAccount, showBilling, activeModal]);
+    }, [showTavern, showShop, showAcademy, showStatus, showAccount, activeModal]);
 
     // モーダル起動時に localStorage に訪問履歴を記録
     React.useEffect(() => {
@@ -202,13 +200,6 @@ function InnPageInner() {
             setVisitedSettings(true);
         }
     }, [showAccount]);
-
-    React.useEffect(() => {
-        if (showBilling) {
-            localStorage.setItem('wirth_dawn_visited_billing', 'true');
-            setVisitedBilling(true);
-        }
-    }, [showBilling]);
 
     // プロモーション自動表示 ＆ オンボーディングガイド用フラグリセット一元管理 useEffect (レースコンディション競合防止)
     React.useEffect(() => {
@@ -441,7 +432,6 @@ function InnPageInner() {
         showAcademy ||
         showPrayer ||
         showStatus ||
-        showBilling ||
         showAccount ||
         showVitalityDeath ||
         showRestConfirm ||
@@ -518,7 +508,7 @@ function InnPageInner() {
                             onOpenSettings={isTourActive ? undefined : () => setShowAccount(true)} 
                             onOpenStatus={isTourActive ? undefined : () => setShowStatus(true)} 
                             onOpenShop={isTourActive ? undefined : () => setShowShop(true)} 
-                            onOpenBilling={isTourActive ? undefined : () => setShowBilling(true)} 
+                            onOpenBilling={undefined} 
                             equipBonus={equipBonus}
                             isStatusRecommended={isStatusRecommended}
                             isSettingsRecommended={isSettingsRecommended}
@@ -802,13 +792,7 @@ function InnPageInner() {
                 <GuestRegisterPromoModal onClose={() => setShowGuestRegisterPromo(false)} />
             )}
 
-            {/* Starter Pack / Elite Pack Promotion Modal */}
-            {showStarterPackPromo && (
-                <StarterPackPromoModal 
-                    onClose={() => setShowStarterPackPromo(false)} 
-                    onOpenBilling={() => setShowBilling(true)}
-                />
-            )}
+
 
             {/* Discord Promo Modal */}
             {showDiscordPromo && (
@@ -868,7 +852,7 @@ function InnPageInner() {
             {/* Modals */}
             {showShop && <ShopModal onClose={() => setShowShop(false)} />}
             {showAppraisal && <AppraisalModal onClose={() => setShowAppraisal(false)} reputation={reputation} />}
-            {showAcademy && <AcademyModal onClose={() => setShowAcademy(false)} onOpenBilling={() => setShowBilling(true)} />}
+            {showAcademy && <AcademyModal onClose={() => setShowAcademy(false)} onOpenBilling={undefined} />}
             {showPrayer && userProfile && <PrayerModal onClose={() => setShowPrayer(false)} locationId={userProfile.current_location_id || ''} locationName={worldState?.location_name || ''} />}
             {showAccount && <AccountSettingsModal onClose={() => setShowAccount(false)} />}
             {showStatus && (
@@ -881,7 +865,6 @@ function InnPageInner() {
                     }}
                 />
             )}
-            {showBilling && <BillingModal onClose={() => setShowBilling(false)} />}
             {showInheritance && (
                 <InheritanceModal
                     onClose={() => setShowInheritance(false)}

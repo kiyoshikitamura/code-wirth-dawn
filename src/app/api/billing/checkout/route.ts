@@ -19,6 +19,13 @@ const supabaseAdmin = createClient(
  * v27.0: JWT認証を追加。トークンからuser_idを検証。
  */
 export async function POST(req: Request) {
+    return NextResponse.json(
+        { error: '新規の課金およびサブスクリプションの受付は終了いたしました。' },
+        { status: 403 }
+    );
+}
+
+export async function POST_disabled_original(req: Request) {
     try {
         const secretKey = process.env.STRIPE_SECRET_KEY || '';
 

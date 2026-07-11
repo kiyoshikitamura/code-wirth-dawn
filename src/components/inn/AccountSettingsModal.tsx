@@ -566,15 +566,11 @@ export default function AccountSettingsModal({ onClose }: Props) {
                             </div>
                         )}
 
-                        {/* Stripeカスタマーポータル */}
+                        {/* 自動解約に関するお知らせ */}
                         {currentTier !== 'free' && (
-                            <button
-                                onClick={handleOpenPortal}
-                                disabled={portalLoading}
-                                className="mt-3 w-full flex items-center justify-center py-1.5 text-[11px] font-bold text-slate-400 border border-slate-700 rounded hover:text-amber-400 hover:border-[#a38b6b] transition-colors disabled:opacity-40"
-                            >
-                                {portalLoading ? '読み込み中...' : 'プラン管理・解約'}
-                            </button>
+                            <p className="mt-2 text-[10px] text-amber-500/80 leading-relaxed text-center">
+                                ※現在サブスクリプションの新規受付は停止しており、既存のご契約は現在の期間満了をもって自動的に解約（フリープランへ移行）されます。
+                            </p>
                         )}
                     </div>
 
